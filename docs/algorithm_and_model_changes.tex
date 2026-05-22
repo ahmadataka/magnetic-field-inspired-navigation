@@ -290,4 +290,376 @@ Future major changes should update this file, especially if they modify:
   \item the benchmark scenario assumptions
 \end{itemize}
 
+\section*{Entry 2026-05-22: Structural Refactor Toward The 2022 Paper}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Refactored in \texttt{src/mfinav/double\_integrator.py}
+  \item This is a structural alignment step, not yet a full equation-level reconstruction of the 2022 paper
+\end{itemize}
+
+\textbf{Motivation}
+
+The 2022 paper describes obstacle avoidance as the combination of two terms:
+
+\begin{equation}
+F_o = F_b + F_a
+\end{equation}
+
+where:
+
+\begin{itemize}[leftmargin=*]
+  \item $F_b$ is the boundary-following field
+  \item $F_a$ is the collision-avoidance field
+\end{itemize}
+
+The earlier cleanroom prototype merged these ideas into one obstacle term plus
+an added repulsive correction. That made the code easy to test, but it hid the
+paper's core decomposition.
+
+\textbf{What Changed}
+
+The obstacle logic is now split into explicit components:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{LocalSensingModel}
+  \item \texttt{BoundaryFollowingField}
+  \item \texttt{CollisionAvoidanceField}
+\end{itemize}
+
+The total control now has the explicit structure
+
+\begin{equation}
+a = a_{\text{goal}} + a_b + a_a
+\end{equation}
+
+where:
+
+\begin{itemize}[leftmargin=*]
+  \item $a_b$ is the boundary-following component
+  \item $a_a$ is the collision-avoidance component
+\end{itemize}
+
+\textbf{Observation Model}
+
+The refactor introduces a local observation container:
+
+\begin{equation}
+\mathcal{O} = \{ r_o,\; d_o \}
+\end{equation}
+
+where:
+
+\begin{itemize}[leftmargin=*]
+  \item $r_o$ is the closest-obstacle vector
+  \item $d_o = \lVert r_o \rVert$
+\end{itemize}
+
+This is still generated from an analytic circle model in the current code, but
+the new interface is intentionally shaped like a local sensing output so it can
+be replaced later by sensor-driven obstacle processing.
+
+\textbf{Boundary-Following Field}
+
+The boundary-following component keeps the same current prototype behavior, but
+it is now isolated as its own field:
+
+\begin{equation}
+\hat{t} = \hat{l}_a - (\hat{l}_a^\top \hat{r})\hat{r}
+\end{equation}
+
+\begin{equation}
+B \propto \frac{\lVert v \rVert}{d}\hat{t}_{\perp}
+\end{equation}
+
+\begin{equation}
+a_b = k_m \hat{l}_{a,\perp}(\hat{l}_{a,\perp}^\top B)
+\end{equation}
+
+This is still the compact 2D analogue used previously, but it is now clearly
+identified as the boundary-following term.
+
+\textbf{Collision-Avoidance Field}
+
+The repulsive near-obstacle correction is now made explicit as the
+collision-avoidance field:
+
+\begin{equation}
+a_a =
+-k_r \left(\frac{1}{d} - \frac{1}{d_b}\right)\frac{r_o}{d}
+\quad \text{for } d \le d_b
+\end{equation}
+
+and, when motion direction is defined, it is projected to remove the component
+parallel to the current motion:
+
+\begin{equation}
+a_a^{\perp} = a_a - (a_a^\top \hat{l}_a)\hat{l}_a
+\end{equation}
+
+\textbf{Goal Relaxation Status}
+
+The goal-relaxation logic remains available, but it is now explicitly marked as
+a legacy extension from the ROS code rather than a confirmed core part of the
+2022 paper implementation.
+
+This is represented by a configuration switch:
+
+\begin{equation}
+\texttt{use\_legacy\_goal\_relaxation} \in \{0,1\}
+\end{equation}
+
+When disabled, the goal controller uses unit scaling rather than the legacy
+relaxation factor.
+
+\textbf{What This Refactor Improves}
+
+\begin{itemize}[leftmargin=*]
+  \item The code structure now mirrors the paper's decomposition more clearly.
+  \item It becomes easier to replace the current placeholder formulas with
+  paper-faithful ones.
+  \item It isolates local sensing, boundary following, and collision avoidance
+  as separate concerns.
+\end{itemize}
+
+\textbf{What Still Does Not Match The 2022 Paper Exactly}
+
+\begin{itemize}[leftmargin=*]
+  \item The exact paper equations for $F_b$ and $F_a$ are not yet reconstructed line by line.
+  \item The threshold semantics of $r_l$ and $r_{la}$ are not yet implemented as separate paper-faithful activations.
+  \item The Section 4.4 closest-point averaging extension is still missing.
+  \item The current observation model still comes from an analytic obstacle, not real local sensing.
+\end{itemize}
+
+\section*{Entry 2026-05-22: Benchmark Environments and APF Baseline}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Added multi-obstacle environment support
+  \item Added convex and non-convex benchmark scenarios
+  \item Added a standard artificial potential field (APF) baseline
+  \item Added a benchmark runner that saves trajectory plots and metrics
+\end{itemize}
+
+\textbf{What Changed}
+
+The simulator is no longer restricted to a single obstacle. A new obstacle
+collection abstraction returns the closest obstacle vector among several
+primitive obstacles:
+
+\begin{equation}
+r_o = \arg\min_{r_i \in \mathcal{R}} \lVert r_i \rVert
+\end{equation}
+
+where $\mathcal{R}$ is the set of closest-point vectors returned by all
+obstacles in the environment.
+
+This enables more realistic environments while preserving the local-sensing
+structure used by the controller.
+
+To make controller comparisons numerically meaningful, the simulator now clips
+both commanded acceleration and robot speed:
+
+\begin{equation}
+a \leftarrow
+\begin{cases}
+a, & \lVert a \rVert \le a_{\max} \\
+a_{\max}\dfrac{a}{\lVert a \rVert}, & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\begin{equation}
+v \leftarrow
+\begin{cases}
+v, & \lVert v \rVert \le v_{\max} \\
+v_{\max}\dfrac{v}{\lVert v \rVert}, & \text{otherwise}
+\end{cases}
+\end{equation}
+
+The rollout also terminates on collision, approximated by zero obstacle
+clearance in the simplified geometric model.
+
+\textbf{New Scenario Types}
+
+Three benchmark scenarios are now defined:
+
+\begin{itemize}[leftmargin=*]
+  \item a single convex obstacle
+  \item a cluster of convex obstacles
+  \item a non-convex U-shaped obstacle approximated by several circles
+\end{itemize}
+
+The non-convex environment is still a geometric approximation, but it is useful
+for testing whether the controller exhibits boundary-following behavior beyond
+simple single-obstacle deflection.
+
+\textbf{APF Baseline}
+
+A standard artificial potential field baseline is added with the structure
+
+\begin{equation}
+a_{\text{APF}} = a_{\text{att}} + a_{\text{rep}}
+\end{equation}
+
+where the attractive term is
+
+\begin{equation}
+a_{\text{att}} = K_P (p_g - p) - K_D v
+\end{equation}
+
+and the repulsive term is activated near obstacles:
+
+\begin{equation}
+a_{\text{rep}}
+=
+-K_R \left(\frac{1}{d} - \frac{1}{d_b}\right)\frac{r_o}{d^2}
+\quad \text{for } d \le d_b
+\end{equation}
+
+This baseline is not meant to reproduce every APF variant in the literature; it
+is meant to provide a simple and interpretable comparison against the current
+MFI implementation.
+
+\textbf{Verification Outputs}
+
+The benchmark runner now produces:
+
+\begin{itemize}[leftmargin=*]
+  \item trajectory comparison plots
+  \item CSV metrics for each scenario and method
+\end{itemize}
+
+The current summary metrics are:
+
+\begin{itemize}[leftmargin=*]
+  \item success flag
+  \item collision flag
+  \item number of steps
+  \item path length
+  \item final goal distance
+  \item minimum obstacle clearance
+  \item mean speed
+\end{itemize}
+
+\textbf{Why This Matters}
+
+This change gives us a repeatable way to evaluate:
+
+\begin{itemize}[leftmargin=*]
+  \item whether the current MFI implementation handles more complex geometry
+  \item whether it offers any practical benefit over a standard APF baseline
+  \item where the current simplified implementation breaks down
+\end{itemize}
+
+\section*{Entry 2026-05-22: Paper-Driven Thresholds, Averaging Extension, and Legacy Goal Relaxation Demotion}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Added explicit threshold semantics for boundary following and collision avoidance
+  \item Added the Section 4.4 style closest-point averaging extension
+  \item Changed legacy goal relaxation from default-on to optional
+\end{itemize}
+
+\textbf{Thresholded Obstacle Activation}
+
+The implementation now follows the paper structure more closely by separating
+the activation thresholds:
+
+\begin{itemize}[leftmargin=*]
+  \item boundary-following field active for $d \le r_l$
+  \item collision-avoidance field active for $d \le r_{la}$
+\end{itemize}
+
+with default values:
+
+\begin{equation}
+r_l = 3.0, \qquad r_{la} = 2.0
+\end{equation}
+
+This replaces the previous use of generic proximity constants that did not map
+cleanly to the paper's notation.
+
+\textbf{Closest-Point Averaging Extension}
+
+To approximate the Section 4.4 extension for non-unique closest points, the
+observation model now collects all sensed obstacle vectors whose magnitudes are
+within a threshold $\delta_r$ of the minimum sensed distance:
+
+\begin{equation}
+\mathcal{R}_{\delta}
+=
+\{ r_i \mid \lVert r_i \rVert \le r_{\min} + \delta_r \}
+\end{equation}
+
+The averaged vector is then
+
+\begin{equation}
+\bar{r}
+=
+\frac{1}{|\mathcal{R}_{\delta}|}
+\sum_{r_i \in \mathcal{R}_{\delta}} r_i
+\end{equation}
+
+Following the paper's heuristic:
+
+\begin{itemize}[leftmargin=*]
+  \item if $\lVert \bar{r} \rVert < \lVert r_o \rVert$, use $\bar{r}$ as the working closest-point vector
+  \item otherwise, use the standard closest vector $r_o$
+\end{itemize}
+
+This gives the code a practical non-unique closest-point handling mechanism for
+concave and sharp-corner approximations.
+
+To better reflect the paper's sensing assumption, the implementation no longer
+uses only one exact closest-point vector per obstacle. Each obstacle now
+provides multiple local surface samples around the nearest visible region, and
+the averaging extension operates over these sensed vectors rather than over a
+single analytic point per obstacle.
+
+\textbf{Small-Current Fallback}
+
+The paper notes that the projected artificial current can become very small when
+the robot direction is nearly aligned with the robot-to-obstacle vector. To
+mitigate this, the implementation now checks the magnitude of the projected
+current and falls back to a unit tangent surrogate when:
+
+\begin{equation}
+\lVert \hat{t} \rVert < \epsilon
+\end{equation}
+
+with default
+
+\begin{equation}
+\epsilon = 3 \times 10^{-6}
+\end{equation}
+
+\textbf{Legacy Goal Relaxation}
+
+The ROS-derived goal-relaxation term is no longer the default path for the
+implementation. It is now explicitly treated as an optional legacy extension:
+
+\begin{equation}
+\texttt{use\_legacy\_goal\_relaxation} = 0
+\end{equation}
+
+by default.
+
+When enabled, the implementation restores the earlier ROS-inspired scaling
+factor. When disabled, the goal controller operates without that legacy gain
+modulation.
+
+\textbf{Why This Change Was Made}
+
+These changes address three of the most important mismatches between the
+prototype and the 2022 paper:
+
+\begin{itemize}[leftmargin=*]
+  \item explicit $r_l$ and $r_{la}$ threshold behavior
+  \item handling of non-unique closest points
+  \item clearer separation between paper-driven behavior and ROS-legacy behavior
+\end{itemize}
+
 \end{document}

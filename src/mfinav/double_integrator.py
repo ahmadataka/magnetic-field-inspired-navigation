@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import csv
 import math
+from typing import Protocol
 
 import numpy as np
 
@@ -38,6 +39,48 @@ class CircleObstacle:
             return np.array([self.radius, 0.0], dtype=float)
         return delta * max(distance - self.radius, EPS) / distance
 
+    def sensed_vectors(self, position: np.ndarray, num_samples: int, angular_window: float) -> list[np.ndarray]:
+        delta = position - self.center
+        base_angle = math.atan2(delta[1], delta[0])
+        samples: list[np.ndarray] = []
+        if num_samples <= 1:
+            angles = [base_angle]
+        else:
+            angles = np.linspace(base_angle - angular_window, base_angle + angular_window, num_samples)
+        for angle in angles:
+            surface_point = self.center + self.radius * np.array([math.cos(angle), math.sin(angle)], dtype=float)
+            samples.append(surface_point - position)
+        return samples
+
+
+class Obstacle(Protocol):
+    def closest_vector(self, position: np.ndarray) -> np.ndarray:
+        ...
+
+
+@dataclass
+class ObstacleCollection:
+    obstacles: list[CircleObstacle]
+
+    def closest_vector(self, position: np.ndarray) -> np.ndarray:
+        if not self.obstacles:
+            return np.array([1e6, 0.0], dtype=float)
+        closest = self.obstacles[0].closest_vector(position)
+        min_distance = _norm(closest)
+        for obstacle in self.obstacles[1:]:
+            candidate = obstacle.closest_vector(position)
+            distance = _norm(candidate)
+            if distance < min_distance:
+                closest = candidate
+                min_distance = distance
+        return closest
+
+    def sensed_vectors(self, position: np.ndarray, num_samples: int, angular_window: float) -> list[np.ndarray]:
+        vectors: list[np.ndarray] = []
+        for obstacle in self.obstacles:
+            vectors.extend(obstacle.sensed_vectors(position, num_samples, angular_window))
+        return vectors
+
 
 @dataclass
 class DoubleIntegratorState:
@@ -46,21 +89,37 @@ class DoubleIntegratorState:
 
 
 @dataclass
+class LocalSensingObservation:
+    closest_obstacle_vector: np.ndarray
+    distance_to_obstacle: float
+    sensed_vectors: list[np.ndarray]
+    averaged_obstacle_vector: np.ndarray
+    used_obstacle_vector: np.ndarray
+
+
+@dataclass
 class SimulationConfig:
     dt: float = 0.02
     steps: int = 2000
-    kp_goal: float = 0.1
-    kd_goal: float = 2.0
-    kd_speed: float = 1.5
-    kp_goal_relaxed: float = 0.1
+    kp_goal: float = 0.04
+    kd_goal: float = 0.5
+    kd_speed: float = 0.5
+    kp_goal_relaxed: float = 0.04
     kp_geom: float = 5.0
     speed_limit: float = 1.5
     magni_bound: float = 2.5
-    bound: float = 1.5
-    bound_add: float = 2.5
-    constant2: float = 10.0
-    constant_add: float = 0.5
+    r_l: float = 3.0
+    r_la: float = 2.0
+    c_field: float = 10.0
+    c_perp: float = 20.0
+    delta_r: float = 0.35
+    epsilon_current: float = 3e-6
+    sensing_samples_per_obstacle: int = 9
+    sensing_angular_window: float = 0.7
     goal_relaxation: bool = True
+    use_legacy_goal_relaxation: bool = False
+    max_acceleration: float = 4.0
+    max_speed_norm: float = 2.0
 
 
 class GoalRelaxationController:
@@ -75,7 +134,7 @@ class GoalRelaxationController:
 
         goal_mag = _norm(goal_vector)
         obs_mag = _norm(obs_vector)
-        if goal_mag < EPS or obs_mag >= 2.0 * self.config.bound or obs_mag < EPS:
+        if goal_mag < EPS or obs_mag >= self.config.r_l or obs_mag < EPS:
             self.min_distance_to_goal = min(self.min_distance_to_goal, goal_mag)
             return 1.0
 
@@ -100,14 +159,17 @@ class GoalRelaxationController:
         self,
         state: DoubleIntegratorState,
         goal: np.ndarray,
-        obstacle_vector: np.ndarray,
+        observation: LocalSensingObservation,
     ) -> np.ndarray:
         goal_vector = goal - state.position
         goal_mag = _norm(goal_vector)
         if goal_mag < EPS:
             return np.zeros(2, dtype=float)
 
-        kp_scale = self._goal_weight(goal_vector, obstacle_vector)
+        if self.config.use_legacy_goal_relaxation:
+            kp_scale = self._goal_weight(goal_vector, observation.closest_obstacle_vector)
+        else:
+            kp_scale = 1.0
 
         if goal_mag > self.config.magni_bound:
             speed = _norm(state.velocity)
@@ -124,14 +186,53 @@ class GoalRelaxationController:
         return self.config.kp_goal * goal_vector - self.config.kd_speed * state.velocity
 
 
-class MagneticFieldAvoider:
+class LocalSensingModel:
     def __init__(self, config: SimulationConfig) -> None:
         self.config = config
 
-    def command(self, state: DoubleIntegratorState, obstacle: CircleObstacle) -> np.ndarray:
-        dist_to_obs = obstacle.closest_vector(state.position)
-        distance = _norm(dist_to_obs)
-        if distance > 2.0 * self.config.bound:
+    def observe(self, state: DoubleIntegratorState, obstacle: Obstacle) -> LocalSensingObservation:
+        if hasattr(obstacle, "sensed_vectors"):
+            sensed_vectors = obstacle.sensed_vectors(
+                state.position,
+                self.config.sensing_samples_per_obstacle,
+                self.config.sensing_angular_window,
+            )
+        else:
+            sensed_vectors = [obstacle.closest_vector(state.position)]
+        distances = [_norm(vec) for vec in sensed_vectors]
+        min_index = int(np.argmin(distances))
+        dist_to_obs = sensed_vectors[min_index]
+        min_distance = distances[min_index]
+
+        close_vectors = [
+            vec for vec, distance in zip(sensed_vectors, distances) if distance <= min_distance + self.config.delta_r
+        ]
+        averaged_vector = np.mean(np.array(close_vectors, dtype=float), axis=0)
+
+        # Section 4.4 paper heuristic:
+        # for concave/non-unique closest-point cases, the averaged vector is
+        # shorter than the single closest measurement and is therefore preferred.
+        if _norm(averaged_vector) < min_distance:
+            used_vector = averaged_vector
+        else:
+            used_vector = dist_to_obs
+
+        return LocalSensingObservation(
+            closest_obstacle_vector=dist_to_obs,
+            distance_to_obstacle=_norm(used_vector),
+            sensed_vectors=sensed_vectors,
+            averaged_obstacle_vector=averaged_vector,
+            used_obstacle_vector=used_vector,
+        )
+
+
+class BoundaryFollowingField:
+    def __init__(self, config: SimulationConfig) -> None:
+        self.config = config
+
+    def command(self, state: DoubleIntegratorState, observation: LocalSensingObservation) -> np.ndarray:
+        distance = observation.distance_to_obstacle
+        if distance > self.config.r_l:
             return np.zeros(2, dtype=float)
 
         speed = _norm(state.velocity)
@@ -139,63 +240,186 @@ class MagneticFieldAvoider:
         if _norm(agent_cur) < EPS:
             return np.zeros(2, dtype=float)
 
+        dist_to_obs = observation.used_obstacle_vector
         dist_from_obs = -dist_to_obs
         dist_from_obs_hat = _unit(dist_from_obs)
 
-        # Projection of the robot current onto the obstacle tangent plane/line.
+        # Approximate the boundary-following field by projecting the motion
+        # direction onto the local obstacle tangent.
         obs_cur = agent_cur - float(np.dot(agent_cur, dist_from_obs_hat)) * dist_from_obs_hat
         obs_cur_mag = _norm(obs_cur)
-        if obs_cur_mag < EPS:
+        if obs_cur_mag < self.config.epsilon_current:
             obs_cur = _perp_left(dist_from_obs_hat)
         else:
             obs_cur = obs_cur / obs_cur_mag
 
-        # 2D analogue of the nested cross-product used in the ROS implementation.
         b_field = _perp_left(obs_cur) * speed / max(distance, EPS)
         agent_perp = _perp_left(agent_cur)
-        force = self.config.constant2 * agent_perp * float(np.dot(agent_perp, b_field))
+        return self.config.c_field * agent_perp * float(np.dot(agent_perp, b_field))
 
-        repulsion = np.zeros(2, dtype=float)
-        if distance <= self.config.bound_add:
-            repulsion = -self.config.constant_add * (1.0 / max(distance, EPS) - 1.0 / self.config.bound_add) * (
-                dist_to_obs / max(distance, EPS)
-            )
+
+class CollisionAvoidanceField:
+    def __init__(self, config: SimulationConfig) -> None:
+        self.config = config
+
+    def command(self, state: DoubleIntegratorState, observation: LocalSensingObservation) -> np.ndarray:
+        distance = observation.distance_to_obstacle
+        if distance > self.config.r_la:
+            return np.zeros(2, dtype=float)
+
+        speed = _norm(state.velocity)
+        agent_cur = _unit(state.velocity) if speed > EPS else np.zeros(2, dtype=float)
+        dist_to_obs = observation.used_obstacle_vector
+
+        repulsion = -self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
+            dist_to_obs / max(distance, EPS)
+        )
+        if _norm(agent_cur) > EPS:
             repulsion = repulsion - float(np.dot(repulsion, agent_cur)) * agent_cur
-
-        return force + repulsion
+        return repulsion
 
 
 class ReferenceNavigator:
     def __init__(self, config: SimulationConfig) -> None:
+        self.sensing = LocalSensingModel(config)
         self.goal_controller = GoalRelaxationController(config)
-        self.avoider = MagneticFieldAvoider(config)
+        self.boundary_following = BoundaryFollowingField(config)
+        self.collision_avoidance = CollisionAvoidanceField(config)
 
     def command(
         self,
         state: DoubleIntegratorState,
         goal: np.ndarray,
-        obstacle: CircleObstacle,
+        obstacle: Obstacle,
     ) -> np.ndarray:
-        obstacle_vector = obstacle.closest_vector(state.position)
-        goal_cmd = self.goal_controller.command(state, goal, obstacle_vector)
-        avoid_cmd = self.avoider.command(state, obstacle)
-        return goal_cmd + avoid_cmd
+        observation = self.sensing.observe(state, obstacle)
+        goal_cmd = self.goal_controller.command(state, goal, observation)
+        boundary_cmd = self.boundary_following.command(state, observation)
+        collision_cmd = self.collision_avoidance.command(state, observation)
+        return goal_cmd + boundary_cmd + collision_cmd
+
+
+class ArtificialPotentialFieldNavigator:
+    def __init__(self, config: SimulationConfig) -> None:
+        self.config = config
+        self.sensing = LocalSensingModel(config)
+
+    def command(
+        self,
+        state: DoubleIntegratorState,
+        goal: np.ndarray,
+        obstacle: Obstacle,
+    ) -> np.ndarray:
+        goal_vector = goal - state.position
+        attractive = self.config.kp_goal * goal_vector - self.config.kd_goal * state.velocity
+        observation = self.sensing.observe(state, obstacle)
+        distance = observation.distance_to_obstacle
+
+        repulsive = np.zeros(2, dtype=float)
+        if distance <= self.config.r_la:
+            repulsive = -self.config.c_field * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
+                observation.used_obstacle_vector / max(distance**2, EPS)
+            )
+        return attractive + repulsive
+
+
+@dataclass
+class BenchmarkScenario:
+    name: str
+    start: np.ndarray
+    goal: np.ndarray
+    obstacles: ObstacleCollection
+    description: str
+
+
+def make_default_scenarios() -> list[BenchmarkScenario]:
+    return [
+        BenchmarkScenario(
+            name="single_convex",
+            start=np.array([0.0, 0.0], dtype=float),
+            goal=np.array([10.0, 1.5], dtype=float),
+            obstacles=ObstacleCollection(
+                obstacles=[CircleObstacle(center=np.array([5.0, 0.0], dtype=float), radius=1.0)]
+            ),
+            description="Single convex obstacle between start and goal.",
+        ),
+        BenchmarkScenario(
+            name="convex_cluster",
+            start=np.array([0.0, -1.0], dtype=float),
+            goal=np.array([11.0, 1.5], dtype=float),
+            obstacles=ObstacleCollection(
+                obstacles=[
+                    CircleObstacle(center=np.array([4.0, 0.0], dtype=float), radius=1.0),
+                    CircleObstacle(center=np.array([6.0, 1.2], dtype=float), radius=1.1),
+                    CircleObstacle(center=np.array([7.5, -0.8], dtype=float), radius=0.9),
+                ]
+            ),
+            description="Several separated convex obstacles requiring repeated boundary following.",
+        ),
+        BenchmarkScenario(
+            name="nonconvex_u_shape",
+            start=np.array([0.0, 0.0], dtype=float),
+            goal=np.array([10.5, 0.0], dtype=float),
+            obstacles=ObstacleCollection(
+                obstacles=[
+                    CircleObstacle(center=np.array([4.5, -2.0], dtype=float), radius=0.9),
+                    CircleObstacle(center=np.array([4.5, -0.7], dtype=float), radius=0.9),
+                    CircleObstacle(center=np.array([4.5, 0.7], dtype=float), radius=0.9),
+                    CircleObstacle(center=np.array([4.5, 2.0], dtype=float), radius=0.9),
+                    CircleObstacle(center=np.array([6.0, -2.0], dtype=float), radius=0.9),
+                    CircleObstacle(center=np.array([7.5, -2.0], dtype=float), radius=0.9),
+                ]
+            ),
+            description="Non-convex U-shaped obstacle approximation with a top opening.",
+        ),
+    ]
+
+
+def compute_metrics(history: list[dict[str, float]], goal: np.ndarray, success_radius: float = 0.3) -> dict[str, float]:
+    path_length = 0.0
+    for prev, cur in zip(history, history[1:]):
+        path_length += math.hypot(cur["x"] - prev["x"], cur["y"] - prev["y"])
+
+    final = history[-1]
+    final_goal_distance = final["goal_distance"]
+    min_clearance = min(row["obstacle_distance"] for row in history)
+    collision = 1.0 if min_clearance <= 1e-3 else 0.0
+    speed_samples = [math.hypot(row["vx"], row["vy"]) for row in history]
+    mean_speed = float(sum(speed_samples) / max(len(speed_samples), 1))
+    return {
+        "steps": float(len(history)),
+        "path_length": path_length,
+        "final_goal_distance": final_goal_distance,
+        "min_clearance": min_clearance,
+        "mean_speed": mean_speed,
+        "success": 1.0 if final_goal_distance <= success_radius and collision == 0.0 else 0.0,
+        "collision": collision,
+    }
+
+
+def _clip_norm(vec: np.ndarray, limit: float) -> np.ndarray:
+    magnitude = _norm(vec)
+    if magnitude <= limit or magnitude < EPS:
+        return vec
+    return vec * (limit / magnitude)
 
 
 def simulate(
     state: DoubleIntegratorState,
     goal: np.ndarray,
-    obstacle: CircleObstacle,
+    obstacle: Obstacle,
     config: SimulationConfig | None = None,
+    navigator: ReferenceNavigator | ArtificialPotentialFieldNavigator | None = None,
 ) -> list[dict[str, float]]:
     cfg = config or SimulationConfig()
-    navigator = ReferenceNavigator(cfg)
+    active_navigator = navigator or ReferenceNavigator(cfg)
     history: list[dict[str, float]] = []
 
     for step in range(cfg.steps):
         goal_vector = goal - state.position
-        obstacle_vector = obstacle.closest_vector(state.position)
-        accel = navigator.command(state, goal, obstacle)
+        observation = active_navigator.sensing.observe(state, obstacle)
+        accel = active_navigator.command(state, goal, obstacle)
+        accel = _clip_norm(accel, cfg.max_acceleration)
 
         history.append(
             {
@@ -207,14 +431,17 @@ def simulate(
                 "ax": float(accel[0]),
                 "ay": float(accel[1]),
                 "goal_distance": _norm(goal_vector),
-                "obstacle_distance": _norm(obstacle_vector),
+                "obstacle_distance": observation.distance_to_obstacle,
             }
         )
 
         state.velocity = state.velocity + accel * cfg.dt
+        state.velocity = _clip_norm(state.velocity, cfg.max_speed_norm)
         state.position = state.position + state.velocity * cfg.dt
 
         if _norm(goal - state.position) < 0.15 and _norm(state.velocity) < 0.1:
+            break
+        if observation.distance_to_obstacle <= 1e-3:
             break
 
     return history
