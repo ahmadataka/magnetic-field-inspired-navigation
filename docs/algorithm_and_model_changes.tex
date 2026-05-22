@@ -1,0 +1,293 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb, mathtools}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{parskip}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\title{Algorithm and Model Changes}
+\author{magnetic-field-inspired-navigation}
+\date{2026-05-22}
+
+\begin{document}
+\maketitle
+
+This document records major algorithm and model decisions in the cleanroom
+\texttt{magnetic-field-inspired-navigation} implementation.
+
+\textbf{Rule for this repo}
+
+\begin{itemize}[leftmargin=*]
+  \item Any major change to the controller, dynamics model, obstacle model, sensing abstraction, or mathematical formulation must be recorded in this file in the same change that introduces it.
+\end{itemize}
+
+The purpose is to keep a durable map between:
+
+\begin{itemize}[leftmargin=*]
+  \item the legacy ROS implementation in \texttt{double\_integrator}
+  \item the cleanroom Python implementation
+  \item intentional simplifications or deviations
+\end{itemize}
+
+\section*{Entry 2026-05-22: Initial Cleanroom Double-Integrator Reference}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Implemented in \texttt{src/mfinav/double\_integrator.py}
+  \item Scenario runner in \texttt{scripts/run\_reference.py}
+\end{itemize}
+
+\textbf{Legacy source anchors}
+
+\begin{itemize}[leftmargin=*]
+  \item Goal controller and relaxation: \texttt{nodes/ataka\_listener.py}
+  \item Duplicate goal controller: \texttt{nodes/multi\_agent\_listener.py}
+  \item Magnetic avoidance, \texttt{field == 2}: \texttt{nodes/collision\_avoidance\_okt.py}
+  \item Double-integrator rollout: \texttt{nodes/system\_motion.py}
+\end{itemize}
+
+\subsection*{What Was Implemented}
+
+The current cleanroom reference includes:
+
+\begin{itemize}[leftmargin=*]
+  \item 2D double-integrator dynamics
+  \item 2D circular obstacle abstraction
+  \item goal-relaxation gain logic inspired by the ROS implementation
+  \item magnetic-field-inspired obstacle avoidance based on the ROS \texttt{field=2} branch
+  \item additive total command
+\end{itemize}
+
+\begin{align}
+a &= a_{\text{goal}} + a_{\text{obs}} \\
+v_{k+1} &= v_k + a_k \Delta t \\
+p_{k+1} &= p_k + v_{k+1}\Delta t
+\end{align}
+
+\subsection*{Goal Relaxation Implemented}
+
+Let
+\begin{itemize}[leftmargin=*]
+  \item $p \in \mathbb{R}^2$ be robot position
+  \item $v \in \mathbb{R}^2$ be robot velocity
+  \item $g \in \mathbb{R}^2$ be goal position
+  \item $r_g = g - p$ be the goal vector
+  \item $r_o$ be the closest obstacle vector
+  \item $d_g = \lVert r_g \rVert$
+  \item $d_o = \lVert r_o \rVert$
+\end{itemize}
+
+The relaxation scale used in the cleanroom implementation is
+
+\begin{equation}
+k_{\text{relax}}
+=
+\left(1 - e^{-d_o/1.5}\right)
+\cdot
+w_{\angle}
+\cdot
+w_{\text{prog}}
+\cdot
+w_{\text{exit}}
+\end{equation}
+
+where
+
+\begin{equation}
+w_{\angle}
+=
+1 - \cos \theta
+=
+1 - \frac{r_g^\top r_o}{\lVert r_g \rVert \lVert r_o \rVert}
+\end{equation}
+
+\begin{equation}
+w_{\text{prog}}
+=
+\begin{cases}
+1, & d_g \le d_{g,0} \\
+\exp\left(-\dfrac{d_g - d_{g,0}}{0.1}\right), & d_g > d_{g,0}
+\end{cases}
+\end{equation}
+
+and
+
+\begin{equation}
+w_{\text{exit}}
+=
+\exp\left(-\dfrac{d_g - d_{g,\min}}{0.1}\right)
+\end{equation}
+
+with:
+
+\begin{itemize}[leftmargin=*]
+  \item $d_{g,0}$: initial distance to the goal
+  \item $d_{g,\min}$: smallest distance to the goal reached so far
+\end{itemize}
+
+This follows the structure of the ROS code around the \texttt{goal\_relax == 1} block.
+
+\subsection*{Goal Controller Implemented}
+
+For the far field, the current cleanroom implementation uses a simplified
+speed-and-turn controller inspired by the ROS geometric block:
+
+\begin{equation}
+a_{\text{goal}} = a_{\text{attr}} + a_{\text{turn}}
+\end{equation}
+
+\begin{equation}
+a_{\text{attr}}
+=
+-\left(k_p\,k_{\text{relax}}\right)
+\left(\lVert v \rVert - v_{\max}\right)\hat{s}
+\end{equation}
+
+where $\hat{s}$ is:
+
+\begin{itemize}[leftmargin=*]
+  \item the normalized velocity direction if $\lVert v \rVert > 0$
+  \item otherwise the normalized goal direction
+\end{itemize}
+
+The turning term is
+
+\begin{equation}
+a_{\text{turn}}
+=
+k_{\omega}\,k_{\text{relax}}\,\lVert v \rVert\,\hat{n}\,(\hat{n}^\top \hat{g})
+\end{equation}
+
+where:
+
+\begin{itemize}[leftmargin=*]
+  \item $\hat{g} = r_g / \lVert r_g \rVert$
+  \item $\hat{n}$ is the left-perpendicular of the current heading
+\end{itemize}
+
+Near the goal, the controller switches to a PD-like attractive form:
+
+\begin{equation}
+a_{\text{goal}}
+=
+k_{p,\text{goal}} r_g - k_d v
+\end{equation}
+
+\subsection*{Magnetic-Field-Inspired Obstacle Term Implemented}
+
+The cleanroom port uses the \texttt{field == 2} structure from the old code.
+
+Let
+\begin{itemize}[leftmargin=*]
+  \item $r_o$ be the closest vector from robot to obstacle surface
+  \item $d = \lVert r_o \rVert$
+  \item $\hat{l}_a = v / \lVert v \rVert$ be the normalized robot motion direction
+  \item $r_{\text{from obs}} = -r_o$
+  \item $\hat{r} = r_{\text{from obs}} / \lVert r_{\text{from obs}} \rVert$
+\end{itemize}
+
+The obstacle current direction is the tangential projection of the robot motion:
+
+\begin{equation}
+\hat{t}
+=
+\hat{l}_a - (\hat{l}_a^\top \hat{r})\hat{r}
+\end{equation}
+
+If this becomes degenerate, the implementation falls back to a perpendicular
+direction.
+
+The 2D magnetic field surrogate is modeled as
+
+\begin{equation}
+B \propto \frac{\lVert v \rVert}{d}\,\hat{t}_{\perp}
+\end{equation}
+
+and the magnetic avoidance term is
+
+\begin{equation}
+F_{\text{mag}}
+=
+k_m \hat{l}_{a,\perp}(\hat{l}_{a,\perp}^\top B)
+\end{equation}
+
+This is a 2D analogue of the nested cross-product structure in the ROS code:
+
+\begin{align}
+B &= [\hat{t}]_{\times} v / d \\
+F &= k_m [\hat{l}_a]_{\times} B
+\end{align}
+
+\subsection*{Added Repulsive Correction Implemented}
+
+The cleanroom implementation also keeps the old additional repulsive term near
+the obstacle:
+
+\begin{equation}
+F_{\text{rep}}
+=
+-k_r \left(\frac{1}{d} - \frac{1}{d_b}\right)\frac{r_o}{d}
+\quad \text{for } d \le d_b
+\end{equation}
+
+Then it is projected to remove the component along the motion direction:
+
+\begin{equation}
+F_{\text{rep}}^{\perp}
+=
+F_{\text{rep}} - (F_{\text{rep}}^\top \hat{l}_a)\hat{l}_a
+\end{equation}
+
+The final obstacle term is:
+
+\begin{equation}
+a_{\text{obs}} = F_{\text{mag}} + F_{\text{rep}}^{\perp}
+\end{equation}
+
+\subsection*{Major Simplifications Relative To The Old ROS Code}
+
+These are intentional and important:
+
+\begin{enumerate}[leftmargin=*]
+  \item The current reference is strictly 2D. The ROS code contains both 2D and 3D branches.
+  \item Obstacles are currently circles. The ROS stack computes obstacle geometry from point clouds, polygonal segments, and local obstacle surfaces.
+  \item The far-field goal controller is structurally inspired by the ROS code, but it is not yet a line-by-line reproduction of the SO(3)-style geometric block.
+  \item The magnetic term is mathematically faithful in structure, but the current implementation uses a compact 2D analogue rather than a direct symbolic port of the original 3D cross-product expressions.
+  \item The cleanroom model removes all ROS-specific concerns: TF, publishers/subscribers, launch files, point-cloud nodes, timestamps, and platform adapters.
+\end{enumerate}
+
+\subsection*{Why This Change Was Made}
+
+The goal of this first cleanroom step is verification by isolation:
+
+\begin{itemize}[leftmargin=*]
+  \item keep the algorithm small enough to reason about
+  \item remove ROS coupling
+  \item make rollout behavior inspectable with CSV and plot outputs
+  \item establish a stable place for future refactors and comparisons
+\end{itemize}
+
+\subsection*{Required Follow-Up}
+
+Future major changes should update this file, especially if they modify:
+
+\begin{itemize}[leftmargin=*]
+  \item the exact goal-relaxation gain
+  \item the magnetic obstacle formula
+  \item the near-goal switching logic
+  \item the state update model
+  \item the obstacle abstraction
+  \item the benchmark scenario assumptions
+\end{itemize}
+
+\end{document}
