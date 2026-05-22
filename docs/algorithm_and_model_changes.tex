@@ -757,4 +757,173 @@ Time-to-goal is defined as the first step index where:
 
 If the goal region is never reached, the value is reported as $\infty$.
 
+\section*{Entry 2026-05-22: Polygonal Obstacles With Local Sensing}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Added explicit polygon obstacle support
+  \item Kept the same local-sensing and closest-point averaging pipeline
+  \item Converted the default benchmark environments to polygonal convex and non-convex obstacles
+\end{itemize}
+
+\textbf{Polygon Obstacle Model}
+
+A polygon obstacle is represented by an ordered list of boundary vertices
+
+\begin{equation}
+\mathcal{P} = \{ v_1, v_2, \dots, v_N \}
+\end{equation}
+
+with edges formed by consecutive vertex pairs. For a robot position $p$, the
+closest-point vector is computed by projecting onto each boundary segment and
+selecting the shortest resulting vector.
+
+\begin{equation}
+r_o = \arg\min_{r_i \in \mathcal{E}} \lVert r_i \rVert
+\end{equation}
+
+where $\mathcal{E}$ is the set of candidate vectors to all polygon edges.
+
+\textbf{Local Sensing on Polygon Boundaries}
+
+Instead of using only a single exact closest point, the polygon model generates
+multiple local samples along each edge around the nearest visible region. These
+sampled boundary vectors are passed into the same observation model already used
+for circular obstacles:
+
+\begin{itemize}[leftmargin=*]
+  \item find the minimum sensed distance
+  \item gather all vectors within the averaging band $\delta_r$
+  \item compute the averaged closest-point surrogate
+  \item use the averaged vector when it is shorter than the single closest vector
+\end{itemize}
+
+This keeps the paper-style local sensing and closest-point averaging intact
+while making convex and non-convex geometry easier to define.
+
+\textbf{Why This Matters}
+
+Polygonal obstacles let us represent:
+
+\begin{itemize}[leftmargin=*]
+  \item single convex obstacles such as boxes or rotated quadrilaterals
+  \item clustered convex environments
+  \item explicitly non-convex obstacles such as U-shaped boundaries
+\end{itemize}
+
+without approximating every case by a large collection of circles.
+
+\section*{Entry 2026-05-22: Signed Clearance Evaluation and Head-On Boundary Fix}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Replaced unsigned polygon distance checks with signed obstacle clearance
+  \item Added explicit safety-violation reporting in addition to hard collision reporting
+  \item Changed the polygon boundary-following and repulsion terms so a head-on wall encounter no longer degenerates to zero avoidance command
+\end{itemize}
+
+\textbf{Signed Clearance}
+
+For evaluation we now distinguish between:
+
+\begin{itemize}[leftmargin=*]
+  \item \emph{distance to the sensed boundary} used by the field law
+  \item \emph{signed clearance} used by the evaluator
+\end{itemize}
+
+For circles,
+
+\begin{equation}
+c(p) = \lVert p - p_c \rVert - r
+\end{equation}
+
+For polygons, the evaluator computes the minimum Euclidean distance from the
+robot position $p$ to any boundary edge and assigns a negative sign if $p$ lies
+inside the polygon:
+
+\begin{equation}
+c(p) =
+\begin{cases}
+- \min\limits_{e \in \partial \mathcal{P}} d(p, e), & p \in \mathcal{P} \\
+\min\limits_{e \in \partial \mathcal{P}} d(p, e), & p \notin \mathcal{P}
+\end{cases}
+\end{equation}
+
+This means:
+
+\begin{itemize}[leftmargin=*]
+  \item $c(p) \le 0$ indicates collision / penetration
+  \item $0 < c(p) \le c_{\text{safety}}$ indicates an unsafe low-clearance path
+\end{itemize}
+
+\textbf{Updated Success Accounting}
+
+The benchmark now reports two success-style quantities:
+
+\begin{equation}
+\text{goal\_reached\_once} =
+\begin{cases}
+1, & \exists k \text{ such that } \lVert p_k - p_g \rVert \le r_{\text{success}} \text{ and } c_{\min} > c_{\text{safety}} \\
+0, & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\begin{equation}
+\text{success} =
+\begin{cases}
+1, & \lVert p_f - p_g \rVert \le r_{\text{success}} \text{ and } c_{\min} > c_{\text{safety}} \\
+0, & \text{otherwise}
+\end{cases}
+\end{equation}
+
+The first quantity captures whether the trajectory ever reached the goal region,
+while the second remains the stricter final-state metric.
+
+\textbf{Why The Old Polygon Case Failed}
+
+The earlier 2D boundary-following and repulsion approximation had a degeneracy
+for a head-on encounter with a vertical wall:
+
+\begin{itemize}[leftmargin=*]
+  \item the tangential term collapsed to zero because the projected field and the projected motion-perpendicular direction became orthogonal
+  \item the repulsive term collapsed to zero because the full normal repulsion was projected away along the current motion direction
+\end{itemize}
+
+That is why parameter sweeps alone could not fix the U-shaped polygon case.
+
+\textbf{Updated Field Form}
+
+To remove that degeneracy, the boundary-following term now directly uses the
+local tangent estimate:
+
+\begin{equation}
+a_b = \sigma_b \, c_{\text{field}} \, v_{\text{guide}} \, \frac{\hat{t}}{d}
+\end{equation}
+
+where
+
+\begin{equation}
+v_{\text{guide}} = \max(\lVert v \rVert, 0.5\,v_{\max})
+\end{equation}
+
+and $\hat{t}$ is the normalized local tangent estimate (or a perpendicular
+fallback when the projected tangent becomes degenerate).
+
+The collision-avoidance term now keeps its full normal component:
+
+\begin{equation}
+a_a =
+- \sigma_a \, c_{\perp}
+\left(
+\frac{1}{d} - \frac{1}{r_{la}}
+\right)
+\frac{r_o}{d}
+\end{equation}
+
+This change is less ``projected'' than the previous 2D approximation, but it is
+much more appropriate for polygonal wall encounters because it preserves a real
+push-away component.
+
 \end{document}

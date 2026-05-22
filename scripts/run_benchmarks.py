@@ -8,6 +8,7 @@ import sys
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as PolygonPatch
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,7 +18,9 @@ if str(SRC) not in sys.path:
 
 from mfinav import (
     ArtificialPotentialFieldNavigator,
+    CircleObstacle,
     DoubleIntegratorState,
+    PolygonObstacle,
     ReferenceNavigator,
     SimulationConfig,
     compute_metrics,
@@ -39,10 +42,18 @@ def _plot_scenario(ax: plt.Axes, scenario, histories: dict[str, list[dict[str, f
         ax.scatter(xs[-1], ys[-1], color=colors[name], s=55, marker="x")
 
     for idx, obstacle in enumerate(scenario.obstacles.obstacles):
-        patch = plt.Circle(tuple(obstacle.center), obstacle.radius, color="#d62728", alpha=0.18)
+        if isinstance(obstacle, CircleObstacle):
+            patch = plt.Circle(tuple(obstacle.center), obstacle.radius, color="#d62728", alpha=0.18)
+            anchor = tuple(obstacle.center)
+        elif isinstance(obstacle, PolygonObstacle):
+            patch = PolygonPatch(obstacle.vertices, closed=True, color="#d62728", alpha=0.18)
+            centroid = np.mean(obstacle.vertices, axis=0)
+            anchor = (float(centroid[0]), float(centroid[1]))
+        else:
+            continue
         ax.add_patch(patch)
         if idx == 0:
-            ax.annotate("obstacles", tuple(obstacle.center), textcoords="offset points", xytext=(6, 6))
+            ax.annotate("obstacles", anchor, textcoords="offset points", xytext=(6, 6))
 
     ax.scatter(scenario.start[0], scenario.start[1], color="#2ca02c", s=70, marker="o", label="start")
     ax.scatter(scenario.goal[0], scenario.goal[1], color="#111111", s=90, marker="*", label="goal")
@@ -90,12 +101,14 @@ def main() -> None:
                     "scenario": scenario.name,
                     "method": method_name,
                     "success": metrics["success"],
+                    "goal_reached_once": metrics["goal_reached_once"],
                     "steps": metrics["steps"],
                     "path_length": metrics["path_length"],
                     "final_goal_distance": metrics["final_goal_distance"],
                     "min_clearance": metrics["min_clearance"],
                     "mean_speed": metrics["mean_speed"],
                     "collision": metrics["collision"],
+                    "safety_violation": metrics["safety_violation"],
                     "time_to_goal_steps": metrics["time_to_goal_steps"],
                     "path_efficiency": metrics["path_efficiency"],
                 }
@@ -116,12 +129,14 @@ def main() -> None:
                 "scenario",
                 "method",
                 "success",
+                "goal_reached_once",
                 "steps",
                 "path_length",
                 "final_goal_distance",
                 "min_clearance",
                 "mean_speed",
                 "collision",
+                "safety_violation",
                 "time_to_goal_steps",
                 "path_efficiency",
             ],
@@ -133,7 +148,9 @@ def main() -> None:
         print(
             f"{row['scenario']} {row['method']}: "
             f"success={int(row['success'])} "
+            f"goal_reached_once={int(row['goal_reached_once'])} "
             f"collision={int(row['collision'])} "
+            f"safety_violation={int(row['safety_violation'])} "
             f"final_goal_distance={row['final_goal_distance']:.3f} "
             f"min_clearance={row['min_clearance']:.3f} "
             f"path_length={row['path_length']:.3f} "

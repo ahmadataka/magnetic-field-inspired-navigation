@@ -27,6 +27,16 @@ def _perp_left(vec: np.ndarray) -> np.ndarray:
     return np.array([-vec[1], vec[0]], dtype=float)
 
 
+def _closest_point_on_segment(point: np.ndarray, start: np.ndarray, end: np.ndarray) -> tuple[np.ndarray, float]:
+    segment = end - start
+    denom = float(np.dot(segment, segment))
+    if denom < EPS:
+        return start.copy(), 0.0
+    t = float(np.dot(point - start, segment) / denom)
+    t_clamped = max(0.0, min(1.0, t))
+    return start + t_clamped * segment, t_clamped
+
+
 @dataclass
 class CircleObstacle:
     center: np.ndarray
@@ -52,15 +62,98 @@ class CircleObstacle:
             samples.append(surface_point - position)
         return samples
 
+    def clearance(self, position: np.ndarray) -> float:
+        return _norm(position - self.center) - self.radius
+
+
+@dataclass
+class PolygonObstacle:
+    vertices: np.ndarray
+
+    def __post_init__(self) -> None:
+        self.vertices = np.asarray(self.vertices, dtype=float)
+        if self.vertices.ndim != 2 or self.vertices.shape[1] != 2 or len(self.vertices) < 3:
+            raise ValueError("PolygonObstacle requires an array of shape (N, 2) with N >= 3.")
+
+    def _edges(self) -> list[tuple[np.ndarray, np.ndarray]]:
+        return [
+            (self.vertices[i], self.vertices[(i + 1) % len(self.vertices)])
+            for i in range(len(self.vertices))
+        ]
+
+    def closest_vector(self, position: np.ndarray) -> np.ndarray:
+        best_vector: np.ndarray | None = None
+        best_distance = math.inf
+        for start, end in self._edges():
+            point, _ = _closest_point_on_segment(position, start, end)
+            vector = point - position
+            distance = _norm(vector)
+            if distance < best_distance:
+                best_vector = vector
+                best_distance = distance
+        if best_vector is None:
+            return np.array([1e6, 0.0], dtype=float)
+        return best_vector
+
+    def sensed_vectors(self, position: np.ndarray, num_samples: int, angular_window: float) -> list[np.ndarray]:
+        samples: list[np.ndarray] = []
+        window_fraction = max(0.05, min(0.45, angular_window / math.pi))
+        per_edge = max(3, num_samples // len(self.vertices))
+        for start, end in self._edges():
+            _, t_clamped = _closest_point_on_segment(position, start, end)
+            if per_edge <= 1:
+                t_values = [t_clamped]
+            else:
+                t_min = max(0.0, t_clamped - window_fraction)
+                t_max = min(1.0, t_clamped + window_fraction)
+                t_values = np.linspace(t_min, t_max, per_edge)
+            edge = end - start
+            for t_value in t_values:
+                boundary_point = start + t_value * edge
+                samples.append(boundary_point - position)
+        return samples
+
+    def _contains_point(self, position: np.ndarray) -> bool:
+        x = float(position[0])
+        y = float(position[1])
+        inside = False
+        for start, end in self._edges():
+            x1, y1 = float(start[0]), float(start[1])
+            x2, y2 = float(end[0]), float(end[1])
+
+            if abs(y2 - y1) < EPS:
+                continue
+
+            intersects = ((y1 > y) != (y2 > y))
+            if not intersects:
+                continue
+
+            x_cross = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+            if x_cross >= x:
+                inside = not inside
+        return inside
+
+    def clearance(self, position: np.ndarray) -> float:
+        min_distance = math.inf
+        for start, end in self._edges():
+            point, _ = _closest_point_on_segment(position, start, end)
+            min_distance = min(min_distance, _norm(point - position))
+        if self._contains_point(position):
+            return -min_distance
+        return min_distance
+
 
 class Obstacle(Protocol):
     def closest_vector(self, position: np.ndarray) -> np.ndarray:
         ...
 
+    def clearance(self, position: np.ndarray) -> float:
+        ...
+
 
 @dataclass
 class ObstacleCollection:
-    obstacles: list[CircleObstacle]
+    obstacles: list[Obstacle]
 
     def closest_vector(self, position: np.ndarray) -> np.ndarray:
         if not self.obstacles:
@@ -81,6 +174,11 @@ class ObstacleCollection:
             vectors.extend(obstacle.sensed_vectors(position, num_samples, angular_window))
         return vectors
 
+    def clearance(self, position: np.ndarray) -> float:
+        if not self.obstacles:
+            return math.inf
+        return min(obstacle.clearance(position) for obstacle in self.obstacles)
+
 
 @dataclass
 class DoubleIntegratorState:
@@ -95,6 +193,7 @@ class LocalSensingObservation:
     sensed_vectors: list[np.ndarray]
     averaged_obstacle_vector: np.ndarray
     used_obstacle_vector: np.ndarray
+    signed_clearance: float
 
 
 @dataclass
@@ -120,6 +219,7 @@ class SimulationConfig:
     use_legacy_goal_relaxation: bool = False
     max_acceleration: float = 4.0
     max_speed_norm: float = 2.0
+    safety_clearance: float = 0.05
 
 
 class GoalRelaxationController:
@@ -223,6 +323,7 @@ class LocalSensingModel:
             sensed_vectors=sensed_vectors,
             averaged_obstacle_vector=averaged_vector,
             used_obstacle_vector=used_vector,
+            signed_clearance=obstacle.clearance(state.position),
         )
 
 
@@ -237,8 +338,6 @@ class BoundaryFollowingField:
 
         speed = _norm(state.velocity)
         agent_cur = _unit(state.velocity) if speed > EPS else np.zeros(2, dtype=float)
-        if _norm(agent_cur) < EPS:
-            return np.zeros(2, dtype=float)
 
         dist_to_obs = observation.used_obstacle_vector
         dist_from_obs = -dist_to_obs
@@ -254,9 +353,8 @@ class BoundaryFollowingField:
             obs_cur = obs_cur / obs_cur_mag
 
         sigma_b = max(0.0, min(1.0, (self.config.r_l - distance) / max(self.config.r_l - self.config.r_la, EPS)))
-        b_field = _perp_left(obs_cur) * speed / max(distance, EPS)
-        agent_perp = _perp_left(agent_cur)
-        return sigma_b * self.config.c_field * agent_perp * float(np.dot(agent_perp, b_field))
+        guidance_speed = max(speed, 0.5 * self.config.speed_limit)
+        return sigma_b * self.config.c_field * guidance_speed * obs_cur / max(distance, EPS)
 
 
 class CollisionAvoidanceField:
@@ -269,15 +367,12 @@ class CollisionAvoidanceField:
             return np.zeros(2, dtype=float)
 
         speed = _norm(state.velocity)
-        agent_cur = _unit(state.velocity) if speed > EPS else np.zeros(2, dtype=float)
         dist_to_obs = observation.used_obstacle_vector
 
         sigma_a = max(0.0, min(1.0, (self.config.r_la - distance) / max(self.config.r_la, EPS)))
         repulsion = -sigma_a * self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
             dist_to_obs / max(distance, EPS)
         )
-        if _norm(agent_cur) > EPS:
-            repulsion = repulsion - float(np.dot(repulsion, agent_cur)) * agent_cur
         return repulsion
 
 
@@ -341,9 +436,21 @@ def make_default_scenarios() -> list[BenchmarkScenario]:
             start=np.array([0.0, 0.0], dtype=float),
             goal=np.array([10.0, 1.5], dtype=float),
             obstacles=ObstacleCollection(
-                obstacles=[CircleObstacle(center=np.array([5.0, 0.0], dtype=float), radius=1.0)]
+                obstacles=[
+                    PolygonObstacle(
+                        vertices=np.array(
+                            [
+                                [4.0, -1.0],
+                                [6.0, -1.0],
+                                [6.0, 1.0],
+                                [4.0, 1.0],
+                            ],
+                            dtype=float,
+                        )
+                    )
+                ]
             ),
-            description="Single convex obstacle between start and goal.",
+            description="Single convex rectangular obstacle between start and goal.",
         ),
         BenchmarkScenario(
             name="convex_cluster",
@@ -351,12 +458,42 @@ def make_default_scenarios() -> list[BenchmarkScenario]:
             goal=np.array([11.0, 1.5], dtype=float),
             obstacles=ObstacleCollection(
                 obstacles=[
-                    CircleObstacle(center=np.array([4.0, 0.0], dtype=float), radius=1.0),
-                    CircleObstacle(center=np.array([6.0, 1.2], dtype=float), radius=1.1),
-                    CircleObstacle(center=np.array([7.5, -0.8], dtype=float), radius=0.9),
+                    PolygonObstacle(
+                        vertices=np.array(
+                            [
+                                [3.2, -1.0],
+                                [4.8, -1.0],
+                                [4.8, 0.8],
+                                [3.2, 0.8],
+                            ],
+                            dtype=float,
+                        )
+                    ),
+                    PolygonObstacle(
+                        vertices=np.array(
+                            [
+                                [5.6, 0.4],
+                                [7.0, 0.1],
+                                [7.6, 1.5],
+                                [6.2, 1.8],
+                            ],
+                            dtype=float,
+                        )
+                    ),
+                    PolygonObstacle(
+                        vertices=np.array(
+                            [
+                                [7.1, -1.7],
+                                [8.3, -1.1],
+                                [7.9, 0.0],
+                                [6.8, -0.4],
+                            ],
+                            dtype=float,
+                        )
+                    ),
                 ]
             ),
-            description="Several separated convex obstacles requiring repeated boundary following.",
+            description="Several separated convex polygonal obstacles requiring repeated boundary following.",
         ),
         BenchmarkScenario(
             name="nonconvex_u_shape",
@@ -364,15 +501,24 @@ def make_default_scenarios() -> list[BenchmarkScenario]:
             goal=np.array([10.5, 0.0], dtype=float),
             obstacles=ObstacleCollection(
                 obstacles=[
-                    CircleObstacle(center=np.array([4.5, -2.0], dtype=float), radius=0.9),
-                    CircleObstacle(center=np.array([4.5, -0.7], dtype=float), radius=0.9),
-                    CircleObstacle(center=np.array([4.5, 0.7], dtype=float), radius=0.9),
-                    CircleObstacle(center=np.array([4.5, 2.0], dtype=float), radius=0.9),
-                    CircleObstacle(center=np.array([6.0, -2.0], dtype=float), radius=0.9),
-                    CircleObstacle(center=np.array([7.5, -2.0], dtype=float), radius=0.9),
+                    PolygonObstacle(
+                        vertices=np.array(
+                            [
+                                [4.0, -2.5],
+                                [8.0, -2.5],
+                                [8.0, -1.2],
+                                [5.4, -1.2],
+                                [5.4, 1.2],
+                                [8.0, 1.2],
+                                [8.0, 2.5],
+                                [4.0, 2.5],
+                            ],
+                            dtype=float,
+                        )
+                    )
                 ]
             ),
-            description="Non-convex U-shaped obstacle approximation with a top opening.",
+            description="Non-convex U-shaped polygon obstacle with a right-facing cavity.",
         ),
     ]
 
@@ -384,12 +530,14 @@ def compute_metrics(history: list[dict[str, float]], goal: np.ndarray, success_r
 
     final = history[-1]
     final_goal_distance = final["goal_distance"]
-    min_clearance = min(row["obstacle_distance"] for row in history)
-    collision = 1.0 if min_clearance <= 1e-3 else 0.0
+    min_clearance = min(row["signed_clearance"] for row in history)
+    collision = 1.0 if min_clearance <= 0.0 else 0.0
+    safety_violation = 1.0 if min_clearance <= 0.05 else 0.0
     speed_samples = [math.hypot(row["vx"], row["vy"]) for row in history]
     mean_speed = float(sum(speed_samples) / max(len(speed_samples), 1))
     first_success_step = next((row["step"] for row in history if row["goal_distance"] <= success_radius), None)
     time_to_goal = float(first_success_step) if first_success_step is not None else math.inf
+    goal_reached_once = 1.0 if first_success_step is not None and safety_violation == 0.0 else 0.0
     realized_displacement = _norm(
         np.array([history[-1]["x"], history[-1]["y"]], dtype=float) - np.array([history[0]["x"], history[0]["y"]], dtype=float)
     )
@@ -400,8 +548,10 @@ def compute_metrics(history: list[dict[str, float]], goal: np.ndarray, success_r
         "final_goal_distance": final_goal_distance,
         "min_clearance": min_clearance,
         "mean_speed": mean_speed,
-        "success": 1.0 if final_goal_distance <= success_radius and collision == 0.0 else 0.0,
+        "success": 1.0 if final_goal_distance <= success_radius and safety_violation == 0.0 else 0.0,
+        "goal_reached_once": goal_reached_once,
         "collision": collision,
+        "safety_violation": safety_violation,
         "time_to_goal_steps": time_to_goal,
         "path_efficiency": path_efficiency,
     }
@@ -442,6 +592,7 @@ def simulate(
                 "ay": float(accel[1]),
                 "goal_distance": _norm(goal_vector),
                 "obstacle_distance": observation.distance_to_obstacle,
+                "signed_clearance": observation.signed_clearance,
             }
         )
 
@@ -451,7 +602,7 @@ def simulate(
 
         if _norm(goal - state.position) < 0.15 and _norm(state.velocity) < 0.1:
             break
-        if observation.distance_to_obstacle <= 1e-3:
+        if observation.signed_clearance <= 0.0:
             break
 
     return history
