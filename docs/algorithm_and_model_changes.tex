@@ -576,11 +576,40 @@ the activation thresholds:
 with default values:
 
 \begin{equation}
-r_l = 3.0, \qquad r_{la} = 2.0
+r_l = 4.0, \qquad r_{la} = 2.5
 \end{equation}
 
 This replaces the previous use of generic proximity constants that did not map
 cleanly to the paper's notation.
+
+The implementation now also applies smooth activation weights:
+
+\begin{equation}
+\sigma_b =
+\mathrm{clip}\left(
+\frac{r_l - d}{r_l - r_{la}}, 0, 1
+\right)
+\end{equation}
+
+\begin{equation}
+\sigma_a =
+\mathrm{clip}\left(
+\frac{r_{la} - d}{r_{la}}, 0, 1
+\right)
+\end{equation}
+
+so that the effective fields are:
+
+\begin{equation}
+a_b \leftarrow \sigma_b a_b
+\end{equation}
+
+\begin{equation}
+a_a \leftarrow \sigma_a a_a
+\end{equation}
+
+This makes the obstacle interaction less abrupt and improved the clustered
+obstacle benchmark in practice.
 
 \textbf{Closest-Point Averaging Extension}
 
@@ -661,5 +690,71 @@ prototype and the 2022 paper:
   \item handling of non-unique closest points
   \item clearer separation between paper-driven behavior and ROS-legacy behavior
 \end{itemize}
+
+\section*{Entry 2026-05-22: Tuned Defaults and Stronger Evaluation Metrics}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Increased the default rollout horizon from 2000 to 6000 steps
+  \item Tuned the default interaction and sensing parameters around the better-performing region
+  \item Added time-to-goal and path-efficiency evaluation metrics
+\end{itemize}
+
+\textbf{Tuned Defaults}
+
+The default parameters are now:
+
+\begin{equation}
+r_l = 4.0, \quad r_{la} = 2.5, \quad c_{\text{field}} = 12.0, \quad c_{\perp} = 35.0
+\end{equation}
+
+and the local sensing surrogate uses:
+
+\begin{equation}
+N_{\text{samples}} = 15, \qquad \theta_{\text{window}} = 1.0, \qquad \delta_r = 0.5
+\end{equation}
+
+These values were selected because they materially improved the convex-cluster
+benchmark while preserving good behavior in the single-convex case.
+
+With the longer rollout horizon, the current MFI implementation is able to
+reach the success region in all three default benchmark scenarios.
+
+\textbf{Additional Evaluation Metrics}
+
+The benchmark harness now reports:
+
+\begin{itemize}[leftmargin=*]
+  \item time-to-goal in simulation steps
+  \item path efficiency
+\end{itemize}
+
+with
+
+\begin{equation}
+\text{path efficiency}
+=
+\frac{\lVert p_f - p_0 \rVert}{L}
+\end{equation}
+
+where:
+
+\begin{itemize}[leftmargin=*]
+  \item $p_0$ is the initial position
+  \item $p_f$ is the realized final position
+  \item $L$ is the realized trajectory length
+\end{itemize}
+
+This definition ensures the metric remains meaningful even when a method does
+not reach the goal.
+
+Time-to-goal is defined as the first step index where:
+
+\begin{equation}
+\lVert p - p_g \rVert \le r_{\text{success}}
+\end{equation}
+
+If the goal region is never reached, the value is reported as $\infty$.
 
 \end{document}

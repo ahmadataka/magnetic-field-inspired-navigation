@@ -96,6 +96,8 @@ def main() -> None:
                     "min_clearance": metrics["min_clearance"],
                     "mean_speed": metrics["mean_speed"],
                     "collision": metrics["collision"],
+                    "time_to_goal_steps": metrics["time_to_goal_steps"],
+                    "path_efficiency": metrics["path_efficiency"],
                 }
             )
 
@@ -120,6 +122,8 @@ def main() -> None:
                 "min_clearance",
                 "mean_speed",
                 "collision",
+                "time_to_goal_steps",
+                "path_efficiency",
             ],
         )
         writer.writeheader()
@@ -132,7 +136,8 @@ def main() -> None:
             f"collision={int(row['collision'])} "
             f"final_goal_distance={row['final_goal_distance']:.3f} "
             f"min_clearance={row['min_clearance']:.3f} "
-            f"path_length={row['path_length']:.3f}"
+            f"path_length={row['path_length']:.3f} "
+            f"time_to_goal_steps={row['time_to_goal_steps'] if row['time_to_goal_steps'] != float('inf') else 'inf'}"
         )
 
     print(f"benchmark_plot={plot_path}")

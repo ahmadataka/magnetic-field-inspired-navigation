@@ -100,7 +100,7 @@ class LocalSensingObservation:
 @dataclass
 class SimulationConfig:
     dt: float = 0.02
-    steps: int = 2000
+    steps: int = 6000
     kp_goal: float = 0.04
     kd_goal: float = 0.5
     kd_speed: float = 0.5
@@ -108,14 +108,14 @@ class SimulationConfig:
     kp_geom: float = 5.0
     speed_limit: float = 1.5
     magni_bound: float = 2.5
-    r_l: float = 3.0
-    r_la: float = 2.0
-    c_field: float = 10.0
-    c_perp: float = 20.0
-    delta_r: float = 0.35
+    r_l: float = 4.0
+    r_la: float = 2.5
+    c_field: float = 12.0
+    c_perp: float = 35.0
+    delta_r: float = 0.5
     epsilon_current: float = 3e-6
-    sensing_samples_per_obstacle: int = 9
-    sensing_angular_window: float = 0.7
+    sensing_samples_per_obstacle: int = 15
+    sensing_angular_window: float = 1.0
     goal_relaxation: bool = True
     use_legacy_goal_relaxation: bool = False
     max_acceleration: float = 4.0
@@ -253,9 +253,10 @@ class BoundaryFollowingField:
         else:
             obs_cur = obs_cur / obs_cur_mag
 
+        sigma_b = max(0.0, min(1.0, (self.config.r_l - distance) / max(self.config.r_l - self.config.r_la, EPS)))
         b_field = _perp_left(obs_cur) * speed / max(distance, EPS)
         agent_perp = _perp_left(agent_cur)
-        return self.config.c_field * agent_perp * float(np.dot(agent_perp, b_field))
+        return sigma_b * self.config.c_field * agent_perp * float(np.dot(agent_perp, b_field))
 
 
 class CollisionAvoidanceField:
@@ -271,7 +272,8 @@ class CollisionAvoidanceField:
         agent_cur = _unit(state.velocity) if speed > EPS else np.zeros(2, dtype=float)
         dist_to_obs = observation.used_obstacle_vector
 
-        repulsion = -self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
+        sigma_a = max(0.0, min(1.0, (self.config.r_la - distance) / max(self.config.r_la, EPS)))
+        repulsion = -sigma_a * self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
             dist_to_obs / max(distance, EPS)
         )
         if _norm(agent_cur) > EPS:
@@ -386,6 +388,12 @@ def compute_metrics(history: list[dict[str, float]], goal: np.ndarray, success_r
     collision = 1.0 if min_clearance <= 1e-3 else 0.0
     speed_samples = [math.hypot(row["vx"], row["vy"]) for row in history]
     mean_speed = float(sum(speed_samples) / max(len(speed_samples), 1))
+    first_success_step = next((row["step"] for row in history if row["goal_distance"] <= success_radius), None)
+    time_to_goal = float(first_success_step) if first_success_step is not None else math.inf
+    realized_displacement = _norm(
+        np.array([history[-1]["x"], history[-1]["y"]], dtype=float) - np.array([history[0]["x"], history[0]["y"]], dtype=float)
+    )
+    path_efficiency = realized_displacement / max(path_length, EPS)
     return {
         "steps": float(len(history)),
         "path_length": path_length,
@@ -394,6 +402,8 @@ def compute_metrics(history: list[dict[str, float]], goal: np.ndarray, success_r
         "mean_speed": mean_speed,
         "success": 1.0 if final_goal_distance <= success_radius and collision == 0.0 else 0.0,
         "collision": collision,
+        "time_to_goal_steps": time_to_goal,
+        "path_efficiency": path_efficiency,
     }
 
 
