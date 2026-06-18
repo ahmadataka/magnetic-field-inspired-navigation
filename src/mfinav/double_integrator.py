@@ -71,6 +71,23 @@ def _closest_point_on_segment(point: np.ndarray, start: np.ndarray, end: np.ndar
     return start + t_clamped * segment, t_clamped
 
 
+def _surface_current_from_observation(
+    velocity_direction: np.ndarray,
+    obstacle_vector: np.ndarray,
+    epsilon_current: float,
+    previous_surface_current: np.ndarray | None,
+) -> tuple[np.ndarray | None, np.ndarray | None]:
+    dist_from_obs_hat = _unit(-obstacle_vector)
+    obs_cur = velocity_direction - float(np.dot(velocity_direction, dist_from_obs_hat)) * dist_from_obs_hat
+    obs_cur_mag = _norm(obs_cur)
+    if obs_cur_mag >= epsilon_current:
+        obs_cur = obs_cur / obs_cur_mag
+        return obs_cur, obs_cur.copy()
+    if previous_surface_current is not None:
+        return previous_surface_current.copy(), previous_surface_current.copy()
+    return None, previous_surface_current
+
+
 @dataclass
 class CircleObstacle:
     center: np.ndarray
@@ -545,6 +562,22 @@ class BoundaryFollowingField:
         agent_cur = _unit(state.velocity) if speed > EPS else np.zeros(2, dtype=float)
 
         dist_to_obs = observation.used_obstacle_vector
+        if self.config.field_mode == "paper":
+            obs_cur, self.previous_surface_current = _surface_current_from_observation(
+                agent_cur,
+                dist_to_obs,
+                self.config.epsilon_current,
+                self.previous_surface_current,
+            )
+            if obs_cur is None:
+                return np.zeros(2, dtype=float)
+
+            if _norm(agent_cur) < EPS:
+                return np.zeros(2, dtype=float)
+
+            magnetic_scalar = _cross2(obs_cur, state.velocity) / max(distance, EPS)
+            return -self.config.c_field * magnetic_scalar * _perp_left(agent_cur)
+
         dist_from_obs = -dist_to_obs
         dist_from_obs_hat = _unit(dist_from_obs)
 
@@ -552,22 +585,6 @@ class BoundaryFollowingField:
         # direction onto the local obstacle tangent.
         obs_cur = agent_cur - float(np.dot(agent_cur, dist_from_obs_hat)) * dist_from_obs_hat
         obs_cur_mag = _norm(obs_cur)
-        if self.config.field_mode == "paper":
-            if obs_cur_mag >= self.config.epsilon_current:
-                obs_cur = obs_cur / obs_cur_mag
-                self.previous_surface_current = obs_cur.copy()
-            elif self.previous_surface_current is not None:
-                obs_cur = self.previous_surface_current.copy()
-            else:
-                return np.zeros(2, dtype=float)
-
-            velocity_3 = _embed_2d(state.velocity)
-            agent_current_3 = _embed_2d(agent_cur)
-            obs_current_3 = _embed_2d(obs_cur)
-            b_field_3 = _skew3(obs_current_3) @ velocity_3 / max(distance, EPS)
-            force_3 = self.config.c_field * (_skew3(agent_current_3) @ b_field_3)
-            return _project_2d(force_3)
-
         if obs_cur_mag < self.config.epsilon_current:
             obs_cur = _perp_left(dist_from_obs_hat)
         else:
@@ -582,6 +599,7 @@ class BoundaryFollowingField:
 class CollisionAvoidanceField:
     def __init__(self, config: SimulationConfig) -> None:
         self.config = config
+        self.previous_surface_current: np.ndarray | None = None
 
     def command(self, state: DoubleIntegratorState, observation: LocalSensingObservation) -> np.ndarray:
         distance = observation.distance_to_obstacle
@@ -593,12 +611,16 @@ class CollisionAvoidanceField:
         dist_to_obs = observation.used_obstacle_vector
 
         if self.config.field_mode == "paper":
-            repulsion = -self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
-                dist_to_obs / max(distance, EPS)
-            )
-            if _norm(agent_cur) > EPS:
-                repulsion = repulsion - float(np.dot(repulsion, agent_cur)) * agent_cur
-            return repulsion
+            if _norm(agent_cur) < EPS:
+                return np.zeros(2, dtype=float)
+
+            # The ROS field=2 branch and the paper discussion of Fa both point to
+            # a short-range collision term built from the obstacle vector itself,
+            # projected to remain orthogonal to the motion direction.
+            repulsion = -self.config.c_perp * (
+                1.0 / max(distance, EPS) - 1.0 / self.config.r_la
+            ) * (dist_to_obs / max(distance, EPS))
+            return repulsion - float(np.dot(repulsion, agent_cur)) * agent_cur
 
         sigma_a = max(0.0, min(1.0, (self.config.r_la - distance) / max(self.config.r_la, EPS)))
         repulsion = -sigma_a * self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (

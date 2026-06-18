@@ -1,0 +1,334 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{mathtools}
+
+\title{2D Derivation Target for the 2022 Magnetic-Field-Inspired Navigation Paper}
+\author{}
+\date{2026-06-18}
+
+\begin{document}
+\maketitle
+
+\section*{Purpose}
+
+This note fixes a concrete 2D target for the clean Python implementation.
+The 2022 paper is written in a general 3D vector-field form, but the current
+benchmark platform is planar. The goal of this document is to define a precise
+2D reduction target for:
+
+\begin{itemize}[leftmargin=*]
+  \item the robot motion direction \(l_a\),
+  \item the obstacle surface normal \(n_o\),
+  \item the artificial surface current \(l_o\),
+  \item the perpendicular / opposite current \(l_o^\perp\),
+  \item the boundary-following field \(F_b\),
+  \item the collision-avoidance field \(F_a\).
+\end{itemize}
+
+This document is not yet a proof that the current code matches the paper.
+It is the derivation target that the code should match.
+
+\section*{Paper Context}
+
+The 2022 paper states:
+
+\begin{itemize}[leftmargin=*]
+  \item the robot has a local sensor of radius \(r_s\),
+  \item the robot velocity direction is \(l_a\),
+  \item the closest obstacle point is described by vector \(r_o\),
+  \item the obstacle normal is taken opposite to \(r_o\),
+  \item the artificial current \(l_o\) is the projection of \(l_a\) onto the local obstacle surface,
+  \item \(F_b\) is induced by \(l_o\),
+  \item \(F_a\) is induced by \(l_o^\perp\),
+  \item both \(F_b\) and \(F_a\) should be orthogonal to robot motion and therefore not change robot speed.
+\end{itemize}
+
+\section*{2D Setup}
+
+We work in \(\mathbb{R}^2\). Let:
+
+\begin{equation}
+p \in \mathbb{R}^2
+\end{equation}
+
+denote the robot position,
+
+\begin{equation}
+v = \dot{p} \in \mathbb{R}^2
+\end{equation}
+
+denote the robot velocity, and
+
+\begin{equation}
+r_o \in \mathbb{R}^2
+\end{equation}
+
+denote the vector from the robot to the currently selected closest obstacle
+point.
+
+The robot speed is
+
+\begin{equation}
+\lVert v \rVert
+\end{equation}
+
+and the robot motion direction is
+
+\begin{equation}
+l_a =
+\begin{cases}
+\dfrac{v}{\lVert v \rVert}, & \lVert v \rVert > 0 \\
+0, & \lVert v \rVert = 0
+\end{cases}
+\end{equation}
+
+\section*{Local Surface Normal and Tangent}
+
+Following the paper assumption, the obstacle surface normal at the currently
+sensed closest point is taken opposite to \(r_o\):
+
+\begin{equation}
+n_o = -\frac{r_o}{\lVert r_o \rVert}
+\end{equation}
+
+whenever \(\lVert r_o \rVert > 0\).
+
+The orthogonal projector onto the local obstacle tangent line is therefore
+
+\begin{equation}
+P_t = I - n_o n_o^\top
+\end{equation}
+
+\section*{Artificial Surface Current \(l_o\)}
+
+The paper defines \(l_o\) as the projection of the robot motion direction
+\(l_a\) onto the local obstacle surface.
+
+In 2D, the natural reduction is:
+
+\begin{equation}
+\tilde{l}_o = P_t l_a = l_a - (l_a^\top n_o)n_o
+\end{equation}
+
+If \(\lVert \tilde{l}_o \rVert \ge \epsilon\), the unit artificial current is
+
+\begin{equation}
+l_o = \frac{\tilde{l}_o}{\lVert \tilde{l}_o \rVert}
+\end{equation}
+
+If \(\lVert \tilde{l}_o \rVert < \epsilon\), the paper says to use the unit
+vector of the previously proposed current. Therefore the 2D target rule is:
+
+\begin{equation}
+l_o =
+\begin{cases}
+\dfrac{\tilde{l}_o}{\lVert \tilde{l}_o \rVert}, & \lVert \tilde{l}_o \rVert \ge \epsilon \\
+l_{o,\text{prev}}, & \lVert \tilde{l}_o \rVert < \epsilon
+\end{cases}
+\end{equation}
+
+\section*{2D Cross-Product Reduction}
+
+To reduce the paper's 3D cross-product expressions into a planar form, define
+the 90-degree rotation matrix
+
+\begin{equation}
+J =
+\begin{bmatrix}
+0 & -1 \\
+1 & 0
+\end{bmatrix}
+\end{equation}
+
+and define the scalar 2D cross product
+
+\begin{equation}
+a \times_2 b = a_x b_y - a_y b_x
+\end{equation}
+
+for \(a,b \in \mathbb{R}^2\).
+
+If \(a,b \in \mathbb{R}^2\) are embedded into \(\mathbb{R}^3\) with zero
+third component, then:
+
+\begin{equation}
+a \times b = (0,0,a \times_2 b)
+\end{equation}
+
+and
+
+\begin{equation}
+a \times (0,0,\beta) = -\beta J a
+\end{equation}
+
+These identities are the basis of the exact 2D reduction target below.
+
+\section*{2D Target for \(F_b\)}
+
+The paper boundary-following field follows the charged-particle style magnetic
+construction:
+
+\begin{equation}
+B_b = \frac{l_o \times v}{\lVert r_o \rVert}
+\end{equation}
+
+\begin{equation}
+F_b = c \, l_a \times B_b
+\end{equation}
+
+Reducing this to 2D gives the target:
+
+\begin{equation}
+B_b^{(z)} = \frac{l_o \times_2 v}{\lVert r_o \rVert}
+\end{equation}
+
+\begin{equation}
+F_b^{2D} = -c \, B_b^{(z)} \, J l_a
+\end{equation}
+
+or equivalently,
+
+\begin{equation}
+F_b^{2D}
+=
+-c
+\frac{l_o \times_2 v}{\lVert r_o \rVert}
+J l_a
+\end{equation}
+
+\textbf{Important property}
+
+Because \(J l_a\) is orthogonal to \(l_a\),
+
+\begin{equation}
+(F_b^{2D})^\top l_a = 0
+\end{equation}
+
+which is the 2D target expression for the paper statement that \(F_b\) does not
+change robot speed.
+
+\section*{2D Target for \(F_a\)}
+
+After checking the old ROS \texttt{field=2} branch more carefully, the best 2D
+target for the current clean implementation is not a second magnetic
+cross-product law. The stronger implementation evidence is:
+
+\begin{itemize}[leftmargin=*]
+  \item \(F_b\) is the magnetic boundary-following term,
+  \item \(F_a\) is a short-range radial collision term,
+  \item \(F_a\) is projected to remain orthogonal to the motion direction so it
+  does not change speed.
+\end{itemize}
+
+Define the raw short-range repulsion
+
+\begin{equation}
+\tilde{F}_a
+=
+-c_\perp
+\left(
+\frac{1}{\lVert r_o \rVert} - \frac{1}{r_{la}}
+\right)
+\frac{r_o}{\lVert r_o \rVert}
+\end{equation}
+
+for \(\lVert r_o \rVert \le r_{la}\). The working 2D target is then the
+orthogonal projection of this repulsion onto the subspace perpendicular to
+\(l_a\):
+
+\begin{equation}
+F_a^{2D}
+=
+\left(I - l_a l_a^\top \right)\tilde{F}_a
+\end{equation}
+
+or equivalently,
+
+\begin{equation}
+F_a^{2D}
+=
+\tilde{F}_a - \left(\tilde{F}_a^\top l_a\right)l_a
+\end{equation}
+
+\textbf{Important property}
+
+By construction,
+
+\begin{equation}
+(F_a^{2D})^\top l_a = 0
+\end{equation}
+
+which is the 2D target expression for the paper statement that \(F_a\) does not
+change robot speed.
+
+\section*{Thresholded Activation Target}
+
+In implementation, the paper uses:
+
+\begin{itemize}[leftmargin=*]
+  \item \(F_b\) only when \(\lVert r_o \rVert \le r_l\)
+  \item \(F_a\) only when \(\lVert r_o \rVert \le r_{la}\)
+\end{itemize}
+
+So the 2D paper target is:
+
+\begin{equation}
+F_b^{\text{active}} =
+\begin{cases}
+F_b^{2D}, & \lVert r_o \rVert \le r_l \\
+0, & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\begin{equation}
+F_a^{\text{active}} =
+\begin{cases}
+F_a^{2D}, & \lVert r_o \rVert \le r_{la} \\
+0, & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\section*{Local Sensing Target}
+
+The paper assumes:
+
+\begin{itemize}[leftmargin=*]
+  \item only currently visible local sensor points are available
+  \item the closest point is chosen from those readings
+  \item if several close readings fall within threshold \(\delta r\), averaging
+  is used for the special non-unique closest-point case
+\end{itemize}
+
+Therefore the 2D implementation target is:
+
+\begin{enumerate}[leftmargin=*]
+  \item collect only sensor-visible obstacle points within radius \(r_s\),
+  \item select the minimum-distance sensed vector,
+  \item form the averaged vector over readings with distance less than
+  \(d_{\min} + \delta r\),
+  \item use the averaged vector only when the paper Section 4.4 condition is satisfied.
+\end{enumerate}
+
+\section*{What This Means For The Next Implementation Step}
+
+The next implementation step should treat the following as the exact 2D target:
+
+\begin{itemize}[leftmargin=*]
+  \item \(n_o = -r_o/\lVert r_o \rVert\)
+  \item \(l_o = \mathrm{normalize}\!\left((I-n_on_o^\top)l_a\right)\), with the
+  \(\epsilon\)-memory rule
+  \item \(F_b^{2D} = -c \dfrac{l_o \times_2 v}{\lVert r_o \rVert} J l_a\)
+  \item \(F_a^{2D} = \left(I-l_a l_a^\top\right)\tilde{F}_a\), where
+  \(\tilde{F}_a = -c_\perp\left(\dfrac{1}{\lVert r_o \rVert} -
+  \dfrac{1}{r_{la}}\right)\dfrac{r_o}{\lVert r_o \rVert}\)
+\end{itemize}
+
+This target may still need revision after checking more carefully against the
+paper equations. However, it now matches the old ROS implementation evidence
+for the short-range collision term much better than the rejected magnetic
+\(l_o^\perp\)-based target.
+
+\end{document}

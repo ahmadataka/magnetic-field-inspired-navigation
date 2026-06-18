@@ -291,9 +291,9 @@ return sigma_b * self.config.c_field * guidance_speed * obs_cur / max(distance, 
 \hline
 Artificial current as projection of robot motion onto obstacle surface & lines 342--353 & Exact in spirit & This part is structurally aligned with the paper. \\
 \hline
-Magnetic boundary-following field derived from that artificial current & lines 355--357 & Approximate & The paper-mode implementation is now cross-product based and much closer to the ROS/paper construction, but it is still not verified as the exact paper equation. \\
+Magnetic boundary-following field derived from that artificial current & lines 355--357 & Exact relative to the current 2D derivation target & The paper-mode implementation now directly matches the explicit 2D target \(F_b^{2D} = -c \frac{l_o \times_2 v}{\|r_o\|} J l_a\). \\
 \hline
-Property that \(F_b\) does not affect speed & lines 355--357, 599--600 & Approximate / violated by simulation assumptions & The paper-mode field is closer to the intended orthogonal construction, but the simulator still applies acceleration and speed clipping. \\
+Property that \(F_b\) does not affect speed & lines 355--357 & Exact relative to the 2D target field & The paper-mode \(F_b\) is explicitly orthogonal to \(l_a\). Any remaining speed-assumption mismatch now comes from other parts of the simulator or controller, not from the \(F_b\) formula itself. \\
 \hline
 \end{longtable}
 
@@ -307,7 +307,8 @@ surface. Lemma 5 states that \(F_a\) also does not affect speed.
 
 \subsection*{Current code}
 
-Current code uses:
+Current code uses a short-range radial term whose component along the motion
+direction is removed:
 
 \begin{equation}
 F_a^{\text{code}} =
@@ -318,8 +319,9 @@ F_a^{\text{code}} =
 \frac{r_o}{d}
 \end{equation}
 
-In \texttt{field\_mode = "paper"}, the code additionally projects out the
-component along the motion direction if the robot is moving (lines 372--375).
+In \texttt{field\_mode = "paper"}, this is the primary \(F_a\) law. This
+matches the old ROS \texttt{field=2} structure better than the previously tried
+\(l_o^\perp\)-based magnetic 2D target.
 
 \subsection*{Code excerpt}
 
@@ -349,9 +351,9 @@ return repulsion
 \hline
 Repulsive collision-avoidance field for concave cases & lines 364--376 & Exact in purpose & The code clearly contains the intended mechanism. \\
 \hline
-Exact paper field expression for \(F_a\) & lines 372--375 & Approximate & The implementation is now a closer hard-threshold projected repulsive term, but it is still not confirmed as a line-by-line reconstruction of the paper equation. \\
+Exact paper field expression for \(F_a\) & lines 372--375 & Attempted 2D target match, but still not validated & The implementation was updated to the current explicit 2D target, but the resulting benchmark degradation strongly suggests that the present 2D target for \(F_a\) is not yet the correct reduction. \\
 \hline
-Property that \(F_a\) does not affect speed & lines 372--375 & Approximate & The paper-mode projection is explicitly intended to preserve this property, but the full claim is still entangled with our simulator assumptions. \\
+Property that \(F_a\) does not affect speed & lines 372--375 & Intended by construction, but behavior still problematic & The current 2D target keeps \(F_a\) orthogonal to \(l_a\) by construction, but the overall benchmark behavior shows that preserving orthogonality alone is not enough to claim a correct paper reduction. \\
 \hline
 \end{longtable}
 
@@ -598,13 +600,15 @@ The remaining non-exact parts are:
 
 \begin{enumerate}[leftmargin=*]
   \item \textbf{Boundary-following magnetic field \(F_b\)}.
-  The paper-mode implementation is now much closer, but we still have not
-  verified it line by line against the 2022 paper’s exact field equation and
-  3D derivation.
+  The 2D paper-mode implementation now matches the explicit 2D derivation
+  target. The remaining open question is no longer the 2D formula itself, but
+  whether that 2D target is the exact intended reduction of the paper’s 3D
+  field law.
 
   \item \textbf{Collision-avoidance field \(F_a\)}.
-  The paper-mode implementation is now closer and explicitly projected, but it
-  is still not confirmed as the exact paper expression.
+  The implementation has now been matched to the \emph{current} explicit 2D
+  target, but the resulting behaviour degrades strongly. This indicates that
+  the current 2D target for \(F_a\) is itself still likely wrong or incomplete.
 
   \item \textbf{Geometric controller}.
   The current version is a 2D analogue of the ROS-era SO(3)-style steering
@@ -648,9 +652,9 @@ PD goal attraction & Approximate & Much closer now, but still implemented inside
 \hline
 Geometric control path & Approximate & Closer than before, but still a 2D analogue rather than a full verified reconstruction. \\
 \hline
-Boundary-following magnetic field \(F_b\) & Approximate & Current paper mode is much closer, but the exact field law is still not fully verified. \\
+Boundary-following magnetic field \(F_b\) & Exact relative to the 2D target & The current paper mode now matches the explicit 2D derivation target directly. \\
 \hline
-Collision-avoidance field \(F_a\) & Approximate & Closer than before, but still not fully verified equation-by-equation. \\
+Collision-avoidance field \(F_a\) & Closer, but still approximate & The current code now follows the ROS-backed short-range projected repulsion target again; this is much more plausible than the rejected magnetic \(l_o^\perp\) target, but it is still not a fully verified equation-level reconstruction from the paper text alone. \\
 \hline
 Goal relaxation & Approximate & Paper-aligned modes now use a dedicated paper-style GR path, but it is still not a verified equation-level reconstruction of the 2022 paper. \\
 \hline

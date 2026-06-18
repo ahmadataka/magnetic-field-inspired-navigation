@@ -1089,4 +1089,247 @@ remaining discrepancy is no longer just about actuation, goal relaxation, or
 local sensing; it is now more likely tied to the exact controller equations and
 the polygon benchmark abstraction itself.
 
+\section*{Entry 2026-06-18: Explicit 2D Derivation Target}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Added a dedicated 2D derivation target document for the paper equations
+  \item Fixed a concrete target form for \(l_a\), \(n_o\), \(l_o\), \(l_o^\perp\), \(F_b\), and \(F_a\)
+  \item Established the exact 2D target to implement against in the next phase
+\end{itemize}
+
+\textbf{Why This Was Needed}
+
+The 2022 paper is written in a general 3D vector-field form, while the current
+cleanroom benchmark is planar. That left too much room for interpretation in
+the 2D implementation. The new derivation note reduces the paper equations to a
+precise 2D target before further controller refactors are attempted.
+
+\textbf{Document Added}
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{docs/paper\_2d\_derivation\_target.tex}
+\end{itemize}
+
+\textbf{2D Target Highlights}
+
+The derivation note fixes the following working targets:
+
+\begin{equation}
+n_o = -\frac{r_o}{\lVert r_o \rVert}
+\end{equation}
+
+\begin{equation}
+\tilde{l}_o = (I - n_on_o^\top) l_a
+\end{equation}
+
+\begin{equation}
+l_o =
+\begin{cases}
+\dfrac{\tilde{l}_o}{\lVert \tilde{l}_o \rVert}, & \lVert \tilde{l}_o \rVert \ge \epsilon \\
+l_{o,\text{prev}}, & \lVert \tilde{l}_o \rVert < \epsilon
+\end{cases}
+\end{equation}
+
+\begin{equation}
+l_o^\perp = -l_o
+\end{equation}
+
+Using the planar rotation matrix
+
+\begin{equation}
+J =
+\begin{bmatrix}
+0 & -1 \\
+1 & 0
+\end{bmatrix},
+\end{equation}
+
+the working 2D target for the boundary-following field is
+
+\begin{equation}
+F_b^{2D}
+=
+-c
+\frac{l_o \times_2 v}{\lVert r_o \rVert}
+J l_a
+\end{equation}
+
+and the working 2D target for the collision-avoidance field is
+
+\begin{equation}
+F_a^{2D}
+=
+-c_\perp
+\frac{l_o^\perp \times_2 r_o}{\lVert r_o \rVert}
+J l_a
+\end{equation}
+
+\textbf{Caution}
+
+The derivation note is now the implementation target, not yet the final proof
+that the current code exactly matches the paper. In particular, the \(F_a\)
+expression still needs to be checked carefully against the paper equations and
+the ROS implementation.
+
+\section*{Entry 2026-06-18: Step 2 -- \(F_b\) Matched to the Explicit 2D Target}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Replaced the paper-mode boundary-following field implementation with the direct 2D target formula
+  \item Removed the embedded-3D surrogate path for the paper-mode \(F_b\)
+  \item Verified that benchmark behavior remained stable after the change
+\end{itemize}
+
+\textbf{New paper-mode \(F_b\) implementation target}
+
+The paper-mode boundary-following field is now implemented directly as:
+
+\begin{equation}
+F_b^{2D}
+=
+-c
+\frac{l_o \times_2 v}{\lVert r_o \rVert}
+J l_a
+\end{equation}
+
+where:
+
+\begin{equation}
+J =
+\begin{bmatrix}
+0 & -1 \\
+1 & 0
+\end{bmatrix}
+\end{equation}
+
+and \(l_o\) is the obstacle-surface current obtained from the 2D projection
+target defined in \texttt{paper\_2d\_derivation\_target.tex}.
+
+\textbf{Why This Matters}
+
+The earlier implementation used an embedded 3D cross-product calculation that
+was consistent in spirit, but still left ambiguity about whether the code
+matched the exact intended 2D reduction. The new implementation makes the 2D
+magnetic field law explicit and removes that ambiguity for \(F_b\).
+
+\textbf{Observed outcome}
+
+Benchmark behavior remained effectively unchanged after replacing the old
+paper-mode \(F_b\) with the direct 2D target formula. This is a good sign
+because it suggests the derivation target and the previous cross-product-based
+implementation were already closely aligned for \(F_b\).
+
+\section*{Entry 2026-06-18: Step 3 -- \(F_a\) Matched to the Current 2D Target and Failed}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Replaced the paper-mode collision-avoidance field with the direct 2D target form based on \(l_o^\perp\)
+  \item Reused the same paper-style surface-current construction and \(\epsilon\)-memory rule as \(F_b\)
+  \item Observed a strong degradation in benchmark behaviour
+\end{itemize}
+
+\textbf{Applied target}
+
+The paper-mode collision-avoidance field was updated to the current 2D target:
+
+\begin{equation}
+F_a^{2D}
+=
+-c_\perp
+\frac{l_o^\perp \times_2 r_o}{\lVert r_o \rVert}
+J l_a
+\end{equation}
+
+\textbf{Observed outcome}
+
+Unlike Step 2, this replacement did \emph{not} preserve behaviour:
+
+\begin{itemize}[leftmargin=*]
+  \item paper-aligned geometric behaviour became unstable in the convex benchmark
+  \item paper-aligned PD lost success in the clustered convex benchmark under the current safety criterion
+  \item both paper-aligned modes collided again in the non-convex U-shaped benchmark
+\end{itemize}
+
+\textbf{Interpretation}
+
+This is important negative evidence. It strongly suggests that the current 2D
+target for \(F_a\), while structurally paper-shaped, is still not the correct
+2D reduction of the paper's intended field law. In other words:
+
+\begin{itemize}[leftmargin=*]
+  \item matching \(F_a\) to the \emph{current} target was useful,
+  \item but the \emph{target itself} is probably incomplete or incorrect,
+  \item especially regarding the exact scalar function and the role of
+  \(l_o^\perp\) in the paper construction.
+\end{itemize}
+
+\textbf{Consequence}
+
+The next step should not be parameter tuning. The next step should be to revise
+the 2D derivation target for \(F_a\) itself by checking the paper equations and
+the ROS implementation more carefully.
+
+\section*{Entry 2026-06-18: Step 4 -- \(F_a\) Revised Back to a ROS-Backed Short-Range Projected Repulsion}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Rejected the previously tried magnetic \(l_o^\perp\)-based 2D target for \(F_a\)
+  \item Restored the paper-mode collision term to a short-range radial repulsion
+  \item Kept the orthogonal projection onto the subspace perpendicular to the motion direction
+  \item Updated the 2D derivation note so it no longer claims the failed magnetic target is the working \(F_a\) reduction
+\end{itemize}
+
+\textbf{Applied target}
+
+The paper-mode collision-avoidance field is now:
+
+\begin{equation}
+\tilde{F}_a
+=
+-c_\perp
+\left(
+\frac{1}{\lVert r_o \rVert} - \frac{1}{r_{la}}
+\right)
+\frac{r_o}{\lVert r_o \rVert}
+\end{equation}
+
+\begin{equation}
+F_a^{2D} = \left(I-l_a l_a^\top\right)\tilde{F}_a
+\end{equation}
+
+\textbf{Why this change was necessary}
+
+The ROS \texttt{field=2} branch does not support the previously assumed
+\(l_o^\perp\)-magnetic reduction for \(F_a\). The stronger implementation
+evidence is:
+
+\begin{itemize}[leftmargin=*]
+  \item the magnetic cross-product structure already belongs to the boundary-following term,
+  \item the close-range collision term is built from the obstacle vector itself,
+  \item the result is then projected so the final command remains orthogonal to the motion direction.
+\end{itemize}
+
+\textbf{Interpretation}
+
+This makes the clean Python implementation more faithful to the old ROS
+behavior and removes a target that was contradicted by both benchmarks and code
+audit. It does \emph{not} yet prove that the paper's printed \(F_a\) equation
+has been reconstructed exactly, but it is a materially better and better-tested
+target than the failed magnetic alternative.
+
+\textbf{Observed outcome}
+
+After this revision:
+
+\begin{itemize}[leftmargin=*]
+  \item both paper-aligned modes recovered clean success in the convex polygon benchmarks,
+  \item the non-convex U-shaped case returned to collision-free behavior,
+  \item the remaining gap is now goal convergence in the non-convex benchmark, not immediate collision.
+\end{itemize}
+
 \end{document}
