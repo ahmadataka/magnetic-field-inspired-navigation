@@ -1459,4 +1459,52 @@ This is strong evidence that the remaining geometric-mode issue was not mainly
 in \(F_a\), \(F_b\), or goal relaxation, but in the low-authority structure of
 the geometric goal controller near the end of the maneuver.
 
+\section*{Entry 2026-06-18: Paper-PD Goal Gains Retuned for Non-Convex Convergence}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Investigated the remaining paper-PD failure in the U-shaped non-convex benchmark
+  \item Verified that disabling goal relaxation did not resolve the failure
+  \item Performed a targeted paper-PD gain sweep
+  \item Updated the default paper-PD gains to the best-performing safe candidate
+\end{itemize}
+
+\textbf{Observed diagnosis}
+
+The targeted tests showed:
+
+\begin{itemize}[leftmargin=*]
+  \item the paper-PD controller still stalled in the non-convex case even when goal relaxation was disabled,
+  \item therefore goal relaxation was not the main cause,
+  \item some PD gain pairs did succeed, which indicated that the remaining issue was controller tuning rather than a fundamental structural mismatch.
+\end{itemize}
+
+\textbf{Applied change}
+
+The default paper-PD gains were updated from
+\(k_p = 0.04\), \(k_d = 0.5\)
+to
+\(k_p = 0.08\), \(k_d = 0.5\).
+
+The relaxed-speed gain parameter was updated consistently so the paper-style
+configuration remains internally coherent.
+
+\textbf{Observed outcome}
+
+With the updated default paper-PD gains:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{paper\_pd} succeeds in the single-convex polygon benchmark,
+  \item \texttt{paper\_pd} succeeds in the convex-cluster benchmark,
+  \item \texttt{paper\_pd} now also succeeds in the U-shaped non-convex benchmark,
+  \item both paper-style controller variants now succeed across the current polygon benchmark set.
+\end{itemize}
+
+\textbf{Interpretation}
+
+At the current 2D benchmark level, the remaining paper-PD issue was primarily a
+gain-tuning problem, not a goal-relaxation problem. This closes the previously
+open non-convex failure for the paper-style PD branch.
+
 \end{document}

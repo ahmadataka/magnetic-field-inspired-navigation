@@ -341,10 +341,10 @@ class SimulationConfig:
 
 def make_paper_pd_config() -> SimulationConfig:
     return SimulationConfig(
-        kp_goal=0.04,
+        kp_goal=0.08,
         kd_goal=0.5,
         kd_speed=0.5,
-        kp_goal_relaxed=0.04,
+        kp_goal_relaxed=0.08,
         kp_geom=5.0,
         speed_limit=1.5,
         magni_bound=2.5,
