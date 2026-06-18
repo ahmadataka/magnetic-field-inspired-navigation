@@ -926,4 +926,101 @@ This change is less ``projected'' than the previous 2D approximation, but it is
 much more appropriate for polygonal wall encounters because it preserves a real
 push-away component.
 
+\section*{Entry 2026-06-18: Closer Reconstruction of Paper PD, Geometric, \(F_b\), and \(F_a\)}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Added separate paper-style PD and paper-style geometric presets
+  \item Replaced the earlier paper placeholder \(F_b\) with a closer cross-product-based reconstruction
+  \item Replaced the earlier smoothed paper placeholder \(F_a\) with a hard-threshold projected repulsive term
+  \item Added memory of the previously proposed obstacle-surface current for the small-current degeneracy case
+\end{itemize}
+
+\textbf{Paper-style Goal Modes}
+
+The repository now distinguishes:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{paper\_pd}: direct attractive PD goal control
+  \item \texttt{paper\_geometric}: speed regulation plus steering correction
+  \item \texttt{pragmatic}: the cleaner benchmark-oriented hybrid controller used in earlier refactors
+\end{itemize}
+
+For \texttt{paper\_pd}, the implemented goal term is:
+
+\begin{equation}
+u_g = K_P (p_g - p) - K_D \dot{p}
+\end{equation}
+
+For \texttt{paper\_geometric}, the far-field speed regulation remains:
+
+\begin{equation}
+u_{\text{attr}} = K_{P,r} (v_{\max} - \lVert v \rVert)\hat{v}
+\end{equation}
+
+and the steering term is now treated as a 2D analogue of the old SO(3)-based
+rotation controller:
+
+\begin{equation}
+u_{\text{steer}} = \omega \, v_{\perp},
+\qquad
+\omega = K_{\omega}\,\mathrm{angle}(v, p_g-p)
+\end{equation}
+
+\textbf{Paper-style Boundary-Following Field}
+
+The previous ``paper mode'' used a smoothed 2D surrogate. The updated
+implementation is closer to the old ROS magnetic construction and to the paper
+derivation:
+
+\begin{equation}
+l_o = l_a - \left(l_a^\top \hat{r}\right)\hat{r}
+\end{equation}
+
+\begin{equation}
+B = [l_o]_{\times} v / d
+\end{equation}
+
+\begin{equation}
+F_b = c [l_a]_{\times} B
+\end{equation}
+
+The implementation now uses a hard activation at \(d \le r_l\) for paper mode
+instead of the earlier smooth activation weight.
+
+\textbf{Small-current degeneracy handling}
+
+When \(\lVert l_o \rVert\) becomes too small, the implementation now reuses the
+previously proposed normalized obstacle-surface current instead of immediately
+switching to the pragmatic tangent fallback. This follows the paper discussion
+more closely than the earlier heuristic.
+
+\textbf{Paper-style Collision-Avoidance Field}
+
+For paper mode, the implementation now applies:
+
+\begin{equation}
+F_a =
+- c_{\perp}
+\left(
+\frac{1}{d} - \frac{1}{r_{la}}
+\right)
+\frac{r_o}{d}
+\end{equation}
+
+with a projection that removes the component along the instantaneous robot
+motion direction in order to better preserve the paper property that \(F_a\)
+does not change speed.
+
+\textbf{Observed outcome}
+
+These changes made the paper-aligned PD controller much more plausible on the
+simple and clustered convex polygon scenarios. The paper-aligned geometric mode
+also became stable after correcting the steering sign in the 2D analogue.
+
+However, the paper-aligned modes still collide in the non-convex U-shaped
+polygon benchmark under the current local polygon sensing abstraction, so the
+equation-level reconstruction is improved but still not complete.
+
 \end{document}

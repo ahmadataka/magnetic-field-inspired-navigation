@@ -27,6 +27,36 @@ def _perp_left(vec: np.ndarray) -> np.ndarray:
     return np.array([-vec[1], vec[0]], dtype=float)
 
 
+def _signed_angle(from_vec: np.ndarray, to_vec: np.ndarray) -> float:
+    from_hat = _unit(from_vec)
+    to_hat = _unit(to_vec)
+    if _norm(from_hat) < EPS or _norm(to_hat) < EPS:
+        return 0.0
+    return math.atan2(
+        float(from_hat[0] * to_hat[1] - from_hat[1] * to_hat[0]),
+        float(np.dot(from_hat, to_hat)),
+    )
+
+
+def _embed_2d(vec: np.ndarray) -> np.ndarray:
+    return np.array([float(vec[0]), float(vec[1]), 0.0], dtype=float)
+
+
+def _project_2d(vec: np.ndarray) -> np.ndarray:
+    return np.array([float(vec[0]), float(vec[1])], dtype=float)
+
+
+def _skew3(vec: np.ndarray) -> np.ndarray:
+    return np.array(
+        [
+            [0.0, -float(vec[2]), float(vec[1])],
+            [float(vec[2]), 0.0, -float(vec[0])],
+            [-float(vec[1]), float(vec[0]), 0.0],
+        ],
+        dtype=float,
+    )
+
+
 def _closest_point_on_segment(point: np.ndarray, start: np.ndarray, end: np.ndarray) -> tuple[np.ndarray, float]:
     segment = end - start
     denom = float(np.dot(segment, segment))
@@ -220,6 +250,49 @@ class SimulationConfig:
     max_acceleration: float = 4.0
     max_speed_norm: float = 2.0
     safety_clearance: float = 0.05
+    goal_mode: str = "hybrid"
+    field_mode: str = "pragmatic"
+
+
+def make_paper_pd_config() -> SimulationConfig:
+    return SimulationConfig(
+        kp_goal=0.04,
+        kd_goal=0.5,
+        kd_speed=0.5,
+        kp_goal_relaxed=0.04,
+        kp_geom=5.0,
+        speed_limit=1.5,
+        magni_bound=2.5,
+        r_l=3.0,
+        r_la=2.0,
+        c_field=10.0,
+        c_perp=20.0,
+        delta_r=0.5,
+        epsilon_current=3e-6,
+        goal_relaxation=False,
+        use_legacy_goal_relaxation=False,
+        goal_mode="pd",
+        field_mode="paper",
+        max_acceleration=50.0,
+        max_speed_norm=50.0,
+    )
+
+
+def make_paper_geometric_config() -> SimulationConfig:
+    cfg = make_paper_pd_config()
+    cfg.goal_mode = "geometric"
+    return cfg
+
+
+def make_paper_faithful_config() -> SimulationConfig:
+    return make_paper_pd_config()
+
+
+def make_pragmatic_config() -> SimulationConfig:
+    return SimulationConfig(
+        goal_mode="hybrid",
+        field_mode="pragmatic",
+    )
 
 
 class GoalRelaxationController:
@@ -271,6 +344,30 @@ class GoalRelaxationController:
         else:
             kp_scale = 1.0
 
+        if self.config.goal_mode == "pd":
+            return kp_scale * self.config.kp_goal * goal_vector - self.config.kd_goal * state.velocity
+
+        if self.config.goal_mode == "geometric":
+            speed = _norm(state.velocity)
+            if goal_mag > self.config.magni_bound:
+                if speed > EPS:
+                    direction = _unit(state.velocity)
+                else:
+                    direction = _unit(goal_vector)
+
+                speed_error = -(speed - self.config.speed_limit)
+                vel_attr = (self.config.kp_goal_relaxed * kp_scale) * speed_error * direction
+
+                if speed > EPS:
+                    angle_error = _signed_angle(state.velocity, goal_vector)
+                    omega = self.config.kp_geom * kp_scale * angle_error
+                    force_add = omega * _perp_left(state.velocity)
+                else:
+                    force_add = np.zeros(2, dtype=float)
+                return vel_attr + force_add
+
+            return kp_scale * self.config.kp_goal * goal_vector - self.config.kd_speed * state.velocity
+
         if goal_mag > self.config.magni_bound:
             speed = _norm(state.velocity)
             direction = _unit(state.velocity) if speed > EPS else _unit(goal_vector)
@@ -283,7 +380,7 @@ class GoalRelaxationController:
             force_add = self.config.kp_geom * kp_scale * speed * lateral * signed_heading_error
             return vel_attr + force_add
 
-        return self.config.kp_goal * goal_vector - self.config.kd_speed * state.velocity
+        return kp_scale * self.config.kp_goal * goal_vector - self.config.kd_speed * state.velocity
 
 
 class LocalSensingModel:
@@ -330,6 +427,7 @@ class LocalSensingModel:
 class BoundaryFollowingField:
     def __init__(self, config: SimulationConfig) -> None:
         self.config = config
+        self.previous_surface_current: np.ndarray | None = None
 
     def command(self, state: DoubleIntegratorState, observation: LocalSensingObservation) -> np.ndarray:
         distance = observation.distance_to_obstacle
@@ -347,12 +445,29 @@ class BoundaryFollowingField:
         # direction onto the local obstacle tangent.
         obs_cur = agent_cur - float(np.dot(agent_cur, dist_from_obs_hat)) * dist_from_obs_hat
         obs_cur_mag = _norm(obs_cur)
+        if self.config.field_mode == "paper":
+            if obs_cur_mag >= self.config.epsilon_current:
+                obs_cur = obs_cur / obs_cur_mag
+                self.previous_surface_current = obs_cur.copy()
+            elif self.previous_surface_current is not None:
+                obs_cur = self.previous_surface_current.copy()
+            else:
+                return np.zeros(2, dtype=float)
+
+            velocity_3 = _embed_2d(state.velocity)
+            agent_current_3 = _embed_2d(agent_cur)
+            obs_current_3 = _embed_2d(obs_cur)
+            b_field_3 = _skew3(obs_current_3) @ velocity_3 / max(distance, EPS)
+            force_3 = self.config.c_field * (_skew3(agent_current_3) @ b_field_3)
+            return _project_2d(force_3)
+
         if obs_cur_mag < self.config.epsilon_current:
             obs_cur = _perp_left(dist_from_obs_hat)
         else:
             obs_cur = obs_cur / obs_cur_mag
 
         sigma_b = max(0.0, min(1.0, (self.config.r_l - distance) / max(self.config.r_l - self.config.r_la, EPS)))
+
         guidance_speed = max(speed, 0.5 * self.config.speed_limit)
         return sigma_b * self.config.c_field * guidance_speed * obs_cur / max(distance, EPS)
 
@@ -367,12 +482,23 @@ class CollisionAvoidanceField:
             return np.zeros(2, dtype=float)
 
         speed = _norm(state.velocity)
+        agent_cur = _unit(state.velocity) if speed > EPS else np.zeros(2, dtype=float)
         dist_to_obs = observation.used_obstacle_vector
+
+        if self.config.field_mode == "paper":
+            repulsion = -self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
+                dist_to_obs / max(distance, EPS)
+            )
+            if _norm(agent_cur) > EPS:
+                repulsion = repulsion - float(np.dot(repulsion, agent_cur)) * agent_cur
+            return repulsion
 
         sigma_a = max(0.0, min(1.0, (self.config.r_la - distance) / max(self.config.r_la, EPS)))
         repulsion = -sigma_a * self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
             dist_to_obs / max(distance, EPS)
         )
+        if _norm(agent_cur) > EPS:
+            repulsion = repulsion - float(np.dot(repulsion, agent_cur)) * agent_cur
         return repulsion
 
 

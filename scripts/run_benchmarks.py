@@ -22,9 +22,11 @@ from mfinav import (
     DoubleIntegratorState,
     PolygonObstacle,
     ReferenceNavigator,
-    SimulationConfig,
     compute_metrics,
     make_default_scenarios,
+    make_paper_geometric_config,
+    make_paper_pd_config,
+    make_pragmatic_config,
     simulate,
 )
 
@@ -34,7 +36,12 @@ def _initial_state(start: np.ndarray) -> DoubleIntegratorState:
 
 
 def _plot_scenario(ax: plt.Axes, scenario, histories: dict[str, list[dict[str, float]]]) -> None:
-    colors = {"mfi": "#1f77b4", "apf": "#ff7f0e"}
+    colors = {
+        "paper_pd": "#1f77b4",
+        "paper_geometric": "#9467bd",
+        "pragmatic_mfi": "#2ca02c",
+        "apf": "#ff7f0e",
+    }
     for name, history in histories.items():
         xs = [row["x"] for row in history]
         ys = [row["y"] for row in history]
@@ -66,7 +73,9 @@ def _plot_scenario(ax: plt.Axes, scenario, histories: dict[str, list[dict[str, f
 
 def main() -> None:
     scenarios = make_default_scenarios()
-    config = SimulationConfig()
+    paper_pd_config = make_paper_pd_config()
+    paper_geometric_config = make_paper_geometric_config()
+    pragmatic_config = make_pragmatic_config()
     artifacts = ROOT / "artifacts"
     artifacts.mkdir(parents=True, exist_ok=True)
 
@@ -80,18 +89,37 @@ def main() -> None:
             _initial_state(scenario.start),
             scenario.goal,
             scenario.obstacles,
-            config,
-            navigator=ReferenceNavigator(config),
+            paper_pd_config,
+            navigator=ReferenceNavigator(paper_pd_config),
+        )
+        paper_geometric_history = simulate(
+            _initial_state(scenario.start),
+            scenario.goal,
+            scenario.obstacles,
+            paper_geometric_config,
+            navigator=ReferenceNavigator(paper_geometric_config),
+        )
+        pragmatic_history = simulate(
+            _initial_state(scenario.start),
+            scenario.goal,
+            scenario.obstacles,
+            pragmatic_config,
+            navigator=ReferenceNavigator(pragmatic_config),
         )
         apf_history = simulate(
             _initial_state(scenario.start),
             scenario.goal,
             scenario.obstacles,
-            config,
-            navigator=ArtificialPotentialFieldNavigator(config),
+            pragmatic_config,
+            navigator=ArtificialPotentialFieldNavigator(pragmatic_config),
         )
 
-        histories = {"mfi": mfi_history, "apf": apf_history}
+        histories = {
+            "paper_pd": mfi_history,
+            "paper_geometric": paper_geometric_history,
+            "pragmatic_mfi": pragmatic_history,
+            "apf": apf_history,
+        }
         _plot_scenario(ax, scenario, histories)
 
         for method_name, history in histories.items():

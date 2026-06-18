@@ -1,0 +1,640 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  keepspaces=true,
+  keywordstyle=\color{blue!60!black},
+  commentstyle=\color{green!40!black},
+  stringstyle=\color{red!50!black},
+  showstringspaces=false
+}
+
+\title{2022 Paper to Code Mapping\\Magnetic-Field-Inspired Navigation}
+\author{}
+\date{2026-06-18}
+
+\begin{document}
+\maketitle
+
+\section*{Purpose}
+
+This document compares the 2022 paper
+\emph{Magnetic-Field-Inspired Navigation for Robots in Complex and Unknown Environments}
+with the current implementation in
+\texttt{src/mfinav/double\_integrator.py}.
+
+The goal is not to claim equivalence. The goal is to make the current status
+explicit:
+
+\begin{itemize}[leftmargin=*]
+  \item what the paper says,
+  \item where that idea appears in the code,
+  \item whether the implementation is exact, approximate, or missing.
+\end{itemize}
+
+Primary paper source:
+\url{https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2022.834177/full}
+
+\section*{Legend}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Exact}: the current code follows the same structure and intent closely enough to be treated as the same mechanism.
+  \item \textbf{Approximate}: the current code is clearly inspired by the paper but does not yet implement the same equation or assumption literally.
+  \item \textbf{Missing}: the paper concept is not yet represented faithfully in code.
+\end{itemize}
+
+\section*{Reference Code Locations}
+
+\begin{itemize}[leftmargin=*]
+  \item Goal controller: lines 225--286
+  \item Local sensing and closest-point averaging: lines 289--327
+  \item Boundary-following field: lines 330--357
+  \item Collision-avoidance field: lines 360--376
+  \item Combined control law: lines 379--396
+  \item Simulation loop and saturation assumptions: lines 567--608
+\end{itemize}
+
+\section*{High-Level Control Law}
+
+Paper Section 4 states that the obstacle term is split into a
+boundary-following vector field and a collision-avoidance vector field. Paper
+Section 5 states that the point robot is steered by control law (38), with a
+goal term and the obstacle term.
+
+\begin{equation}
+u = F_g + F_o
+\end{equation}
+
+\begin{equation}
+F_o = F_b + F_a
+\end{equation}
+
+\textbf{Current code}
+
+The current code follows exactly that high-level decomposition:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{goal\_cmd} in lines 392--393
+  \item \texttt{boundary\_cmd} in lines 394
+  \item \texttt{collision\_cmd} in line 395
+  \item sum in line 396
+\end{itemize}
+
+\textbf{Status}: \textbf{Exact at architecture level}
+
+\section*{Go-To-Goal Term \(F_g\)}
+
+\subsection*{Paper}
+
+Paper Section 5 says the authors first used PD control from Eq. (39) as the
+goal attraction term. The same section then says geometric control was
+introduced as an alternative because plain PD does not guarantee constant speed.
+
+The PD form described in the paper is the standard point-robot attractive term:
+
+\begin{equation}
+F_g = -K_P (p - p_g) - K_D \dot{p}
+\end{equation}
+
+Equivalently, with \(e = p - p_g\),
+
+\begin{equation}
+F_g = -K_P e - K_D \dot{p}
+\end{equation}
+
+\subsection*{Current code}
+
+The current code supports three goal modes:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{goal\_mode = "pd"} at lines 269--273 and 274--286
+  \item \texttt{goal\_mode = "geometric"} at lines 274--284
+  \item \texttt{goal\_mode = "hybrid"} at lines 274--286
+\end{itemize}
+
+In PD mode, the implemented term is:
+
+\begin{equation}
+u_g = k_{\text{scale}} K_P (p_g - p) - K_D \dot{p}
+\end{equation}
+
+which is equivalent to the paper PD form when \(k_{\text{scale}} = 1\).
+
+In geometric mode, the current code uses:
+
+\begin{equation}
+u_g = -k K_{P,r} (\lVert v \rVert - v_{\max}) \hat{v}
+      + K_{\omega} \lVert v \rVert \hat{n} (\hat{n}^{\top}\hat{g})
+\end{equation}
+
+In hybrid mode, the geometric-like term is used far from the goal and the PD
+term is used near the goal.
+
+\subsection*{Code excerpt}
+
+\begin{lstlisting}[language=Python]
+if self.config.use_legacy_goal_relaxation:
+    kp_scale = self._goal_weight(goal_vector, observation.closest_obstacle_vector)
+else:
+    kp_scale = 1.0
+
+if self.config.goal_mode == "pd":
+    return kp_scale * self.config.kp_goal * goal_vector - self.config.kd_goal * state.velocity
+
+if self.config.goal_mode == "geometric":
+    speed = _norm(state.velocity)
+    if goal_mag > self.config.magni_bound:
+        if speed > EPS:
+            direction = _unit(state.velocity)
+        else:
+            direction = _unit(goal_vector)
+
+        speed_error = -(speed - self.config.speed_limit)
+        vel_attr = (self.config.kp_goal_relaxed * kp_scale) * speed_error * direction
+
+        if speed > EPS:
+            angle_error = _signed_angle(state.velocity, goal_vector)
+            omega = self.config.kp_geom * kp_scale * angle_error
+            force_add = omega * _perp_left(state.velocity)
+        else:
+            force_add = np.zeros(2, dtype=float)
+        return vel_attr + force_add
+
+    return kp_scale * self.config.kp_goal * goal_vector - self.config.kd_speed * state.velocity
+
+return kp_scale * self.config.kp_goal * goal_vector - self.config.kd_speed * state.velocity
+\end{lstlisting}
+
+This is closer to the ROS-era SO(3) geometric steering than the earlier
+simplified lateral heuristic, but it is still a 2D analogue rather than a full
+matrix-logarithm reconstruction.
+
+\subsection*{Comparison}
+
+\begin{longtable}{|p{0.23\linewidth}|p{0.24\linewidth}|p{0.14\linewidth}|p{0.29\linewidth}|}
+\hline
+\textbf{Paper item} & \textbf{Code location} & \textbf{Status} & \textbf{Notes} \\
+\hline
+PD goal term \(F_g\) from Eq. (39) & lines 269--273, 286 & Approximate & Correct sign and structure in PD mode, but optional scaling \(k_{\text{scale}}\) can modify the pure paper form. \\
+\hline
+Geometric control alternative & lines 274--284 & Approximate & Present in spirit, but not verified line-by-line against the geometric controller referenced by the paper. \\
+\hline
+Implementation choice ``PD first, geometric alternative'' & lines 200--223, 269--286 & Approximate & The repo exposes explicit modes, but the default pragmatic path still uses a hybrid controller not stated in the paper. \\
+\hline
+\end{longtable}
+
+\section*{Boundary-Following Field \(F_b\)}
+
+\subsection*{Paper}
+
+Paper Section 4.1 says:
+
+\begin{itemize}[leftmargin=*]
+  \item \(F_b\) is induced by an artificial current on the obstacle surface,
+  \item the artificial current \(l_o\) has the same direction as the
+  projection of the robot motion direction \(l_a\) onto the obstacle surface,
+  \item \(F_b\) is the term responsible for boundary following.
+\end{itemize}
+
+The paper also states in Lemma 1 that \(F_b\) does not affect robot speed.
+
+\subsection*{Current code}
+
+Current code computes:
+
+\begin{equation}
+\hat{l}_a = \frac{v}{\lVert v \rVert}
+\end{equation}
+
+\begin{equation}
+\hat{r} = \frac{-r_o}{\lVert r_o \rVert}
+\end{equation}
+
+\begin{equation}
+l_o \approx \hat{l}_a - (\hat{l}_a^{\top}\hat{r})\hat{r}
+\end{equation}
+
+with a perpendicular fallback when the projection becomes too small
+(lines 342--353).
+
+Two field modes now exist:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{paper mode} at lines 355--357:
+  \begin{equation}
+  F_b^{\text{code}} =
+  \sigma_b c\, l_{a,\perp}\left(l_{a,\perp}^{\top}
+  \left(\frac{\lVert v \rVert}{d} l_{o,\perp}\right)\right)
+  \end{equation}
+  \item \textbf{pragmatic mode} at lines 356--357:
+  \begin{equation}
+  F_b^{\text{code}} =
+  \sigma_b c\, v_{\text{guide}} \frac{\hat{l}_o}{d}
+  \end{equation}
+\end{itemize}
+
+\subsection*{Code excerpt}
+
+\begin{lstlisting}[language=Python]
+dist_to_obs = observation.used_obstacle_vector
+dist_from_obs = -dist_to_obs
+dist_from_obs_hat = _unit(dist_from_obs)
+
+obs_cur = agent_cur - float(np.dot(agent_cur, dist_from_obs_hat)) * dist_from_obs_hat
+obs_cur_mag = _norm(obs_cur)
+if self.config.field_mode == "paper":
+    if obs_cur_mag >= self.config.epsilon_current:
+        obs_cur = obs_cur / obs_cur_mag
+        self.previous_surface_current = obs_cur.copy()
+    elif self.previous_surface_current is not None:
+        obs_cur = self.previous_surface_current.copy()
+    else:
+        return np.zeros(2, dtype=float)
+
+    velocity_3 = _embed_2d(state.velocity)
+    agent_current_3 = _embed_2d(agent_cur)
+    obs_current_3 = _embed_2d(obs_cur)
+    b_field_3 = _skew3(obs_current_3) @ velocity_3 / max(distance, EPS)
+    force_3 = self.config.c_field * (_skew3(agent_current_3) @ b_field_3)
+    return _project_2d(force_3)
+\end{lstlisting}
+
+The pragmatic mode still uses the direct tangent-guidance surrogate:
+
+\begin{lstlisting}[language=Python]
+if obs_cur_mag < self.config.epsilon_current:
+    obs_cur = _perp_left(dist_from_obs_hat)
+else:
+    obs_cur = obs_cur / obs_cur_mag
+
+sigma_b = max(0.0, min(1.0, (self.config.r_l - distance) / max(self.config.r_l - self.config.r_la, EPS)))
+guidance_speed = max(speed, 0.5 * self.config.speed_limit)
+return sigma_b * self.config.c_field * guidance_speed * obs_cur / max(distance, EPS)
+\end{lstlisting}
+
+\subsection*{Comparison}
+
+\begin{longtable}{|p{0.23\linewidth}|p{0.24\linewidth}|p{0.14\linewidth}|p{0.29\linewidth}|}
+\hline
+\textbf{Paper item} & \textbf{Code location} & \textbf{Status} & \textbf{Notes} \\
+\hline
+Artificial current as projection of robot motion onto obstacle surface & lines 342--353 & Exact in spirit & This part is structurally aligned with the paper. \\
+\hline
+Magnetic boundary-following field derived from that artificial current & lines 355--357 & Approximate & The code uses a 2D surrogate that captures the idea but is not yet verified against the exact paper equation. \\
+\hline
+Property that \(F_b\) does not affect speed & lines 355--357, 599--600 & Approximate / violated by simulation assumptions & The paper claims this property analytically, but our simulator also applies acceleration and speed clipping. \\
+\hline
+\end{longtable}
+
+\section*{Collision-Avoidance Field \(F_a\)}
+
+\subsection*{Paper}
+
+Paper Section 4.2 states that \(F_a\) is needed for concave obstacles because
+boundary following alone does not regulate the distance to the obstacle
+surface. Lemma 5 states that \(F_a\) also does not affect speed.
+
+\subsection*{Current code}
+
+Current code uses:
+
+\begin{equation}
+F_a^{\text{code}} =
+-\sigma_a c_{\perp}
+\left(
+\frac{1}{d} - \frac{1}{r_{la}}
+\right)
+\frac{r_o}{d}
+\end{equation}
+
+In \texttt{field\_mode = "paper"}, the code additionally projects out the
+component along the motion direction if the robot is moving (lines 372--375).
+
+\subsection*{Code excerpt}
+
+\begin{lstlisting}[language=Python]
+if self.config.field_mode == "paper":
+    repulsion = -self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
+        dist_to_obs / max(distance, EPS)
+    )
+    if _norm(agent_cur) > EPS:
+        repulsion = repulsion - float(np.dot(repulsion, agent_cur)) * agent_cur
+    return repulsion
+
+sigma_a = max(0.0, min(1.0, (self.config.r_la - distance) / max(self.config.r_la, EPS)))
+repulsion = -sigma_a * self.config.c_perp * (1.0 / max(distance, EPS) - 1.0 / self.config.r_la) * (
+    dist_to_obs / max(distance, EPS)
+)
+if _norm(agent_cur) > EPS:
+    repulsion = repulsion - float(np.dot(repulsion, agent_cur)) * agent_cur
+return repulsion
+\end{lstlisting}
+
+\subsection*{Comparison}
+
+\begin{longtable}{|p{0.23\linewidth}|p{0.24\linewidth}|p{0.14\linewidth}|p{0.29\linewidth}|}
+\hline
+\textbf{Paper item} & \textbf{Code location} & \textbf{Status} & \textbf{Notes} \\
+\hline
+Repulsive collision-avoidance field for concave cases & lines 364--376 & Exact in purpose & The code clearly contains the intended mechanism. \\
+\hline
+Exact paper field expression for \(F_a\) & lines 372--375 & Approximate & The implementation is still a simplified radial repulsion form. \\
+\hline
+Property that \(F_a\) does not affect speed & lines 372--375 & Approximate & The projection in paper mode tries to preserve the paper property, but this is not yet a verified reconstruction. \\
+\hline
+\end{longtable}
+
+\section*{Thresholded Use of \(r_l\) and \(r_{la}\)}
+
+\subsection*{Paper}
+
+Paper Section 5 states:
+
+\begin{itemize}[leftmargin=*]
+  \item \(F_b\) is only used when the closest distance falls below \(r_l\),
+  \item \(F_a\) is only used when the robot gets closer still, below \(r_{la}\).
+\end{itemize}
+
+\subsection*{Current code}
+
+\begin{itemize}[leftmargin=*]
+  \item \(F_b = 0\) if \(d > r_l\) at lines 335--337
+  \item \(F_a = 0\) if \(d > r_{la}\) at lines 365--367
+  \item smooth activation weights \(\sigma_b\) and \(\sigma_a\) are used at
+  lines 355 and 372
+\end{itemize}
+
+\textbf{Status}: \textbf{Approximate}
+
+The threshold logic is correct in spirit. The smooth activation is an additional
+implementation choice that is not stated in the paper excerpt.
+
+\section*{Closest-Point Detection}
+
+\subsection*{Paper}
+
+Paper Section 4.4 says that the original closest-point detection chooses the
+smallest sensed distance from current sensor readings.
+
+\subsection*{Current code}
+
+Current code does exactly that first:
+
+\begin{itemize}[leftmargin=*]
+  \item compute all sensed vectors: lines 294--301
+  \item compute distances: line 302
+  \item choose smallest distance: lines 303--305
+\end{itemize}
+
+\textbf{Status}: \textbf{Exact}
+
+\subsection*{Code excerpt}
+
+\begin{lstlisting}[language=Python]
+if hasattr(obstacle, "sensed_vectors"):
+    sensed_vectors = obstacle.sensed_vectors(
+        state.position,
+        self.config.sensing_samples_per_obstacle,
+        self.config.sensing_angular_window,
+    )
+else:
+    sensed_vectors = [obstacle.closest_vector(state.position)]
+distances = [_norm(vec) for vec in sensed_vectors]
+min_index = int(np.argmin(distances))
+dist_to_obs = sensed_vectors[min_index]
+min_distance = distances[min_index]
+\end{lstlisting}
+
+\section*{Closest-Point Averaging for Non-Unique Closest Points}
+
+\subsection*{Paper}
+
+Paper Section 4.4 states:
+
+\begin{itemize}[leftmargin=*]
+  \item select several sensed distances smaller than threshold \(\delta r\),
+  \item average them,
+  \item for concave/non-unique cases, use the average if it is smaller in
+  magnitude than the single closest sensed position,
+  \item for convex cases, revert to the standard closest point.
+\end{itemize}
+
+\subsection*{Current code}
+
+The current code follows exactly that logic:
+
+\begin{itemize}[leftmargin=*]
+  \item collect all vectors within the \(\delta r\) band: lines 307--309
+  \item average them: line 310
+  \item if the average is shorter, use it: lines 315--318
+  \item otherwise use the single closest vector: lines 317--318
+\end{itemize}
+
+\textbf{Status}: \textbf{Exact in logic}
+
+\subsection*{Code excerpt}
+
+\begin{lstlisting}[language=Python]
+close_vectors = [
+    vec for vec, distance in zip(sensed_vectors, distances) if distance <= min_distance + self.config.delta_r
+]
+averaged_vector = np.mean(np.array(close_vectors, dtype=float), axis=0)
+
+if _norm(averaged_vector) < min_distance:
+    used_vector = averaged_vector
+else:
+    used_vector = dist_to_obs
+\end{lstlisting}
+
+\section*{Goal Relaxation}
+
+\subsection*{Paper}
+
+Paper Section 4.4 says goal relaxation is introduced for large obstacles where
+following the boundary may increase the distance to the goal beyond the initial
+goal distance. The paper description is qualitative in the Frontiers article:
+
+\begin{itemize}[leftmargin=*]
+  \item decrease \(F_g\) when the robot is close to the obstacle and the goal is
+  still occluded,
+  \item increase \(F_g\) when the obstacle no longer blocks the goal.
+\end{itemize}
+
+The paper explicitly points back to earlier work for details.
+
+\subsection*{Current code}
+
+The current implementation contains a legacy goal-relaxation weight:
+
+\begin{equation}
+k_{\text{GR}} =
+\left(1-e^{-d_o/1.5}\right)
+\left(1-\cos\theta\right)
+\exp\left(-\frac{d_g-d_{g,0}}{0.1}\right)
+\exp\left(-\frac{d_g-d_{g,\min}}{0.1}\right)
+\end{equation}
+
+This logic appears in lines 231--256 and is only active when
+\texttt{use\_legacy\_goal\_relaxation = True} (line 269).
+
+\subsection*{Code excerpt}
+
+\begin{lstlisting}[language=Python]
+goal_mag = _norm(goal_vector)
+obs_mag = _norm(obs_vector)
+if goal_mag < EPS or obs_mag >= self.config.r_l or obs_mag < EPS:
+    self.min_distance_to_goal = min(self.min_distance_to_goal, goal_mag)
+    return 1.0
+
+if self.initial_goal_distance is None:
+    self.initial_goal_distance = goal_mag
+self.min_distance_to_goal = min(self.min_distance_to_goal, goal_mag)
+
+cos_angle = float(np.dot(goal_vector, obs_vector) / max(goal_mag * obs_mag, EPS))
+cos_angle = max(-1.0, min(1.0, cos_angle))
+weight = 1.0 - cos_angle
+
+if self.initial_goal_distance is None or goal_mag <= self.initial_goal_distance:
+    new_weight = 1.0
+else:
+    new_weight = math.exp(-(goal_mag - self.initial_goal_distance) / 0.1)
+
+weight_exit = math.exp(-(goal_mag - self.min_distance_to_goal) / 0.1)
+distance_scale = 1.0 - math.exp(-obs_mag / 1.5)
+return distance_scale * weight * new_weight * weight_exit
+\end{lstlisting}
+
+\subsection*{Comparison}
+
+\textbf{Status}: \textbf{Approximate / inherited from earlier ROS work}
+
+This is not a direct equation-level implementation from the 2022 Frontiers
+paper. It is a pragmatic reuse of an earlier goal-relaxation mechanism from the
+legacy codebase.
+
+\section*{Local Sensing Assumption}
+
+\subsection*{Paper}
+
+The paper repeatedly states that only local sensory information is assumed, and
+that no prior map is required.
+
+\subsection*{Current code}
+
+The current code honors that spirit through local obstacle samples, but the
+obstacles themselves are analytic objects:
+
+\begin{itemize}[leftmargin=*]
+  \item circles sample local boundary points: lines 52--63
+  \item polygons sample edge-local points: lines 98--114
+\end{itemize}
+
+\textbf{Status}: \textbf{Approximate}
+
+This is a clean local-sensing simulation abstraction, not the same as the ROS
+range-sensor or point-cloud pipeline used in the paper experiments.
+
+\section*{Dynamics and Actuation Assumptions}
+
+\subsection*{Paper}
+
+The paper explicitly assumes non-saturatable actuators.
+
+\subsection*{Current code}
+
+The current simulator clips both acceleration and speed:
+
+\begin{itemize}[leftmargin=*]
+  \item acceleration clipping: lines 581--582
+  \item speed clipping: lines 599--600
+\end{itemize}
+
+\textbf{Status}: \textbf{Different assumption}
+
+This makes the simulation safer and numerically easier to manage, but it is not
+the same assumption as the paper.
+
+\section*{Point-Robot Parameter Table}
+
+Paper Table 1 gives the following point-robot parameters:
+
+\begin{itemize}[leftmargin=*]
+  \item \(c = 10\)
+  \item \(c_{\perp} = 20\)
+  \item \(K_P = 0.04\)
+  \item \(K_D = 0.5\)
+  \item \(r_l = 3\)
+  \item \(r_{la} = 2\)
+  \item \(\epsilon = 3 \times 10^{-6}\)
+\end{itemize}
+
+The code path intended to mirror these values is:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{make\_paper\_faithful\_config()} at lines 225--243
+\end{itemize}
+
+\textbf{Status}: \textbf{Exact for the numeric table, not yet exact for the full behaviour}
+
+\section*{Overall Assessment}
+
+\begin{longtable}{|p{0.34\linewidth}|p{0.16\linewidth}|p{0.34\linewidth}|}
+\hline
+\textbf{Component} & \textbf{Status} & \textbf{Comment} \\
+\hline
+High-level split \(u = F_g + F_b + F_a\) & Exact & Architecture matches the paper. \\
+\hline
+Closest-point detection & Exact & Single minimum-distance reading is implemented directly. \\
+\hline
+Section 4.4 closest-point averaging & Exact in logic & One of the strongest matches in the current code. \\
+\hline
+PD goal attraction & Approximate & Present, but wrapped in configurable modes and optional GR scaling. \\
+\hline
+Geometric control path & Approximate & Implemented in spirit, not yet verified from the cited controller derivation. \\
+\hline
+Boundary-following magnetic field \(F_b\) & Approximate & Current implementation captures intent, but the exact field law is still not reconstructed. \\
+\hline
+Collision-avoidance field \(F_a\) & Approximate & Same situation as \(F_b\). \\
+\hline
+Goal relaxation & Approximate / inherited & Current GR is inherited from earlier code, not reconstructed from the 2022 paper itself. \\
+\hline
+Local sensing assumption & Approximate & Simulation abstraction is local, but not the same sensing pipeline as the ROS work. \\
+\hline
+Actuation assumptions & Different & Paper assumes non-saturatable actuators; code clips acceleration and speed. \\
+\hline
+\end{longtable}
+
+\section*{Practical Conclusion}
+
+The current implementation is closest to the paper in:
+
+\begin{itemize}[leftmargin=*]
+  \item overall architecture,
+  \item thresholded obstacle-field activation,
+  \item closest-point and closest-point-averaging logic.
+\end{itemize}
+
+The current implementation is farthest from the paper in:
+
+\begin{itemize}[leftmargin=*]
+  \item the exact magnetic-field equations for \(F_b\) and \(F_a\),
+  \item the exact goal-control choice used in each paper experiment,
+  \item the exact sensing and actuation assumptions used in the paper setup.
+\end{itemize}
+
+Therefore, the current repository should still be described as a
+\textbf{paper-inspired clean reimplementation}, not yet a verified reproduction
+of the 2022 point-robot algorithm.
+
+\end{document}
