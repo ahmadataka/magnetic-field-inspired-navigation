@@ -186,11 +186,11 @@ matrix-logarithm reconstruction.
 \hline
 \textbf{Paper item} & \textbf{Code location} & \textbf{Status} & \textbf{Notes} \\
 \hline
-PD goal term \(F_g\) from Eq. (39) & lines 269--273, 286 & Approximate & Correct sign and structure in PD mode, but optional scaling \(k_{\text{scale}}\) can modify the pure paper form. \\
+PD goal term \(F_g\) from Eq. (39) & lines 269--273, 286 & Approximate & The PD structure is now much closer, but the same controller class still supports non-paper modes and optional scaling logic. \\
 \hline
-Geometric control alternative & lines 274--284 & Approximate & Present in spirit, but not verified line-by-line against the geometric controller referenced by the paper. \\
+Geometric control alternative & lines 274--284 & Approximate & The 2D steering law is now closer to the ROS-era formulation, but it is still a 2D analogue rather than a full matrix-logarithm reconstruction. \\
 \hline
-Implementation choice ``PD first, geometric alternative'' & lines 200--223, 269--286 & Approximate & The repo exposes explicit modes, but the default pragmatic path still uses a hybrid controller not stated in the paper. \\
+Implementation choice ``PD first, geometric alternative'' & lines 200--223, 269--286 & Approximate & The repo now exposes explicit paper PD and paper geometric modes, but the pragmatic default is still a hybrid controller not stated in the paper. \\
 \hline
 \end{longtable}
 
@@ -291,9 +291,9 @@ return sigma_b * self.config.c_field * guidance_speed * obs_cur / max(distance, 
 \hline
 Artificial current as projection of robot motion onto obstacle surface & lines 342--353 & Exact in spirit & This part is structurally aligned with the paper. \\
 \hline
-Magnetic boundary-following field derived from that artificial current & lines 355--357 & Approximate & The code uses a 2D surrogate that captures the idea but is not yet verified against the exact paper equation. \\
+Magnetic boundary-following field derived from that artificial current & lines 355--357 & Approximate & The paper-mode implementation is now cross-product based and much closer to the ROS/paper construction, but it is still not verified as the exact paper equation. \\
 \hline
-Property that \(F_b\) does not affect speed & lines 355--357, 599--600 & Approximate / violated by simulation assumptions & The paper claims this property analytically, but our simulator also applies acceleration and speed clipping. \\
+Property that \(F_b\) does not affect speed & lines 355--357, 599--600 & Approximate / violated by simulation assumptions & The paper-mode field is closer to the intended orthogonal construction, but the simulator still applies acceleration and speed clipping. \\
 \hline
 \end{longtable}
 
@@ -349,9 +349,9 @@ return repulsion
 \hline
 Repulsive collision-avoidance field for concave cases & lines 364--376 & Exact in purpose & The code clearly contains the intended mechanism. \\
 \hline
-Exact paper field expression for \(F_a\) & lines 372--375 & Approximate & The implementation is still a simplified radial repulsion form. \\
+Exact paper field expression for \(F_a\) & lines 372--375 & Approximate & The implementation is now a closer hard-threshold projected repulsive term, but it is still not confirmed as a line-by-line reconstruction of the paper equation. \\
 \hline
-Property that \(F_a\) does not affect speed & lines 372--375 & Approximate & The projection in paper mode tries to preserve the paper property, but this is not yet a verified reconstruction. \\
+Property that \(F_a\) does not affect speed & lines 372--375 & Approximate & The paper-mode projection is explicitly intended to preserve this property, but the full claim is still entangled with our simulator assumptions. \\
 \hline
 \end{longtable}
 
@@ -521,7 +521,8 @@ return distance_scale * weight * new_weight * weight_exit
 
 This is not a direct equation-level implementation from the 2022 Frontiers
 paper. It is a pragmatic reuse of an earlier goal-relaxation mechanism from the
-legacy codebase.
+legacy codebase. However, unlike earlier revisions of this clean repository,
+the paper-aligned modes now enable this mechanism instead of bypassing it.
 
 \section*{Local Sensing Assumption}
 
@@ -532,18 +533,22 @@ that no prior map is required.
 
 \subsection*{Current code}
 
-The current code honors that spirit through local obstacle samples, but the
-obstacles themselves are analytic objects:
+The current code honors that spirit through local obstacle samples. In the
+paper-aligned modes, these samples now come from ray-based sensing rather than
+direct boundary sampling:
 
 \begin{itemize}[leftmargin=*]
-  \item circles sample local boundary points: lines 52--63
-  \item polygons sample edge-local points: lines 98--114
+  \item rays are cast around the robot over a full angular sweep
+  \item the nearest obstacle intersection on each ray is selected
+  \item only the currently visible local obstacle points are passed to the
+  closest-point and averaging logic
 \end{itemize}
 
-\textbf{Status}: \textbf{Approximate}
+\textbf{Status}: \textbf{Closer, but still approximate}
 
-This is a clean local-sensing simulation abstraction, not the same as the ROS
-range-sensor or point-cloud pipeline used in the paper experiments.
+This is much closer to the paper assumption than the earlier direct analytic
+boundary sampling, but it is still not the same as the ROS range-sensor or
+point-cloud pipeline used in the paper experiments.
 
 \section*{Dynamics and Actuation Assumptions}
 
@@ -553,17 +558,17 @@ The paper explicitly assumes non-saturatable actuators.
 
 \subsection*{Current code}
 
-The current simulator clips both acceleration and speed:
+The pragmatic benchmark mode clips both acceleration and speed:
 
 \begin{itemize}[leftmargin=*]
   \item acceleration clipping: lines 581--582
   \item speed clipping: lines 599--600
 \end{itemize}
 
-\textbf{Status}: \textbf{Different assumption}
+\textbf{Status}: \textbf{Matched for paper-aligned modes, different for pragmatic mode}
 
-This makes the simulation safer and numerically easier to manage, but it is not
-the same assumption as the paper.
+The paper-aligned modes now run without acceleration or speed clipping. The
+pragmatic mode still clips both for robustness.
 
 \section*{Point-Robot Parameter Table}
 
@@ -579,13 +584,53 @@ Paper Table 1 gives the following point-robot parameters:
   \item \(\epsilon = 3 \times 10^{-6}\)
 \end{itemize}
 
-The code path intended to mirror these values is:
+The code paths intended to mirror these values are:
 
 \begin{itemize}[leftmargin=*]
-  \item \texttt{make\_paper\_faithful\_config()} at lines 225--243
+  \item \texttt{make\_paper\_pd\_config()} and \texttt{make\_paper\_geometric\_config()}
 \end{itemize}
 
 \textbf{Status}: \textbf{Exact for the numeric table, not yet exact for the full behaviour}
+
+\section*{Not Exact Yet}
+
+The remaining non-exact parts are:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Boundary-following magnetic field \(F_b\)}.
+  The paper-mode implementation is now much closer, but we still have not
+  verified it line by line against the 2022 paper’s exact field equation and
+  3D derivation.
+
+  \item \textbf{Collision-avoidance field \(F_a\)}.
+  The paper-mode implementation is now closer and explicitly projected, but it
+  is still not confirmed as the exact paper expression.
+
+  \item \textbf{Geometric controller}.
+  The current version is a 2D analogue of the ROS-era SO(3)-style steering
+  logic, not a full 3D matrix-logarithm reconstruction of the original idea.
+
+  \item \textbf{Goal relaxation}.
+  The current GR term is no longer bypassed in paper mode and now has a distinct
+  paper-style path, but it is still not rebuilt directly from the 2022 paper as
+  a verified equation-level reconstruction.
+
+  \item \textbf{Local sensing model}.
+  The paper-aligned modes now use ray-based local sensing, which is much closer
+  to the paper assumption. However, it is still not the same as the ROS sensing
+  pipeline used in the paper experiments.
+
+  \item \textbf{Actuation assumptions}.
+  These are now matched for the paper-aligned modes, but not for the pragmatic
+  benchmark mode.
+
+  \item \textbf{Non-convex benchmark behaviour}.
+  After matching these assumptions, the paper-style PD and geometric modes are
+  both collision-free in the U-shaped polygon benchmark, and the geometric mode
+  gets much closer to the goal. However, neither mode fully converges there.
+  This suggests the remaining mismatch is now more concentrated in the exact
+  controller equations and benchmark abstraction.
+\end{enumerate}
 
 \section*{Overall Assessment}
 
@@ -599,19 +644,19 @@ Closest-point detection & Exact & Single minimum-distance reading is implemented
 \hline
 Section 4.4 closest-point averaging & Exact in logic & One of the strongest matches in the current code. \\
 \hline
-PD goal attraction & Approximate & Present, but wrapped in configurable modes and optional GR scaling. \\
+PD goal attraction & Approximate & Much closer now, but still implemented inside a multi-mode controller with optional non-paper logic. \\
 \hline
-Geometric control path & Approximate & Implemented in spirit, not yet verified from the cited controller derivation. \\
+Geometric control path & Approximate & Closer than before, but still a 2D analogue rather than a full verified reconstruction. \\
 \hline
-Boundary-following magnetic field \(F_b\) & Approximate & Current implementation captures intent, but the exact field law is still not reconstructed. \\
+Boundary-following magnetic field \(F_b\) & Approximate & Current paper mode is much closer, but the exact field law is still not fully verified. \\
 \hline
-Collision-avoidance field \(F_a\) & Approximate & Same situation as \(F_b\). \\
+Collision-avoidance field \(F_a\) & Approximate & Closer than before, but still not fully verified equation-by-equation. \\
 \hline
-Goal relaxation & Approximate / inherited & Current GR is inherited from earlier code, not reconstructed from the 2022 paper itself. \\
+Goal relaxation & Approximate & Paper-aligned modes now use a dedicated paper-style GR path, but it is still not a verified equation-level reconstruction of the 2022 paper. \\
 \hline
-Local sensing assumption & Approximate & Simulation abstraction is local, but not the same sensing pipeline as the ROS work. \\
+Local sensing assumption & Closer, but still approximate & Paper-aligned modes now use ray-based local sensing, but not the same sensing pipeline as the ROS work. \\
 \hline
-Actuation assumptions & Different & Paper assumes non-saturatable actuators; code clips acceleration and speed. \\
+Actuation assumptions & Matched in paper modes, different in pragmatic mode & Paper-style presets now avoid clipping; pragmatic mode still clips for robustness. \\
 \hline
 \end{longtable}
 
@@ -630,7 +675,7 @@ The current implementation is farthest from the paper in:
 \begin{itemize}[leftmargin=*]
   \item the exact magnetic-field equations for \(F_b\) and \(F_a\),
   \item the exact goal-control choice used in each paper experiment,
-  \item the exact sensing and actuation assumptions used in the paper setup.
+  \item the exact remaining sensing and non-convex benchmark abstractions.
 \end{itemize}
 
 Therefore, the current repository should still be described as a

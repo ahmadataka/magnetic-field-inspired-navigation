@@ -57,6 +57,10 @@ def _skew3(vec: np.ndarray) -> np.ndarray:
     )
 
 
+def _cross2(a: np.ndarray, b: np.ndarray) -> float:
+    return float(a[0] * b[1] - a[1] * b[0])
+
+
 def _closest_point_on_segment(point: np.ndarray, start: np.ndarray, end: np.ndarray) -> tuple[np.ndarray, float]:
     segment = end - start
     denom = float(np.dot(segment, segment))
@@ -94,6 +98,25 @@ class CircleObstacle:
 
     def clearance(self, position: np.ndarray) -> float:
         return _norm(position - self.center) - self.radius
+
+    def ray_intersection_distance(
+        self,
+        position: np.ndarray,
+        direction: np.ndarray,
+        max_range: float,
+    ) -> float | None:
+        rel = position - self.center
+        b = 2.0 * float(np.dot(direction, rel))
+        c = float(np.dot(rel, rel) - self.radius**2)
+        disc = b * b - 4.0 * c
+        if disc < 0.0:
+            return None
+        sqrt_disc = math.sqrt(disc)
+        candidates = [(-b - sqrt_disc) / 2.0, (-b + sqrt_disc) / 2.0]
+        valid = [t for t in candidates if EPS <= t <= max_range]
+        if not valid:
+            return None
+        return min(valid)
 
 
 @dataclass
@@ -172,12 +195,40 @@ class PolygonObstacle:
             return -min_distance
         return min_distance
 
+    def ray_intersection_distance(
+        self,
+        position: np.ndarray,
+        direction: np.ndarray,
+        max_range: float,
+    ) -> float | None:
+        best_t: float | None = None
+        for start, end in self._edges():
+            edge = end - start
+            denom = _cross2(direction, edge)
+            if abs(denom) < EPS:
+                continue
+            rel = start - position
+            t = _cross2(rel, edge) / denom
+            u = _cross2(rel, direction) / denom
+            if EPS <= t <= max_range and 0.0 <= u <= 1.0:
+                if best_t is None or t < best_t:
+                    best_t = t
+        return best_t
+
 
 class Obstacle(Protocol):
     def closest_vector(self, position: np.ndarray) -> np.ndarray:
         ...
 
     def clearance(self, position: np.ndarray) -> float:
+        ...
+
+    def ray_intersection_distance(
+        self,
+        position: np.ndarray,
+        direction: np.ndarray,
+        max_range: float,
+    ) -> float | None:
         ...
 
 
@@ -202,6 +253,20 @@ class ObstacleCollection:
         vectors: list[np.ndarray] = []
         for obstacle in self.obstacles:
             vectors.extend(obstacle.sensed_vectors(position, num_samples, angular_window))
+        return vectors
+
+    def raycast_vectors(self, position: np.ndarray, num_samples: int, max_range: float) -> list[np.ndarray]:
+        vectors: list[np.ndarray] = []
+        angles = np.linspace(-math.pi, math.pi, max(8, num_samples), endpoint=False)
+        for angle in angles:
+            direction = np.array([math.cos(angle), math.sin(angle)], dtype=float)
+            best_t: float | None = None
+            for obstacle in self.obstacles:
+                candidate = obstacle.ray_intersection_distance(position, direction, max_range)
+                if candidate is not None and (best_t is None or candidate < best_t):
+                    best_t = candidate
+            if best_t is not None:
+                vectors.append(direction * best_t)
         return vectors
 
     def clearance(self, position: np.ndarray) -> float:
@@ -252,6 +317,9 @@ class SimulationConfig:
     safety_clearance: float = 0.05
     goal_mode: str = "hybrid"
     field_mode: str = "pragmatic"
+    sensing_mode: str = "analytic"
+    sensor_range: float = 6.0
+    goal_relaxation_mode: str = "legacy"
 
 
 def make_paper_pd_config() -> SimulationConfig:
@@ -269,12 +337,15 @@ def make_paper_pd_config() -> SimulationConfig:
         c_perp=20.0,
         delta_r=0.5,
         epsilon_current=3e-6,
-        goal_relaxation=False,
+        goal_relaxation=True,
         use_legacy_goal_relaxation=False,
         goal_mode="pd",
         field_mode="paper",
-        max_acceleration=50.0,
-        max_speed_norm=50.0,
+        sensing_mode="raycast",
+        sensor_range=6.0,
+        goal_relaxation_mode="paper",
+        max_acceleration=math.inf,
+        max_speed_norm=math.inf,
     )
 
 
@@ -307,6 +378,26 @@ class GoalRelaxationController:
 
         goal_mag = _norm(goal_vector)
         obs_mag = _norm(obs_vector)
+        if self.config.goal_relaxation_mode == "paper":
+            if goal_mag < EPS or obs_mag < EPS:
+                return 1.0
+            if self.initial_goal_distance is None:
+                self.initial_goal_distance = goal_mag
+            self.min_distance_to_goal = min(self.min_distance_to_goal, goal_mag)
+            if obs_mag >= 2.0 * self.config.r_l:
+                return 1.0
+
+            goal_hat = _unit(goal_vector)
+            obs_hat = _unit(obs_vector)
+            blockage = max(0.0, float(np.dot(goal_hat, obs_hat)))
+            proximity = max(0.0, 1.0 - obs_mag / max(2.0 * self.config.r_l, EPS))
+            if goal_mag > self.initial_goal_distance:
+                regression = 1.0
+            else:
+                regression = max(0.0, min(1.0, (goal_mag - self.min_distance_to_goal) / max(self.config.r_l, EPS)))
+            relax_strength = proximity * blockage * max(regression, 0.35)
+            return max(0.2, 1.0 - 0.8 * relax_strength)
+
         if goal_mag < EPS or obs_mag >= self.config.r_l or obs_mag < EPS:
             self.min_distance_to_goal = min(self.min_distance_to_goal, goal_mag)
             return 1.0
@@ -339,7 +430,7 @@ class GoalRelaxationController:
         if goal_mag < EPS:
             return np.zeros(2, dtype=float)
 
-        if self.config.use_legacy_goal_relaxation:
+        if self.config.goal_relaxation:
             kp_scale = self._goal_weight(goal_vector, observation.closest_obstacle_vector)
         else:
             kp_scale = 1.0
@@ -388,7 +479,13 @@ class LocalSensingModel:
         self.config = config
 
     def observe(self, state: DoubleIntegratorState, obstacle: Obstacle) -> LocalSensingObservation:
-        if hasattr(obstacle, "sensed_vectors"):
+        if self.config.sensing_mode == "raycast" and hasattr(obstacle, "raycast_vectors"):
+            sensed_vectors = obstacle.raycast_vectors(
+                state.position,
+                self.config.sensing_samples_per_obstacle,
+                self.config.sensor_range,
+            )
+        elif hasattr(obstacle, "sensed_vectors"):
             sensed_vectors = obstacle.sensed_vectors(
                 state.position,
                 self.config.sensing_samples_per_obstacle,
@@ -396,6 +493,16 @@ class LocalSensingModel:
             )
         else:
             sensed_vectors = [obstacle.closest_vector(state.position)]
+        if not sensed_vectors:
+            fallback = np.array([self.config.sensor_range * 10.0, 0.0], dtype=float)
+            return LocalSensingObservation(
+                closest_obstacle_vector=fallback,
+                distance_to_obstacle=math.inf,
+                sensed_vectors=[],
+                averaged_obstacle_vector=fallback,
+                used_obstacle_vector=fallback,
+                signed_clearance=obstacle.clearance(state.position),
+            )
         distances = [_norm(vec) for vec in sensed_vectors]
         min_index = int(np.argmin(distances))
         dist_to_obs = sensed_vectors[min_index]

@@ -1023,4 +1023,70 @@ However, the paper-aligned modes still collide in the non-convex U-shaped
 polygon benchmark under the current local polygon sensing abstraction, so the
 equation-level reconstruction is improved but still not complete.
 
+\section*{Entry 2026-06-18: Matching Paper Actuation, Goal Relaxation, and Local Sensing Assumptions}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Paper-aligned modes now run without acceleration or speed clipping
+  \item Goal relaxation is enabled again for the paper-aligned modes
+  \item Local sensing for paper-aligned modes now uses ray-based sensing instead of direct analytic boundary sampling
+\end{itemize}
+
+\textbf{Actuation Assumption}
+
+The 2022 paper assumes non-saturatable actuators. Earlier versions of the clean
+repository applied norm clipping to both acceleration and speed even in the
+paper-style modes. This has now been removed for the paper-aligned presets by
+setting:
+
+\begin{equation}
+\lVert u \rVert_{\max} = \infty,
+\qquad
+\lVert v \rVert_{\max} = \infty
+\end{equation}
+
+for \texttt{paper\_pd} and \texttt{paper\_geometric}.
+
+\textbf{Goal Relaxation Assumption}
+
+Goal relaxation is now active again in the paper-aligned presets. The current
+implementation still uses the inherited ROS-era weighting logic, but the paper
+modes no longer bypass goal relaxation entirely.
+
+\textbf{Local Sensing Assumption}
+
+Earlier versions used direct local boundary sampling from known analytic circle
+or polygon geometry. The paper-aligned sensing path now uses a synthetic
+range-sensor style model based on ray casting:
+
+\begin{itemize}[leftmargin=*]
+  \item rays are cast around the robot over a full angular sweep
+  \item for each ray, the nearest obstacle intersection within the sensor range is selected
+  \item only those currently visible local obstacle points are passed to the closest-point and averaging logic
+\end{itemize}
+
+This is still a simulation abstraction, but it matches the paper’s
+``temporally and spatially local sensing'' assumption much better than the
+earlier direct-boundary access.
+
+\textbf{Observed outcome}
+
+These assumption changes improved the paper-aligned controllers substantially:
+
+\begin{itemize}[leftmargin=*]
+  \item the paper-aligned PD controller now succeeds in the clustered convex polygon benchmark
+  \item it now succeeds in the clustered convex polygon benchmark
+  \item the paper-aligned geometric controller also succeeds in the clustered convex polygon benchmark
+  \item both paper-aligned modes remain collision-free in the non-convex U-shaped benchmark
+  \item the paper-aligned geometric controller approaches the non-convex U-shaped benchmark goal much more closely while maintaining safe clearance
+\end{itemize}
+
+However, the paper-aligned PD controller still fails to make substantial
+progress in the non-convex U-shaped benchmark and the paper-aligned geometric
+controller still stops short of full convergence. This suggests that the
+remaining discrepancy is no longer just about actuation, goal relaxation, or
+local sensing; it is now more likely tied to the exact controller equations and
+the polygon benchmark abstraction itself.
+
 \end{document}
