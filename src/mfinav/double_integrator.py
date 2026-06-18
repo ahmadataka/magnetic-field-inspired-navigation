@@ -388,6 +388,7 @@ class GoalRelaxationController:
         self.config = config
         self.initial_goal_distance: float | None = None
         self.min_distance_to_goal = math.inf
+        self.last_goal_weight = 1.0
 
     def _goal_weight(self, goal_vector: np.ndarray, obs_vector: np.ndarray) -> float:
         if not self.config.goal_relaxation:
@@ -448,9 +449,10 @@ class GoalRelaxationController:
             return np.zeros(2, dtype=float)
 
         if self.config.goal_relaxation:
-            kp_scale = self._goal_weight(goal_vector, observation.closest_obstacle_vector)
+            kp_scale = self._goal_weight(goal_vector, observation.used_obstacle_vector)
         else:
             kp_scale = 1.0
+        self.last_goal_weight = kp_scale
 
         if self.config.goal_mode == "pd":
             return kp_scale * self.config.kp_goal * goal_vector - self.config.kd_goal * state.velocity
@@ -466,15 +468,15 @@ class GoalRelaxationController:
                 speed_error = -(speed - self.config.speed_limit)
                 vel_attr = (self.config.kp_goal_relaxed * kp_scale) * speed_error * direction
 
-                if speed > EPS:
-                    angle_error = _signed_angle(state.velocity, goal_vector)
-                    omega = self.config.kp_geom * kp_scale * angle_error
-                    force_add = omega * _perp_left(state.velocity)
-                else:
-                    force_add = np.zeros(2, dtype=float)
+                angle_error = _signed_angle(direction, goal_vector)
+                turn_gain = self.config.kp_geom * kp_scale * max(self.config.speed_limit, speed, 0.25)
+                force_add = turn_gain * angle_error * _perp_left(direction)
                 return vel_attr + force_add
 
-            return kp_scale * self.config.kp_goal * goal_vector - self.config.kd_speed * state.velocity
+            goal_hat = _unit(goal_vector)
+            desired_speed = kp_scale * min(self.config.speed_limit, goal_mag)
+            desired_velocity = desired_speed * goal_hat
+            return self.config.kd_speed * (desired_velocity - state.velocity)
 
         if goal_mag > self.config.magni_bound:
             speed = _norm(state.velocity)
@@ -637,6 +639,11 @@ class ReferenceNavigator:
         self.goal_controller = GoalRelaxationController(config)
         self.boundary_following = BoundaryFollowingField(config)
         self.collision_avoidance = CollisionAvoidanceField(config)
+        self.last_observation: LocalSensingObservation | None = None
+        self.last_goal_cmd = np.zeros(2, dtype=float)
+        self.last_boundary_cmd = np.zeros(2, dtype=float)
+        self.last_collision_cmd = np.zeros(2, dtype=float)
+        self.last_total_cmd = np.zeros(2, dtype=float)
 
     def command(
         self,
@@ -648,7 +655,13 @@ class ReferenceNavigator:
         goal_cmd = self.goal_controller.command(state, goal, observation)
         boundary_cmd = self.boundary_following.command(state, observation)
         collision_cmd = self.collision_avoidance.command(state, observation)
-        return goal_cmd + boundary_cmd + collision_cmd
+        total_cmd = goal_cmd + boundary_cmd + collision_cmd
+        self.last_observation = observation
+        self.last_goal_cmd = goal_cmd
+        self.last_boundary_cmd = boundary_cmd
+        self.last_collision_cmd = collision_cmd
+        self.last_total_cmd = total_cmd
+        return total_cmd
 
 
 class ArtificialPotentialFieldNavigator:

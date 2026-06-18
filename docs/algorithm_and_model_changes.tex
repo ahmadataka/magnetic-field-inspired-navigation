@@ -1332,4 +1332,131 @@ After this revision:
   \item the remaining gap is now goal convergence in the non-convex benchmark, not immediate collision.
 \end{itemize}
 
+\section*{Entry 2026-06-18: Added Non-Convex Diagnostic Instrumentation}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Added per-step diagnostic capture for the paper-aligned controller components
+  \item Added a dedicated U-shaped obstacle diagnostic script
+  \item Re-ran the non-convex benchmark on the restored baseline to keep artifacts aligned with the current code
+\end{itemize}
+
+\textbf{What was added}
+
+The clean Python implementation now records:
+
+\begin{itemize}[leftmargin=*]
+  \item the last local sensing observation,
+  \item the goal-attraction command,
+  \item the boundary-following field command,
+  \item the collision-avoidance field command,
+  \item the total command and goal-relaxation weight.
+\end{itemize}
+
+The new script \texttt{scripts/run\_nonconvex\_diagnostic.py} exports:
+
+\begin{itemize}[leftmargin=*]
+  \item a trajectory plot for the U-shaped benchmark,
+  \item a per-step CSV with obstacle distance, goal distance, goal weight,
+  heading error, and command norms.
+\end{itemize}
+
+\textbf{Observed diagnostic findings}
+
+On the restored baseline:
+
+\begin{itemize}[leftmargin=*]
+  \item the paper PD controller stalls far before the goal with very small speed while still inside the sensing / avoidance band,
+  \item the paper geometric controller gets close to the goal but keeps a small residual steering conflict and does not settle inside the success radius,
+  \item a simple \(F_a\) taper experiment was tested and rejected because it regressed the convex-cluster benchmark.
+\end{itemize}
+
+\section*{Entry 2026-06-18: Goal Relaxation Switched to \texttt{used\_obstacle\_vector}}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Updated the paper-style goal-relaxation path to use \texttt{used\_obstacle\_vector} instead of \texttt{closest\_obstacle\_vector}
+  \item Re-ran the non-convex diagnostic and the full polygon benchmark suite
+\end{itemize}
+
+\textbf{Motivation}
+
+The diagnostic traces suggested that the geometric controller's goal command
+remained small even after the obstacle terms had already become weak. One
+possible explanation was that goal relaxation was still using the wrong
+obstacle representative, since the paper-oriented sensing path already uses the
+averaged / selected vector \texttt{used\_obstacle\_vector} elsewhere.
+
+\textbf{Observed outcome}
+
+This change was largely neutral:
+
+\begin{itemize}[leftmargin=*]
+  \item the convex paper-mode benchmarks remained successful,
+  \item the non-convex U-shaped benchmark changed only negligibly,
+  \item therefore the choice between \texttt{closest\_obstacle\_vector} and \texttt{used\_obstacle\_vector} is not the main cause of the remaining non-convex failure.
+\end{itemize}
+
+\textbf{Interpretation}
+
+This was still the correct paper-consistent cleanup to make. However, the
+remaining issue is more likely due to the structure of the paper-style goal
+relaxation itself, or to the interaction between that relaxation and the
+geometric far-goal controller, rather than to the obstacle representative alone.
+
+\section*{Entry 2026-06-18: Geometric Controller Updated for Low-Speed Turning and Near-Goal Velocity Tracking}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Strengthened the paper-style geometric far-goal steering term so it does not collapse when the robot speed becomes very small
+  \item Replaced the geometric near-goal positional PD fallback with a distance-scaled desired-velocity tracking law
+  \item Re-ran the U-shaped non-convex diagnostic and the full polygon benchmark suite
+\end{itemize}
+
+\textbf{Motivation}
+
+Targeted diagnostics showed that:
+
+\begin{itemize}[leftmargin=*]
+  \item the geometric controller could get near the goal while obstacle terms were already weak,
+  \item but the goal command itself became too small,
+  \item and disabling goal relaxation did not resolve that failure.
+\end{itemize}
+
+This isolated the remaining issue to the structure of the geometric goal
+controller itself, especially in low-speed and near-goal conditions.
+
+\textbf{Applied change}
+
+Two updates were made to the paper-style geometric controller:
+
+\begin{itemize}[leftmargin=*]
+  \item the far-goal turning term now uses the motion direction basis instead of
+  the raw velocity vector, so steering authority remains meaningful even when
+  the speed is low,
+  \item the near-goal branch now tracks a desired velocity whose magnitude is
+  proportional to the remaining goal distance, instead of falling back to the
+  weak positional PD term.
+\end{itemize}
+
+\textbf{Observed outcome}
+
+This produced the first full non-convex success for the paper-style geometric
+controller:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{paper\_geometric} now succeeds in the U-shaped non-convex benchmark,
+  \item the convex polygon benchmarks remain successful,
+  \item \texttt{paper\_pd} still remains the unsolved variant in the non-convex case.
+\end{itemize}
+
+\textbf{Interpretation}
+
+This is strong evidence that the remaining geometric-mode issue was not mainly
+in \(F_a\), \(F_b\), or goal relaxation, but in the low-authority structure of
+the geometric goal controller near the end of the maneuver.
+
 \end{document}
