@@ -24,9 +24,16 @@ from mfinav import (
     SphereObstacle,
     compute_metrics,
     make_default_scenarios_3d,
+    make_paper_geometric_3d_config,
     make_paper_pd_3d_config,
     simulate,
 )
+
+METHOD_SPECS = {
+    "paper_pd_3d": {"label": "MFI-PD", "color": "#1f77b4"},
+    "paper_geometric_3d": {"label": "MFI-Geometric", "color": "#2ca02c"},
+    "apf_3d": {"label": "APF", "color": "#ff7f0e"},
+}
 
 
 def _initial_state(start: np.ndarray) -> DoubleIntegratorState:
@@ -63,16 +70,14 @@ def _sphere_surface(center: np.ndarray, radius: float, n_theta: int = 18, n_phi:
 
 
 def _plot_projection(ax: plt.Axes, scenario, histories: dict[str, list[dict[str, float]]], axes: tuple[str, str]) -> None:
-    colors = {
-        "paper_pd_3d": "#1f77b4",
-        "apf_3d": "#ff7f0e",
-    }
     x_key, y_key = axes
     for name, history in histories.items():
         xs = [row[x_key] for row in history]
         ys = [row[y_key] for row in history]
-        ax.plot(xs, ys, linewidth=2.0, label=name.upper(), color=colors[name])
-        ax.scatter(xs[-1], ys[-1], color=colors[name], s=45, marker="x")
+        color = METHOD_SPECS[name]["color"]
+        label = METHOD_SPECS[name]["label"]
+        ax.plot(xs, ys, linewidth=2.0, label=label, color=color)
+        ax.scatter(xs[-1], ys[-1], color=color, s=45, marker="x")
 
     for obstacle in scenario.obstacles.obstacles:
         if isinstance(obstacle, SphereObstacle):
@@ -82,7 +87,7 @@ def _plot_projection(ax: plt.Axes, scenario, histories: dict[str, list[dict[str,
     ax.scatter(
         scenario.start[0 if x_key == "x" else 1 if x_key == "y" else 2],
         scenario.start[0 if y_key == "x" else 1 if y_key == "y" else 2],
-        color="#2ca02c",
+        color="#0f766e",
         s=60,
         marker="o",
     )
@@ -123,7 +128,7 @@ def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
         "<body>",
         "  <main>",
         "    <h1>Interactive 3D Benchmark Comparison</h1>",
-        "    <p>Rotate, pan, and zoom each scene. Blue is paper-style MFI, orange is APF, green is the start, black is the goal, and red translucent surfaces are sphere obstacles.</p>",
+        "    <p>Rotate, pan, and zoom each scene. Blue is MFI-PD, green is MFI-Geometric, orange is APF, teal is the start, black is the goal, and red translucent surfaces are sphere obstacles.</p>",
     ]
 
     script_lines = [
@@ -190,8 +195,10 @@ def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
         html_parts.append(f"      <p class=\"caption\">{scenario_data['description']}</p>")
         html_parts.append("      <div class=\"controls\">")
         html_parts.append(f"        <button class=\"active\" data-plot=\"{div_id}\" data-algorithm=\"both\">Both</button>")
-        html_parts.append(f"        <button data-plot=\"{div_id}\" data-algorithm=\"paper_pd_3d\">MFI</button>")
-        html_parts.append(f"        <button data-plot=\"{div_id}\" data-algorithm=\"apf_3d\">APF</button>")
+        for method_name, spec in METHOD_SPECS.items():
+            html_parts.append(
+                f"        <button data-plot=\"{div_id}\" data-algorithm=\"{method_name}\">{spec['label']}</button>"
+            )
         html_parts.append("      </div>")
         html_parts.append(f"      <div id=\"{div_id}\" class=\"plot\"></div>")
         html_parts.append("    </section>")
@@ -239,7 +246,9 @@ def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
 
 def main() -> None:
     scenarios = make_default_scenarios_3d()
-    config = make_paper_pd_3d_config()
+    config_pd = make_paper_pd_3d_config()
+    config_geometric = make_paper_geometric_3d_config()
+    config_apf = make_paper_pd_3d_config()
     artifacts = ROOT / "artifacts"
     artifacts.mkdir(parents=True, exist_ok=True)
 
@@ -253,18 +262,26 @@ def main() -> None:
             _initial_state(scenario.start),
             scenario.goal,
             scenario.obstacles,
-            config,
-            navigator=MagneticFieldNavigator3D(config),
+            config_pd,
+            navigator=MagneticFieldNavigator3D(config_pd),
+        )
+        geometric_history = simulate(
+            _initial_state(scenario.start),
+            scenario.goal,
+            scenario.obstacles,
+            config_geometric,
+            navigator=MagneticFieldNavigator3D(config_geometric),
         )
         apf_history = simulate(
             _initial_state(scenario.start),
             scenario.goal,
             scenario.obstacles,
-            config,
-            navigator=ArtificialPotentialFieldNavigator(config),
+            config_apf,
+            navigator=ArtificialPotentialFieldNavigator(config_apf),
         )
         histories = {
             "paper_pd_3d": history,
+            "paper_geometric_3d": geometric_history,
             "apf_3d": apf_history,
         }
 
@@ -297,13 +314,13 @@ def main() -> None:
                 {
                     "type": "scatter3d",
                     "mode": "lines",
-                    "name": method_name.upper(),
+                    "name": METHOD_SPECS[method_name]["label"],
                     "x": [row["x"] for row in reduced_history],
                     "y": [row["y"] for row in reduced_history],
                     "z": [row["z"] for row in reduced_history],
                     "line": {
-                        "color": "#1f77b4" if method_name == "paper_pd_3d" else "#ff7f0e",
-                        "width": 7 if method_name == "paper_pd_3d" else 5,
+                        "color": METHOD_SPECS[method_name]["color"],
+                        "width": 7 if method_name == "paper_pd_3d" else 6 if method_name == "paper_geometric_3d" else 5,
                     },
                     "meta": {"category": "algorithm", "algorithm": method_name},
                 }
@@ -312,14 +329,14 @@ def main() -> None:
                 {
                     "type": "scatter3d",
                     "mode": "markers",
-                    "name": f"{method_name.upper()} final",
+                    "name": f"{METHOD_SPECS[method_name]['label']} final",
                     "x": [reduced_history[-1]["x"]],
                     "y": [reduced_history[-1]["y"]],
                     "z": [reduced_history[-1]["z"]],
                     "marker": {
                         "size": 4,
                         "symbol": "x",
-                        "color": "#1f77b4" if method_name == "paper_pd_3d" else "#ff7f0e",
+                        "color": METHOD_SPECS[method_name]["color"],
                     },
                     "meta": {"category": "algorithm", "algorithm": method_name},
                 }
@@ -353,7 +370,7 @@ def main() -> None:
                     "z": [float(scenario.start[2])],
                     "text": ["start"],
                     "textposition": "top center",
-                    "marker": {"size": 7, "color": "#16a34a"},
+                    "marker": {"size": 7, "color": "#0f766e"},
                     "meta": {"category": "context"},
                 },
                 {

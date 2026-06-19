@@ -1663,4 +1663,47 @@ This is a stronger 3D milestone outcome:
   \item and deeper trap-like cavities remain an open limitation for the current purely local formulation.
 \end{itemize}
 
+\section*{Entry 2026-06-19: Stabilized 3D Geometric Benchmark Variant}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Added a dedicated \texttt{make\_paper\_geometric\_3d\_config()} preset
+  \item Extended the 3D benchmark and interactive HTML viewer to compare \texttt{MFI-PD}, \texttt{MFI-Geometric}, and \texttt{APF}
+  \item Reworked the 3D geometric goal controller so it no longer blows up in cluttered scenes
+  \item Re-ran the 2D benchmark suite to confirm the new 3D geometric work did not change 2D behavior
+\end{itemize}
+
+\textbf{Main controller change}
+
+The first 3D geometric attempt copied the spirit of the 2D turning term too
+literally and was numerically unstable. The revised 3D geometric logic now uses:
+
+\begin{itemize}[leftmargin=*]
+  \item geometric-style far-field guidance outside the obstacle interaction zone,
+  \item PD-style goal attraction once the sensed obstacle distance is within $r_l$,
+  \item a 3D lateral turning direction given by the component of the goal direction orthogonal to the current velocity direction,
+  \item an angle-weighted turning command rather than a permanently normalized lateral push.
+\end{itemize}
+
+\textbf{Current benchmark outcome}
+
+With the stabilized 3D geometric variant:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{single\_sphere}: success
+  \item \texttt{double\_sphere\_gap}: success
+  \item \texttt{sphere\_cluster}: success
+  \item \texttt{archway}: success
+  \item \texttt{offset\_cavity}: still fails by collision
+\end{itemize}
+
+\textbf{Interpretation}
+
+\begin{itemize}[leftmargin=*]
+  \item the 3D geometric benchmark path is now stable enough to keep in the default comparison,
+  \item it is meaningfully stronger than the first unstable 3D geometric draft,
+  \item but it is still not as robust as the 3D paper-style PD variant in the offset cavity case.
+\end{itemize}
+
 \end{document}
