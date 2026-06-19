@@ -1706,4 +1706,63 @@ With the stabilized 3D geometric variant:
   \item but it is still not as robust as the 3D paper-style PD variant in the offset cavity case.
 \end{itemize}
 
+\section*{Entry 2026-06-19: More Faithful 3D Geometric Steering via Skew-Symmetric Structure}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Removed the temporary ``switch to PD inside obstacle range'' idea from the 3D geometric path
+  \item Replaced it with a more faithful skew-symmetric steering construction
+  \item Re-ran both the 3D and 2D benchmark suites after the change
+\end{itemize}
+
+\textbf{Main change}
+
+For the far-field 3D geometric branch, the steering command now uses the nested
+skew-symmetric structure built from the current motion direction \(l_a\) and the
+goal direction \(l_g\):
+
+\begin{equation}
+F_{g,\text{turn}}^{3D}
+=
+-k_{\text{geom}}
+\,[l_a]_{\times}
+\left([l_a]_{\times} l_g\right)
+\end{equation}
+
+which is equivalent to the lateral projection
+
+\begin{equation}
+F_{g,\text{turn}}^{3D}
+=
+k_{\text{geom}}
+\left(I - l_a l_a^\top\right) l_g
+\end{equation}
+
+up to the chosen sign convention inside the controller implementation.
+
+This keeps the geometric steering term inside the same cross-product /
+skew-symmetric family as the paper's 3D vector formulation, instead of falling
+back to a PD branch during obstacle interaction.
+
+\textbf{Current benchmark outcome}
+
+With this more faithful 3D geometric benchmark variant:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{single\_sphere}: success
+  \item \texttt{double\_sphere\_gap}: success
+  \item \texttt{sphere\_cluster}: success
+  \item \texttt{archway}: success
+  \item \texttt{offset\_cavity}: still fails
+\end{itemize}
+
+\textbf{Interpretation}
+
+\begin{itemize}[leftmargin=*]
+  \item this version is more faithful to the paper's 3D control structure than the temporary hybridized 3D geometric experiment,
+  \item it preserves the current 2D benchmark behavior,
+  \item and it gives a usable 3D geometric comparison path even though the offset cavity case remains unsolved.
+\end{itemize}
+
 \end{document}

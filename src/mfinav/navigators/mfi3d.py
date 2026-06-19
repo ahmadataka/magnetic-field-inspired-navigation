@@ -8,7 +8,7 @@ from ..config.simulation import SimulationConfig
 from ..models.double_integrator import DoubleIntegratorState
 from ..obstacles.base import Obstacle
 from ..sensing.local import LocalSensingModel, LocalSensingObservation
-from ..utils.math2d import EPS, _norm, _surface_current_from_observation, _unit
+from ..utils.math2d import EPS, _norm, _skew3, _surface_current_from_observation, _unit
 from ..utils.math3d import _cross3
 
 
@@ -83,23 +83,15 @@ class GoalRelaxationController3D:
         if self.config.goal_mode == "geometric":
             speed = _norm(state.velocity)
             goal_hat = _unit(goal_vector)
-            if observation.distance_to_obstacle <= self.config.r_l:
-                return kp_scale * self.config.kp_goal * goal_vector - self.config.kd_goal * state.velocity
             if goal_mag > self.config.magni_bound:
                 direction = _unit(state.velocity) if speed > EPS else goal_hat
                 speed_error = -(speed - self.config.speed_limit)
                 vel_attr = (self.config.kp_goal_relaxed * kp_scale) * speed_error * direction
 
-                lateral_goal = goal_hat - float(np.dot(goal_hat, direction)) * direction
-                lateral_norm = _norm(lateral_goal)
-                if lateral_norm > EPS:
-                    lateral_dir = lateral_goal / lateral_norm
-                    cos_angle = max(-1.0, min(1.0, float(np.dot(direction, goal_hat))))
-                    angle_error = math.acos(cos_angle)
-                    turn_gain = self.config.kp_geom * kp_scale * max(self.config.speed_limit, speed, 0.25)
-                    force_add = turn_gain * angle_error * lateral_dir
-                else:
-                    force_add = np.zeros(3, dtype=float)
+                skew_direction = _skew3(direction)
+                force_add = -self.config.kp_geom * kp_scale * max(self.config.speed_limit, speed, 0.25) * (
+                    skew_direction @ (skew_direction @ goal_hat)
+                )
                 return vel_attr + force_add
 
             desired_speed = kp_scale * min(self.config.speed_limit, goal_mag)

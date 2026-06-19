@@ -84,11 +84,11 @@ def make_paper_pd_3d_config() -> SimulationConfig:
 def make_paper_geometric_3d_config() -> SimulationConfig:
     cfg = make_paper_pd_3d_config()
     cfg.goal_mode = "geometric"
-    cfg.speed_limit = 0.6
+    cfg.speed_limit = 0.5
     cfg.kp_goal = 0.12
-    cfg.kp_goal_relaxed = 0.08
+    cfg.kp_goal_relaxed = 0.06
     cfg.kd_goal = 0.5
-    cfg.kp_geom = 0.5
+    cfg.kp_geom = 0.3
     cfg.c_field = 22.0
     cfg.c_perp = 20.0
     cfg.r_l = 4.0
