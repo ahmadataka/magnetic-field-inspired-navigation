@@ -11,6 +11,7 @@ from .math2d import (
     _surface_current_from_observation,
     _unit,
 )
+from .math3d import _cross3, _orthogonal_projection
 
 __all__ = [
     "EPS",
@@ -24,4 +25,6 @@ __all__ = [
     "_skew3",
     "_surface_current_from_observation",
     "_unit",
+    "_cross3",
+    "_orthogonal_projection",
 ]

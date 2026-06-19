@@ -15,6 +15,7 @@ simulation infrastructure are separate.
   Navigation and control logic independent of the robot model.
   Current implementations:
   - `MagneticFieldNavigator`
+  - `MagneticFieldNavigator3D`
   - `ArtificialPotentialFieldNavigator`
 
 - `src/mfinav/obstacles/`
@@ -23,6 +24,7 @@ simulation infrastructure are separate.
   - `CircleObstacle`
   - `PolygonObstacle`
   - `ObstacleCollection`
+  - `SphereObstacle`
 
 - `src/mfinav/sensing/`
   Local sensing assumptions and observation types.
@@ -35,6 +37,8 @@ simulation infrastructure are separate.
   Current implementation:
   - `BenchmarkScenario`
   - `make_default_scenarios`
+  - `BenchmarkScenario3D`
+  - `make_default_scenarios_3d`
 
 - `src/mfinav/sim/`
   Generic simulation runner and history export.
@@ -88,6 +92,20 @@ To add a new robot model later:
 3. connect that model to the simulator
 4. adapt command interpretation if the robot uses a different control input
 
+## Current 3D Milestone
+
+The repository now includes an initial 3D path:
+
+- 3D double-integrator state propagation
+- sphere obstacles
+- exact local sensing via closest-point obstacle vectors
+- a 3D magnetic-field-inspired navigator
+- a dedicated 3D benchmark script:
+  - `scripts/run_benchmarks_3d.py`
+
+This first 3D milestone is intended as a correctness baseline rather than a
+finished 3D benchmark suite.
+
 ## Adding A New Navigation Method
 
 To add another navigation algorithm later:
@@ -95,4 +113,3 @@ To add another navigation algorithm later:
 1. add a new navigator under `src/mfinav/navigators/`
 2. implement `command(state, goal, obstacle)`
 3. reuse the same sensing, scenarios, simulator, and metrics
-

@@ -1601,4 +1601,47 @@ This benchmark update is useful because it separates:
   \item from cases that still require more work in repeated-obstacle and truly concave-facing navigation.
 \end{itemize}
 
+\section*{Entry 2026-06-19: Initial 3D Double-Integrator Milestone}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Added an initial 3D path alongside the existing 2D implementation
+  \item Added 3D math helpers, sphere obstacles, 3D benchmark scenarios, and a dedicated 3D benchmark script
+  \item Generalized simulation history and metric computation so 2D and 3D trajectories can share the same runner and evaluator
+  \item Re-ran the existing 2D benchmark suite to confirm the old behavior was preserved
+\end{itemize}
+
+\textbf{Implemented 3D components}
+
+The first 3D milestone includes:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{SphereObstacle} for simple 3D obstacle geometry
+  \item \texttt{MagneticFieldNavigator3D} for 3D magnetic-field-inspired navigation
+  \item \texttt{benchmarks3d.py} for a first 3D scenario set
+  \item \texttt{run\_benchmarks\_3d.py} for 3D evaluation and projection plots
+\end{itemize}
+
+\textbf{Benchmark outcome}
+
+The first 3D benchmark run shows:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{single\_sphere}: successful paper-style 3D navigation
+  \item \texttt{double\_sphere\_gap}: collision in the current implementation
+  \item \texttt{sphere\_cluster}: collision in the current implementation
+\end{itemize}
+
+\textbf{Interpretation}
+
+This is a good first milestone outcome:
+
+\begin{itemize}[leftmargin=*]
+  \item the 3D stack is alive and operational,
+  \item the 2D stack remains preserved,
+  \item the simple 3D case already works,
+  \item but cluttered 3D obstacle handling still needs further work, especially in close-range collision avoidance and sensing robustness.
+\end{itemize}
+
 \end{document}

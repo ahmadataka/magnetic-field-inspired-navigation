@@ -10,6 +10,7 @@ from .config.simulation import (
 from .metrics.benchmark import compute_metrics
 from .models.double_integrator import DoubleIntegratorModel, DoubleIntegratorState
 from .navigators.apf import ArtificialPotentialFieldNavigator
+from .navigators.mfi3d import MagneticFieldNavigator3D
 from .navigators.mfi import (
     BoundaryFollowingField,
     CollisionAvoidanceField,
@@ -21,7 +22,9 @@ from .obstacles.base import Obstacle
 from .obstacles.circle import CircleObstacle
 from .obstacles.collection import ObstacleCollection
 from .obstacles.polygon import PolygonObstacle
+from .obstacles.sphere import SphereObstacle
 from .scenarios.benchmarks import BenchmarkScenario, make_default_scenarios
+from .scenarios.benchmarks3d import BenchmarkScenario3D, make_default_scenarios_3d
 from .sensing.local import LocalSensingModel, LocalSensingObservation
 from .sim.runner import simulate, write_history_csv
 from .utils.math2d import (
@@ -52,11 +55,14 @@ __all__ = [
     "LocalSensingModel",
     "LocalSensingObservation",
     "MagneticFieldNavigator",
+    "MagneticFieldNavigator3D",
     "Obstacle",
     "ObstacleCollection",
     "PolygonObstacle",
+    "SphereObstacle",
     "ReferenceNavigator",
     "SimulationConfig",
+    "BenchmarkScenario3D",
     "_closest_point_on_segment",
     "_cross2",
     "_embed_2d",
@@ -68,6 +74,7 @@ __all__ = [
     "_surface_current_from_observation",
     "_unit",
     "make_default_scenarios",
+    "make_default_scenarios_3d",
     "make_paper_faithful_config",
     "make_paper_geometric_config",
     "make_paper_pd_config",

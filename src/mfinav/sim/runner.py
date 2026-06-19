@@ -13,6 +13,28 @@ from ..obstacles.base import Obstacle
 from ..utils.math2d import _norm
 
 
+def _history_row(
+    step: int,
+    state: DoubleIntegratorState,
+    accel: np.ndarray,
+    goal_distance: float,
+    obstacle_distance: float,
+    signed_clearance: float,
+) -> dict[str, float]:
+    row = {
+        "step": float(step),
+        "goal_distance": goal_distance,
+        "obstacle_distance": obstacle_distance,
+        "signed_clearance": signed_clearance,
+    }
+    axis_names = ("x", "y", "z")
+    for idx, axis in enumerate(axis_names[: len(state.position)]):
+        row[axis] = float(state.position[idx])
+        row[f"v{axis}"] = float(state.velocity[idx])
+        row[f"a{axis}"] = float(accel[idx])
+    return row
+
+
 def simulate(
     state: DoubleIntegratorState,
     goal: np.ndarray,
@@ -33,18 +55,14 @@ def simulate(
         accel = active_model.clip_command(accel)
 
         history.append(
-            {
-                "step": float(step),
-                "x": float(state.position[0]),
-                "y": float(state.position[1]),
-                "vx": float(state.velocity[0]),
-                "vy": float(state.velocity[1]),
-                "ax": float(accel[0]),
-                "ay": float(accel[1]),
-                "goal_distance": _norm(goal_vector),
-                "obstacle_distance": observation.distance_to_obstacle,
-                "signed_clearance": observation.signed_clearance,
-            }
+            _history_row(
+                step,
+                state,
+                accel,
+                _norm(goal_vector),
+                observation.distance_to_obstacle,
+                observation.signed_clearance,
+            )
         )
 
         state = active_model.step(state, accel, cfg.dt)

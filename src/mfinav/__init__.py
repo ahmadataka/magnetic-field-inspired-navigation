@@ -13,10 +13,11 @@ from .navigators import (
     CollisionAvoidanceField,
     GoalRelaxationController,
     MagneticFieldNavigator,
+    MagneticFieldNavigator3D,
     ReferenceNavigator,
 )
-from .obstacles import CircleObstacle, Obstacle, ObstacleCollection, PolygonObstacle
-from .scenarios import BenchmarkScenario, make_default_scenarios
+from .obstacles import CircleObstacle, Obstacle, ObstacleCollection, PolygonObstacle, SphereObstacle
+from .scenarios import BenchmarkScenario, BenchmarkScenario3D, make_default_scenarios, make_default_scenarios_3d
 from .sensing import LocalSensingModel, LocalSensingObservation
 from .sim import simulate, write_history_csv
 
@@ -33,6 +34,7 @@ __all__ = [
     "LocalSensingModel",
     "LocalSensingObservation",
     "MagneticFieldNavigator",
+    "MagneticFieldNavigator3D",
     "Obstacle",
     "make_paper_geometric_config",
     "make_paper_pd_config",
@@ -41,8 +43,11 @@ __all__ = [
     "make_default_scenarios",
     "ObstacleCollection",
     "PolygonObstacle",
+    "SphereObstacle",
     "ReferenceNavigator",
     "SimulationConfig",
+    "BenchmarkScenario3D",
     "simulate",
     "write_history_csv",
+    "make_default_scenarios_3d",
 ]

@@ -27,7 +27,6 @@ from mfinav import (
     make_default_scenarios,
     make_paper_geometric_config,
     make_paper_pd_config,
-    make_pragmatic_config,
     simulate,
 )
 
@@ -40,7 +39,6 @@ def _plot_scenario(ax: plt.Axes, scenario, histories: dict[str, list[dict[str, f
     colors = {
         "paper_pd": "#1f77b4",
         "paper_geometric": "#9467bd",
-        "pragmatic_mfi": "#2ca02c",
         "apf": "#ff7f0e",
     }
     for name, history in histories.items():
@@ -76,7 +74,6 @@ def main() -> None:
     scenarios = make_default_scenarios()
     paper_pd_config = make_paper_pd_config()
     paper_geometric_config = make_paper_geometric_config()
-    pragmatic_config = make_pragmatic_config()
     artifacts = ROOT / "artifacts"
     artifacts.mkdir(parents=True, exist_ok=True)
 
@@ -101,25 +98,17 @@ def main() -> None:
             paper_geometric_config,
             navigator=ReferenceNavigator(paper_geometric_config),
         )
-        pragmatic_history = simulate(
-            _initial_state(scenario.start),
-            scenario.goal,
-            scenario.obstacles,
-            pragmatic_config,
-            navigator=ReferenceNavigator(pragmatic_config),
-        )
         apf_history = simulate(
             _initial_state(scenario.start),
             scenario.goal,
             scenario.obstacles,
-            pragmatic_config,
-            navigator=ArtificialPotentialFieldNavigator(pragmatic_config),
+            paper_pd_config,
+            navigator=ArtificialPotentialFieldNavigator(paper_pd_config),
         )
 
         histories = {
             "paper_pd": mfi_history,
             "paper_geometric": paper_geometric_history,
-            "pragmatic_mfi": pragmatic_history,
             "apf": apf_history,
         }
         _plot_scenario(ax, scenario, histories)
