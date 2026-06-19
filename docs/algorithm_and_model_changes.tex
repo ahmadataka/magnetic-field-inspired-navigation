@@ -1874,4 +1874,58 @@ F_{\text{Sabattini}} &= \sigma\,(u_g + F_{\text{damp}}),
 
 where \(E_0 = 0.1\,d_{g,0}^2\) uses the initial goal distance and \(s \in \{+1,-1\}\) follows the sign convention from the ROS code.
 
+\section*{Entry 2026-06-19: Added Differential-Drive Kinematic Model}
+
+\textbf{What changed}
+
+\begin{itemize}[leftmargin=*]
+  \item Added \texttt{DifferentialDriveState} and \texttt{DifferentialDriveModel} in \texttt{src/mfinav/models/differential\_drive.py}
+  \item Added \texttt{simulate\_differential\_drive} in \texttt{src/mfinav/sim/differential\_drive.py}
+  \item Added 2D nonholonomic benchmark script \texttt{scripts/run\_benchmarks\_diff\_drive.py}
+\end{itemize}
+
+\textbf{Motivation}
+
+\begin{itemize}[leftmargin=*]
+  \item The repository previously benchmarked only fully actuated double-integrator motion.
+  \item A differential-drive model is needed to test the same navigation algorithms on a nonholonomic planar robot while keeping the sensing and obstacle abstractions unchanged.
+\end{itemize}
+
+\textbf{Modeling choice}
+
+The navigation algorithms in this repository output a planar guidance vector
+\(u \in \mathbb{R}^2\). For the differential-drive robot, this vector is
+interpreted as a desired heading and speed command rather than as a physical
+acceleration.
+
+Let the robot state be
+\[
+x = \begin{bmatrix} p_x & p_y & \theta & v & \omega \end{bmatrix}^\top
+\]
+with planar position \(p\), heading \(\theta\), linear speed \(v\), and angular
+speed \(\omega\). Given guidance vector \(u\), define
+
+\begin{align}
+\theta_d &= \operatorname{atan2}(u_y, u_x), \\
+e_\theta &= \operatorname{wrap}(\theta_d - \theta), \\
+\omega_c &= \operatorname{sat}_{\omega_{\max}}(k_\theta e_\theta), \\
+v_c &= \operatorname{sat}_{v_{\max}}(k_v \lVert u \rVert)\,\max(0,\cos e_\theta).
+\end{align}
+
+The kinematic propagation is then
+
+\begin{align}
+\dot{p}_x &= v_c \cos \theta, \\
+\dot{p}_y &= v_c \sin \theta, \\
+\dot{\theta} &= \omega_c.
+\end{align}
+
+\textbf{Interpretation}
+
+\begin{itemize}[leftmargin=*]
+  \item This is a tracking wrapper around the existing navigation field, not a re-derivation of the original papers for differential-drive actuation.
+  \item The same local sensing and obstacle models are reused, so differences in benchmark behavior mainly reflect the effect of the nonholonomic kinematics and heading-tracking layer.
+  \item Differential-drive benchmarks are therefore useful for qualitative portability studies and algorithm comparison, but should not be interpreted as a paper-faithful nonholonomic controller unless a dedicated derivation is added later.
+\end{itemize}
+
 \end{document}

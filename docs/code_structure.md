@@ -8,6 +8,8 @@ simulation infrastructure are separate.
 - `src/mfinav/models/`
   Robot dynamics and state propagation.
   Current implementation:
+  - `DifferentialDriveState`
+  - `DifferentialDriveModel`
   - `DoubleIntegratorState`
   - `DoubleIntegratorModel`
 
@@ -45,6 +47,7 @@ simulation infrastructure are separate.
   Generic simulation runner and history export.
   Current implementation:
   - `simulate`
+  - `simulate_differential_drive`
   - `write_history_csv`
 
 - `src/mfinav/metrics/`
@@ -118,6 +121,18 @@ The repository now includes an initial 3D path:
 The default 3D suite is now intended to be a reproducible correctness
 baseline, while the stress scenarios capture harder local-sensing failure modes
 that still need additional work.
+
+## Differential-Drive Milestone
+
+The repository now also includes a 2D differential-drive path:
+
+- differential-drive kinematic state propagation
+- a guidance-to-`v,\omega` tracking layer that reuses the same navigators
+- a dedicated 2D benchmark script:
+  - `scripts/run_benchmarks_diff_drive.py`
+
+This keeps the navigation layer reusable while allowing nonholonomic 2D
+benchmarking against the same obstacle scenarios.
 
 ## Adding A New Navigation Method
 

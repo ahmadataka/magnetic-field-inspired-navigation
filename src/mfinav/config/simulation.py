@@ -27,6 +27,11 @@ class SimulationConfig:
     use_legacy_goal_relaxation: bool = False
     max_acceleration: float = 4.0
     max_speed_norm: float = 2.0
+    max_linear_speed: float = 1.0
+    max_angular_speed: float = 2.5
+    speed_gain: float = 0.35
+    heading_gain: float = 2.5
+    min_forward_factor: float = 0.2
     safety_clearance: float = 0.05
     goal_mode: str = "hybrid"
     field_mode: str = "pragmatic"

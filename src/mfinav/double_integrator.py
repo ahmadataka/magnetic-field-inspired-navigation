@@ -11,6 +11,7 @@ from .config.simulation import (
 )
 from .metrics.benchmark import compute_metrics
 from .models.double_integrator import DoubleIntegratorModel, DoubleIntegratorState
+from .models.differential_drive import DifferentialDriveCommand, DifferentialDriveModel, DifferentialDriveState
 from .navigators.apf import ArtificialPotentialFieldNavigator
 from .navigators.baselines import HaddadinNavigator, SabattiniNavigator
 from .navigators.mfi3d import MagneticFieldNavigator3D
@@ -31,6 +32,7 @@ from .scenarios.benchmarks import BenchmarkScenario, make_default_scenarios
 from .scenarios.benchmarks3d import BenchmarkScenario3D, make_default_scenarios_3d, make_stress_scenarios_3d
 from .sensing.local import LocalSensingModel, LocalSensingObservation
 from .sim.runner import simulate, write_history_csv
+from .sim.differential_drive import simulate_differential_drive
 from .utils.math2d import (
     EPS,
     _closest_point_on_segment,
@@ -52,6 +54,9 @@ __all__ = [
     "CircleObstacle",
     "CollisionAvoidanceField",
     "compute_metrics",
+    "DifferentialDriveCommand",
+    "DifferentialDriveModel",
+    "DifferentialDriveState",
     "DoubleIntegratorModel",
     "DoubleIntegratorState",
     "EPS",
@@ -90,5 +95,6 @@ __all__ = [
     "make_paper_pd_3d_config",
     "make_pragmatic_config",
     "simulate",
+    "simulate_differential_drive",
     "write_history_csv",
 ]

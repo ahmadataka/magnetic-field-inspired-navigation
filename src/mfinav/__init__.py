@@ -8,7 +8,13 @@ from .config import (
     make_pragmatic_config,
 )
 from .metrics import compute_metrics
-from .models import DoubleIntegratorModel, DoubleIntegratorState
+from .models import (
+    DifferentialDriveCommand,
+    DifferentialDriveModel,
+    DifferentialDriveState,
+    DoubleIntegratorModel,
+    DoubleIntegratorState,
+)
 from .navigators import (
     ArtificialPotentialFieldNavigator,
     BoundaryFollowingField,
@@ -29,7 +35,7 @@ from .scenarios import (
     make_stress_scenarios_3d,
 )
 from .sensing import LocalSensingModel, LocalSensingObservation
-from .sim import simulate, write_history_csv
+from .sim import simulate, simulate_differential_drive, write_history_csv
 
 __all__ = [
     "ArtificialPotentialFieldNavigator",
@@ -38,6 +44,9 @@ __all__ = [
     "CircleObstacle",
     "CollisionAvoidanceField",
     "compute_metrics",
+    "DifferentialDriveCommand",
+    "DifferentialDriveModel",
+    "DifferentialDriveState",
     "DoubleIntegratorModel",
     "DoubleIntegratorState",
     "GoalRelaxationController",
@@ -63,6 +72,7 @@ __all__ = [
     "BenchmarkScenario3D",
     "SabattiniNavigator",
     "simulate",
+    "simulate_differential_drive",
     "write_history_csv",
     "make_default_scenarios_3d",
     "make_stress_scenarios_3d",
