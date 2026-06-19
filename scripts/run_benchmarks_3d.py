@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 import csv
+import json
+import math
 import sys
 
 import matplotlib
@@ -29,6 +31,35 @@ from mfinav import (
 
 def _initial_state(start: np.ndarray) -> DoubleIntegratorState:
     return DoubleIntegratorState(position=start.copy(), velocity=np.zeros_like(start))
+
+
+def _downsample_history(history: list[dict[str, float]], max_points: int = 1200) -> list[dict[str, float]]:
+    if len(history) <= max_points:
+        return history
+    indices = np.linspace(0, len(history) - 1, max_points, dtype=int)
+    return [history[index] for index in indices]
+
+
+def _sphere_surface(center: np.ndarray, radius: float, n_theta: int = 18, n_phi: int = 10) -> tuple[list[list[float]], list[list[float]], list[list[float]]]:
+    theta_values = np.linspace(0.0, 2.0 * math.pi, n_theta)
+    phi_values = np.linspace(0.0, math.pi, n_phi)
+    xs: list[list[float]] = []
+    ys: list[list[float]] = []
+    zs: list[list[float]] = []
+    for phi in phi_values:
+        row_x: list[float] = []
+        row_y: list[float] = []
+        row_z: list[float] = []
+        sin_phi = math.sin(phi)
+        cos_phi = math.cos(phi)
+        for theta in theta_values:
+            row_x.append(float(center[0] + radius * math.cos(theta) * sin_phi))
+            row_y.append(float(center[1] + radius * math.sin(theta) * sin_phi))
+            row_z.append(float(center[2] + radius * cos_phi))
+        xs.append(row_x)
+        ys.append(row_y)
+        zs.append(row_z)
+    return xs, ys, zs
 
 
 def _plot_projection(ax: plt.Axes, scenario, histories: dict[str, list[dict[str, float]]], axes: tuple[str, str]) -> None:
@@ -67,6 +98,145 @@ def _plot_projection(ax: plt.Axes, scenario, histories: dict[str, list[dict[str,
     ax.grid(True, alpha=0.25)
 
 
+def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
+    html_parts = [
+        "<!DOCTYPE html>",
+        "<html lang=\"en\">",
+        "<head>",
+        "  <meta charset=\"utf-8\">",
+        "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+        "  <title>3D Benchmark Comparison</title>",
+        "  <script src=\"https://cdn.plot.ly/plotly-2.35.2.min.js\"></script>",
+        "  <style>",
+        "    body { font-family: Helvetica, Arial, sans-serif; margin: 0; background: #f7f7f5; color: #1a1a1a; }",
+        "    main { max-width: 1400px; margin: 0 auto; padding: 24px; }",
+        "    h1 { margin: 0 0 8px; font-size: 28px; }",
+        "    p { margin: 0 0 18px; line-height: 1.5; }",
+        "    .scenario { background: #ffffff; border: 1px solid #dddddd; border-radius: 16px; padding: 18px; margin: 0 0 22px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05); }",
+        "    .plot { width: 100%; height: 760px; }",
+        "    .caption { color: #555555; margin: 0 0 10px; }",
+        "    .controls { display: flex; gap: 10px; margin: 0 0 14px; flex-wrap: wrap; }",
+        "    .controls button { border: 1px solid #c9c9c9; background: #f3f4f6; color: #222222; border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 14px; }",
+        "    .controls button.active { background: #111827; color: #ffffff; border-color: #111827; }",
+        "  </style>",
+        "</head>",
+        "<body>",
+        "  <main>",
+        "    <h1>Interactive 3D Benchmark Comparison</h1>",
+        "    <p>Rotate, pan, and zoom each scene. Blue is paper-style MFI, orange is APF, green is the start, black is the goal, and red translucent surfaces are sphere obstacles.</p>",
+    ]
+
+    script_lines = [
+        "<script>",
+        "function flattenNumeric(values) {",
+        "  if (!Array.isArray(values)) {",
+        "    return typeof values === 'number' ? [values] : [];",
+        "  }",
+        "  const result = [];",
+        "  const stack = [...values];",
+        "  while (stack.length > 0) {",
+        "    const value = stack.pop();",
+        "    if (Array.isArray(value)) {",
+        "      for (let i = 0; i < value.length; i += 1) stack.push(value[i]);",
+        "    } else if (typeof value === 'number' && Number.isFinite(value)) {",
+        "      result.push(value);",
+        "    }",
+        "  }",
+        "  return result;",
+        "}",
+        "function computeSceneRanges(traces, visibleMask) {",
+        "  const xs = [];",
+        "  const ys = [];",
+        "  const zs = [];",
+        "  traces.forEach((trace, index) => {",
+        "    if (!visibleMask[index]) return;",
+        "    xs.push(...flattenNumeric(trace.x || []));",
+        "    ys.push(...flattenNumeric(trace.y || []));",
+        "    zs.push(...flattenNumeric(trace.z || []));",
+        "  });",
+        "  if (!xs.length || !ys.length || !zs.length) return null;",
+        "  const makeRange = (values) => {",
+        "    const min = Math.min(...values);",
+        "    const max = Math.max(...values);",
+        "    const span = Math.max(max - min, 1.0);",
+        "    const pad = 0.12 * span;",
+        "    return [min - pad, max + pad];",
+        "  };",
+        "  return {",
+        "    'scene.xaxis.range': makeRange(xs),",
+        "    'scene.yaxis.range': makeRange(ys),",
+        "    'scene.zaxis.range': makeRange(zs),",
+        "    'scene.aspectmode': 'data'",
+        "  };",
+        "}",
+        "function applyAlgorithmView(plotId, traces, algorithm) {",
+        "  const visibleMask = traces.map((trace) => {",
+        "    const meta = trace.meta || {};",
+        "    if (meta.category !== 'algorithm') return true;",
+        "    return algorithm === 'both' || meta.algorithm === algorithm;",
+        "  });",
+        "  Plotly.restyle(plotId, {visible: visibleMask});",
+        "  const ranges = computeSceneRanges(traces, visibleMask);",
+        "  if (ranges) Plotly.relayout(plotId, ranges);",
+        "  document.querySelectorAll(`[data-plot=\"${plotId}\"]`).forEach((button) => {",
+        "    button.classList.toggle('active', button.dataset.algorithm === algorithm);",
+        "  });",
+        "}",
+    ]
+    for index, scenario_data in enumerate(scenarios_data):
+        div_id = f"plot-{index}"
+        html_parts.append(f"    <section class=\"scenario\">")
+        html_parts.append(f"      <h2>{scenario_data['name']}</h2>")
+        html_parts.append(f"      <p class=\"caption\">{scenario_data['description']}</p>")
+        html_parts.append("      <div class=\"controls\">")
+        html_parts.append(f"        <button class=\"active\" data-plot=\"{div_id}\" data-algorithm=\"both\">Both</button>")
+        html_parts.append(f"        <button data-plot=\"{div_id}\" data-algorithm=\"paper_pd_3d\">MFI</button>")
+        html_parts.append(f"        <button data-plot=\"{div_id}\" data-algorithm=\"apf_3d\">APF</button>")
+        html_parts.append("      </div>")
+        html_parts.append(f"      <div id=\"{div_id}\" class=\"plot\"></div>")
+        html_parts.append("    </section>")
+        script_lines.append(
+            f"const data{index} = {json.dumps(scenario_data['plot_traces'], separators=(',', ':'))};"
+        )
+        script_lines.append(
+            f"window.data{index} = data{index};"
+        )
+        script_lines.append(
+            f"const layout{index} = {json.dumps(scenario_data['layout'], separators=(',', ':'))};"
+        )
+        script_lines.append(
+            f"Plotly.newPlot('{div_id}', data{index}, layout{index}, {{responsive: true, displaylogo: false}});"
+        )
+        script_lines.append(
+            f"applyAlgorithmView('{div_id}', data{index}, 'both');"
+        )
+    script_lines.append(
+        "document.querySelectorAll('.controls button').forEach((button) => {"
+    )
+    script_lines.append(
+        "  button.addEventListener('click', () => {"
+    )
+    script_lines.append(
+        "    const plotId = button.dataset.plot;"
+    )
+    script_lines.append(
+        "    const index = Number(plotId.split('-')[1]);"
+    )
+    script_lines.append(
+        "    const traces = window[`data${index}`];"
+    )
+    script_lines.append(
+        "    applyAlgorithmView(plotId, traces, button.dataset.algorithm);"
+    )
+    script_lines.append("  });")
+    script_lines.append("});")
+    script_lines.append("</script>")
+
+    html_parts.extend(script_lines)
+    html_parts.extend(["  </main>", "</body>", "</html>"])
+    return "\n".join(html_parts)
+
+
 def main() -> None:
     scenarios = make_default_scenarios_3d()
     config = make_paper_pd_3d_config()
@@ -74,6 +244,7 @@ def main() -> None:
     artifacts.mkdir(parents=True, exist_ok=True)
 
     summary_rows: list[dict[str, str | float]] = []
+    interactive_scenarios: list[dict[str, object]] = []
     fig, axes = plt.subplots(len(scenarios), 3, figsize=(16, 4.8 * len(scenarios)))
     axes = np.atleast_2d(axes)
 
@@ -96,11 +267,63 @@ def main() -> None:
             "paper_pd_3d": history,
             "apf_3d": apf_history,
         }
+
+        plot_traces: list[dict[str, object]] = []
+        for obstacle_index, obstacle in enumerate(scenario.obstacles.obstacles):
+            if isinstance(obstacle, SphereObstacle):
+                xs, ys, zs = _sphere_surface(obstacle.center, obstacle.radius)
+                plot_traces.append(
+                    {
+                        "type": "surface",
+                        "x": xs,
+                        "y": ys,
+                        "z": zs,
+                        "opacity": 0.28,
+                        "showscale": False,
+                        "hoverinfo": "skip",
+                        "name": f"obstacle_{obstacle_index + 1}",
+                        "colorscale": [[0.0, "#ef4444"], [1.0, "#ef4444"]],
+                        "meta": {"category": "context"},
+                    }
+                )
+
         for ax, proj in zip(row_axes, (("x", "y"), ("x", "z"), ("y", "z"))):
             _plot_projection(ax, scenario, histories, proj)
             ax.set_title(f"{scenario.name} {proj[0]}{proj[1]}")
 
         for method_name, method_history in histories.items():
+            reduced_history = _downsample_history(method_history)
+            plot_traces.append(
+                {
+                    "type": "scatter3d",
+                    "mode": "lines",
+                    "name": method_name.upper(),
+                    "x": [row["x"] for row in reduced_history],
+                    "y": [row["y"] for row in reduced_history],
+                    "z": [row["z"] for row in reduced_history],
+                    "line": {
+                        "color": "#1f77b4" if method_name == "paper_pd_3d" else "#ff7f0e",
+                        "width": 7 if method_name == "paper_pd_3d" else 5,
+                    },
+                    "meta": {"category": "algorithm", "algorithm": method_name},
+                }
+            )
+            plot_traces.append(
+                {
+                    "type": "scatter3d",
+                    "mode": "markers",
+                    "name": f"{method_name.upper()} final",
+                    "x": [reduced_history[-1]["x"]],
+                    "y": [reduced_history[-1]["y"]],
+                    "z": [reduced_history[-1]["z"]],
+                    "marker": {
+                        "size": 4,
+                        "symbol": "x",
+                        "color": "#1f77b4" if method_name == "paper_pd_3d" else "#ff7f0e",
+                    },
+                    "meta": {"category": "algorithm", "algorithm": method_name},
+                }
+            )
             metrics = compute_metrics(method_history, scenario.goal)
             summary_rows.append(
                 {
@@ -119,11 +342,61 @@ def main() -> None:
                     "path_efficiency": metrics["path_efficiency"],
                 }
             )
+        plot_traces.extend(
+            [
+                {
+                    "type": "scatter3d",
+                    "mode": "markers+text",
+                    "name": "start",
+                    "x": [float(scenario.start[0])],
+                    "y": [float(scenario.start[1])],
+                    "z": [float(scenario.start[2])],
+                    "text": ["start"],
+                    "textposition": "top center",
+                    "marker": {"size": 7, "color": "#16a34a"},
+                    "meta": {"category": "context"},
+                },
+                {
+                    "type": "scatter3d",
+                    "mode": "markers+text",
+                    "name": "goal",
+                    "x": [float(scenario.goal[0])],
+                    "y": [float(scenario.goal[1])],
+                    "z": [float(scenario.goal[2])],
+                    "text": ["goal"],
+                    "textposition": "top center",
+                    "marker": {"size": 8, "color": "#111111", "symbol": "diamond"},
+                    "meta": {"category": "context"},
+                },
+            ]
+        )
+        interactive_scenarios.append(
+            {
+                "name": scenario.name,
+                "description": scenario.description,
+                "plot_traces": plot_traces,
+                "layout": {
+                    "margin": {"l": 0, "r": 0, "t": 36, "b": 0},
+                    "legend": {"orientation": "h", "y": 1.04},
+                    "scene": {
+                        "aspectmode": "data",
+                        "xaxis": {"title": "x"},
+                        "yaxis": {"title": "y"},
+                        "zaxis": {"title": "z"},
+                        "camera": {"eye": {"x": 1.6, "y": 1.4, "z": 0.9}},
+                    },
+                    "title": {"text": scenario.name.replace("_", " ")},
+                },
+            }
+        )
 
     fig.tight_layout()
     plot_path = artifacts / "benchmark_comparison_3d.png"
     fig.savefig(plot_path, dpi=180)
     plt.close(fig)
+
+    interactive_path = artifacts / "benchmark_comparison_3d.html"
+    interactive_path.write_text(_build_interactive_html(interactive_scenarios), encoding="utf-8")
 
     csv_path = artifacts / "benchmark_metrics_3d.csv"
     with csv_path.open("w", newline="") as handle:
@@ -162,6 +435,7 @@ def main() -> None:
         )
 
     print(f"benchmark_plot_3d={plot_path}")
+    print(f"benchmark_plot_3d_interactive={interactive_path}")
     print(f"benchmark_metrics_3d={csv_path}")
 
 
