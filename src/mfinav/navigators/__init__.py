@@ -1,4 +1,5 @@
 from .apf import ArtificialPotentialFieldNavigator
+from .baselines import HaddadinNavigator, SabattiniNavigator
 from .mfi3d import MagneticFieldNavigator3D
 from .mfi import (
     BoundaryFollowingField,
@@ -13,7 +14,9 @@ __all__ = [
     "BoundaryFollowingField",
     "CollisionAvoidanceField",
     "GoalRelaxationController",
+    "HaddadinNavigator",
     "MagneticFieldNavigator",
     "MagneticFieldNavigator3D",
     "ReferenceNavigator",
+    "SabattiniNavigator",
 ]

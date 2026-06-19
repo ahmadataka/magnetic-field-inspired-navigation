@@ -12,6 +12,7 @@ from .config.simulation import (
 from .metrics.benchmark import compute_metrics
 from .models.double_integrator import DoubleIntegratorModel, DoubleIntegratorState
 from .navigators.apf import ArtificialPotentialFieldNavigator
+from .navigators.baselines import HaddadinNavigator, SabattiniNavigator
 from .navigators.mfi3d import MagneticFieldNavigator3D
 from .navigators.mfi import (
     BoundaryFollowingField,
@@ -55,6 +56,7 @@ __all__ = [
     "DoubleIntegratorState",
     "EPS",
     "GoalRelaxationController",
+    "HaddadinNavigator",
     "LocalSensingModel",
     "LocalSensingObservation",
     "MagneticFieldNavigator",
@@ -65,6 +67,7 @@ __all__ = [
     "PrismObstacle",
     "SphereObstacle",
     "ReferenceNavigator",
+    "SabattiniNavigator",
     "SimulationConfig",
     "BenchmarkScenario3D",
     "_closest_point_on_segment",

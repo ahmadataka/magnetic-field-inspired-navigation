@@ -21,8 +21,10 @@ from mfinav import (
     ArtificialPotentialFieldNavigator,
     CircleObstacle,
     DoubleIntegratorState,
+    HaddadinNavigator,
     PolygonObstacle,
     ReferenceNavigator,
+    SabattiniNavigator,
     compute_metrics,
     make_default_scenarios,
     make_paper_geometric_config,
@@ -38,8 +40,10 @@ def _initial_state(start: np.ndarray) -> DoubleIntegratorState:
 def _plot_scenario(ax: plt.Axes, scenario, histories: dict[str, list[dict[str, float]]]) -> None:
     colors = {
         "paper_pd": "#1f77b4",
-        "paper_geometric": "#9467bd",
+        "paper_geometric": "#2ca02c",
         "apf": "#ff7f0e",
+        "haddadin": "#8b5cf6",
+        "sabattini": "#d97706",
     }
     for name, history in histories.items():
         xs = [row["x"] for row in history]
@@ -105,11 +109,27 @@ def main() -> None:
             paper_pd_config,
             navigator=ArtificialPotentialFieldNavigator(paper_pd_config),
         )
+        haddadin_history = simulate(
+            _initial_state(scenario.start),
+            scenario.goal,
+            scenario.obstacles,
+            paper_pd_config,
+            navigator=HaddadinNavigator(paper_pd_config),
+        )
+        sabattini_history = simulate(
+            _initial_state(scenario.start),
+            scenario.goal,
+            scenario.obstacles,
+            paper_pd_config,
+            navigator=SabattiniNavigator(paper_pd_config),
+        )
 
         histories = {
             "paper_pd": mfi_history,
             "paper_geometric": paper_geometric_history,
             "apf": apf_history,
+            "haddadin": haddadin_history,
+            "sabattini": sabattini_history,
         }
         _plot_scenario(ax, scenario, histories)
 
@@ -137,7 +157,7 @@ def main() -> None:
         ax.axis("off")
 
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", ncol=4, frameon=False)
+    fig.legend(handles, labels, loc="upper center", ncol=5, frameon=False)
     fig.tight_layout(rect=(0, 0, 1, 0.95))
     plot_path = artifacts / "benchmark_comparison.png"
     fig.savefig(plot_path, dpi=180)

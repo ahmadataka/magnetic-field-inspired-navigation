@@ -7,8 +7,8 @@ import numpy as np
 
 from ..config.simulation import SimulationConfig
 from ..models.double_integrator import DoubleIntegratorModel, DoubleIntegratorState
-from ..navigators.apf import ArtificialPotentialFieldNavigator
-from ..navigators.mfi import MagneticFieldNavigator, ReferenceNavigator
+from ..navigators.base import Navigator
+from ..navigators.mfi import MagneticFieldNavigator
 from ..obstacles.base import Obstacle
 from ..utils.math2d import _norm
 
@@ -40,7 +40,7 @@ def simulate(
     goal: np.ndarray,
     obstacle: Obstacle,
     config: SimulationConfig | None = None,
-    navigator: ReferenceNavigator | ArtificialPotentialFieldNavigator | None = None,
+    navigator: Navigator | None = None,
     model: DoubleIntegratorModel | None = None,
 ) -> list[dict[str, float]]:
     cfg = config or SimulationConfig()

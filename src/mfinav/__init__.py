@@ -14,9 +14,11 @@ from .navigators import (
     BoundaryFollowingField,
     CollisionAvoidanceField,
     GoalRelaxationController,
+    HaddadinNavigator,
     MagneticFieldNavigator,
     MagneticFieldNavigator3D,
     ReferenceNavigator,
+    SabattiniNavigator,
 )
 from .obstacles import CircleObstacle, Obstacle, ObstacleCollection, PolygonObstacle, PrismObstacle, SphereObstacle
 from .scenarios import (
@@ -39,6 +41,7 @@ __all__ = [
     "DoubleIntegratorModel",
     "DoubleIntegratorState",
     "GoalRelaxationController",
+    "HaddadinNavigator",
     "LocalSensingModel",
     "LocalSensingObservation",
     "MagneticFieldNavigator",
@@ -58,6 +61,7 @@ __all__ = [
     "ReferenceNavigator",
     "SimulationConfig",
     "BenchmarkScenario3D",
+    "SabattiniNavigator",
     "simulate",
     "write_history_csv",
     "make_default_scenarios_3d",

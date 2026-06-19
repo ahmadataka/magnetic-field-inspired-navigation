@@ -20,8 +20,10 @@ if str(SRC) not in sys.path:
 from mfinav import (
     ArtificialPotentialFieldNavigator,
     DoubleIntegratorState,
+    HaddadinNavigator,
     MagneticFieldNavigator3D,
     PrismObstacle,
+    SabattiniNavigator,
     SphereObstacle,
     compute_metrics,
     make_default_scenarios_3d,
@@ -34,6 +36,8 @@ METHOD_SPECS = {
     "paper_pd_3d": {"label": "MFI-PD", "color": "#1f77b4"},
     "paper_geometric_3d": {"label": "MFI-Geometric", "color": "#2ca02c"},
     "apf_3d": {"label": "APF", "color": "#ff7f0e"},
+    "haddadin_3d": {"label": "Haddadin", "color": "#8b5cf6"},
+    "sabattini_3d": {"label": "Sabattini", "color": "#d97706"},
 }
 
 
@@ -191,7 +195,7 @@ def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
         "<body>",
         "  <main>",
         "    <h1>Interactive 3D Benchmark Comparison</h1>",
-        "    <p>Rotate, pan, and zoom each scene. Blue is MFI-PD, green is MFI-Geometric, orange is APF, teal is the start, black is the goal, and red obstacle geometry shows spheres or extruded polygon prisms.</p>",
+        "    <p>Rotate, pan, and zoom each scene. Blue is MFI-PD, green is MFI-Geometric, orange is APF, purple is Haddadin, amber is Sabattini, teal is the start, black is the goal, and red obstacle geometry shows spheres or extruded polygon prisms.</p>",
     ]
 
     script_lines = [
@@ -394,10 +398,26 @@ def main() -> None:
             config_apf,
             navigator=ArtificialPotentialFieldNavigator(config_apf),
         )
+        haddadin_history = simulate(
+            _initial_state(scenario.start),
+            scenario.goal,
+            scenario.obstacles,
+            config_pd,
+            navigator=HaddadinNavigator(config_pd),
+        )
+        sabattini_history = simulate(
+            _initial_state(scenario.start),
+            scenario.goal,
+            scenario.obstacles,
+            config_pd,
+            navigator=SabattiniNavigator(config_pd),
+        )
         histories = {
             "paper_pd_3d": history,
             "paper_geometric_3d": geometric_history,
             "apf_3d": apf_history,
+            "haddadin_3d": haddadin_history,
+            "sabattini_3d": sabattini_history,
         }
 
         plot_traces: list[dict[str, object]] = []

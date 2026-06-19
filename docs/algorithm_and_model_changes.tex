@@ -1066,7 +1066,7 @@ range-sensor style model based on ray casting:
   \item only those currently visible local obstacle points are passed to the closest-point and averaging logic
 \end{itemize}
 
-This is still a simulation abstraction, but it matches the paper’s
+This is still a simulation abstraction, but it matches the paper's
 ``temporally and spatially local sensing'' assumption much better than the
 earlier direct-boundary access.
 
@@ -1814,5 +1814,64 @@ With the current controllers:
   \item convex and non-convex obstacle structure can now be studied directly in 3D using polygon-derived solids,
   \item and the prism model is a better bridge toward future robot and environment extensions than sphere-only approximations.
 \end{itemize}
+
+\section*{Entry 2026-06-19: Added Legacy Comparison Navigators}
+
+\textbf{What changed}
+
+\begin{itemize}[leftmargin=*]
+  \item Added \texttt{HaddadinNavigator} in \texttt{src/mfinav/navigators/baselines.py}
+  \item Added \texttt{SabattiniNavigator} in \texttt{src/mfinav/navigators/baselines.py}
+  \item Extended both \texttt{scripts/run\_benchmarks.py} and \texttt{scripts/run\_benchmarks\_3d.py} to include these baselines
+\end{itemize}
+
+\textbf{Legacy source anchors}
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{nodes/collision\_avoidance\_new.py}, branches \texttt{field == 3} and \texttt{field == 4}
+  \item Cross-check against \texttt{nodes/collision\_avoidance\_okt.py}, which contains the same branch structure with slightly different hard-coded gains and cutoffs
+\end{itemize}
+
+\textbf{Porting notes}
+
+\begin{itemize}[leftmargin=*]
+  \item In the ROS repository these methods were implemented as obstacle-only terms added on top of the same go-to-goal node, so the clean Python port keeps the existing goal controller and swaps only the obstacle-response term.
+  \item The old ROS snapshots do not fully agree on exact scalar gains, distance cutoffs, or whether an extra factor of \(10\) multiplies the Haddadin branch. The clean Python port therefore preserves the branch logic and geometry, while using stable gains tied to the current benchmark framework.
+  \item The old ROS code used an \texttt{obs\_central} topic. In the clean Python port this is approximated by the centroid of the nearest active obstacle: exact center for circles and spheres, polygon centroid for 2D polygons, and footprint-centroid plus mid-height for prisms.
+  \item The Chang gyroscopic branch from the ROS repository was \emph{not} ported in this change because the legacy implementation outputs only a planar angular velocity command for unicycle-like robots, not a fully actuated double-integrator acceleration.
+\end{itemize}
+
+\textbf{Implemented formulas}
+
+For Haddadin, the obstacle term uses the sensed obstacle vector \(r_o\), a local obstacle-center proxy \(m_x\), goal vector \(r_g\), and robot velocity \(v\):
+
+\begin{align}
+\hat{l}_a &= \frac{v}{\lVert v \rVert}, \\
+d &= \lVert r_o \rVert, \\
+\hat{g} &= \frac{r_g}{\lVert r_g \rVert}, \\
+d_v &= m_x - (m_x^\top \hat{g})\hat{g}, \\
+\hat{t} &\propto \left(\frac{-r_o}{d}\right) \times \frac{d_v \times r_g}{\lVert d_v \times r_g \rVert}, \\
+B &= \frac{\hat{t} \times v}{\lVert v \rVert d^2}, \\
+F_{\text{Haddadin}} &= k_H \left(\hat{l}_a \times B\right)\lVert v \rVert .
+\end{align}
+
+For Sabattini, the obstacle term uses the goal vector \(r_g\), velocity \(v\), obstacle vector \(r_o\), and a damping term based on the signed approach speed:
+
+\begin{align}
+u_t &= 0.1\,r_g, \\
+w &= u_t - \operatorname{proj}_{v}(u_t), \\
+u_g &= -k_S \frac{w}{\lVert w \rVert}, \\
+\sigma &=
+\begin{cases}
+1, & v^\top r_o \ge 0, \\
+0, & v^\top r_o < 0,
+\end{cases} \\
+F_{\text{damp}} &= -0.05\,s\,\frac{E_0}{\lVert r_o \rVert}
+\left(\lvert v^\top r_o \rvert + e^{-\lvert v^\top r_o \rvert}\right)
+\frac{r_o}{\lVert r_o \rVert}, \\
+F_{\text{Sabattini}} &= \sigma\,(u_g + F_{\text{damp}}),
+\end{align}
+
+where \(E_0 = 0.1\,d_{g,0}^2\) uses the initial goal distance and \(s \in \{+1,-1\}\) follows the sign convention from the ROS code.
 
 \end{document}
