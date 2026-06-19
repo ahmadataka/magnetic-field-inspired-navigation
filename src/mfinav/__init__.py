@@ -14,6 +14,8 @@ from .models import (
     DifferentialDriveState,
     DoubleIntegratorModel,
     DoubleIntegratorState,
+    QuadrotorModel,
+    QuadrotorState,
 )
 from .navigators import (
     ArtificialPotentialFieldNavigator,
@@ -35,7 +37,7 @@ from .scenarios import (
     make_stress_scenarios_3d,
 )
 from .sensing import LocalSensingModel, LocalSensingObservation
-from .sim import simulate, simulate_differential_drive, write_history_csv
+from .sim import simulate, simulate_differential_drive, simulate_quadrotor, write_history_csv
 
 __all__ = [
     "ArtificialPotentialFieldNavigator",
@@ -66,6 +68,8 @@ __all__ = [
     "ObstacleCollection",
     "PolygonObstacle",
     "PrismObstacle",
+    "QuadrotorModel",
+    "QuadrotorState",
     "SphereObstacle",
     "ReferenceNavigator",
     "SimulationConfig",
@@ -73,6 +77,7 @@ __all__ = [
     "SabattiniNavigator",
     "simulate",
     "simulate_differential_drive",
+    "simulate_quadrotor",
     "write_history_csv",
     "make_default_scenarios_3d",
     "make_stress_scenarios_3d",

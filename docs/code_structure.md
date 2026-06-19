@@ -12,6 +12,8 @@ simulation infrastructure are separate.
   - `DifferentialDriveModel`
   - `DoubleIntegratorState`
   - `DoubleIntegratorModel`
+  - `QuadrotorState`
+  - `QuadrotorModel`
 
 - `src/mfinav/navigators/`
   Navigation and control logic independent of the robot model.
@@ -48,6 +50,7 @@ simulation infrastructure are separate.
   Current implementation:
   - `simulate`
   - `simulate_differential_drive`
+  - `simulate_quadrotor`
   - `write_history_csv`
 
 - `src/mfinav/metrics/`
@@ -133,6 +136,22 @@ The repository now also includes a 2D differential-drive path:
 
 This keeps the navigation layer reusable while allowing nonholonomic 2D
 benchmarking against the same obstacle scenarios.
+
+## Quadrotor Milestone
+
+The repository now also includes a 3D quadrotor path:
+
+- quadrotor state propagation with explicit position, velocity, attitude,
+  angular velocity, and thrust state
+- Pelican-inspired rotor allocation constants and rigid-body dynamics
+- a low-level thrust and attitude tracking layer that reuses the same 3D
+  navigation outputs
+- a dedicated 3D quadrotor benchmark script:
+  - `scripts/run_benchmarks_quadrotor_3d.py`
+
+This makes it possible to compare the current 3D navigation algorithms on both
+the point-mass double-integrator abstraction and a more realistic quadrotor
+dynamic model.
 
 ## Adding A New Navigation Method
 

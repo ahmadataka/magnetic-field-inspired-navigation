@@ -1928,4 +1928,102 @@ The kinematic propagation is then
   \item Differential-drive benchmarks are therefore useful for qualitative portability studies and algorithm comparison, but should not be interpreted as a paper-faithful nonholonomic controller unless a dedicated derivation is added later.
 \end{itemize}
 
+\section*{Entry 2026-06-19: Added 3D Quadrotor Dynamics Model and Benchmark Path}
+
+\textbf{What changed}
+
+\begin{itemize}[leftmargin=*]
+  \item Added \texttt{QuadrotorState} and \texttt{QuadrotorModel} in \texttt{src/mfinav/models/quadrotor.py}
+  \item Added \texttt{simulate\_quadrotor} in \texttt{src/mfinav/sim/quadrotor.py}
+  \item Exported the quadrotor model and simulator through the package compatibility layer
+  \item Added dedicated 3D quadrotor benchmark script \texttt{scripts/run\_benchmarks\_quadrotor\_3d.py}
+\end{itemize}
+
+\textbf{Motivation}
+
+\begin{itemize}[leftmargin=*]
+  \item The clean Python repository already supported 3D point-mass navigation, but not the quadrotor dynamic model used in the ICRA 2019 ROS implementation.
+  \item A dedicated quadrotor model is needed so the same 3D navigators can be tested under a more realistic underactuated vehicle assumption.
+\end{itemize}
+
+\textbf{Modeling choice}
+
+The quadrotor state is
+\[
+x = \begin{bmatrix} p^\top & v^\top & R & \omega^\top & T \end{bmatrix},
+\]
+where \(p \in \mathbb{R}^3\) is position, \(v \in \mathbb{R}^3\) is linear
+velocity, \(R \in SO(3)\) is attitude, \(\omega \in \mathbb{R}^3\) is angular
+velocity, and \(T\) is total thrust.
+
+The high-level navigation layer still outputs a 3D guidance vector
+\(u \in \mathbb{R}^3\). In the quadrotor model this is interpreted as the
+desired translational navigation force relative to hover:
+\[
+F_Q = u + m g e_3 .
+\]
+
+The rigid-body propagation follows the same structure as the legacy ROS
+quadrotor node:
+\begin{align}
+\dot{p} &= v, \\
+\dot{v} &= \frac{1}{m}\left(R e_3 T + G\right), \\
+\dot{R} &= R \hat{\omega}, \\
+\dot{\omega} &= J^{-1}\left(J \hat{\omega}\,\omega + \tau\right).
+\end{align}
+
+\textbf{Low-level actuation assumption}
+
+To match the practical quadrotor controller path in the old ROS implementation,
+the clean Python model uses a thrust plus attitude-tracking layer rather than
+driving the navigation field directly into rotor speeds.
+
+The total thrust tracks the desired force magnitude:
+\[
+T_d = \lVert F_Q \rVert .
+\]
+
+Desired roll and pitch are computed from the horizontal components of \(F_Q\)
+and the available thrust, with yaw regulated toward zero:
+\begin{align}
+\phi_d &= -k_f \frac{F_{Q,y}}{\max(T_d,\varepsilon)}, \\
+\theta_d &= k_f \frac{F_{Q,x}}{\max(T_d,\varepsilon)}, \\
+\psi_d &= 0 .
+\end{align}
+
+The torque command is then a PD law on roll, pitch, and yaw:
+\begin{align}
+\tau_\phi &= -k_\phi (\phi - \phi_d) - d_\phi \omega_x, \\
+\tau_\theta &= -k_\theta (\theta - \theta_d) - d_\theta \omega_y, \\
+\tau_\psi &= -k_\psi (\psi - \psi_d) - d_\psi \omega_z .
+\end{align}
+
+Rotor speeds are computed through the Pelican-style allocation matrix used in
+the old ROS code, but the internal benchmark dynamics are propagated with the
+commanded thrust and torques, matching the legacy non-Gazebo simulation path.
+
+\textbf{Current benchmark outcome}
+
+The first quadrotor benchmark pass is now operational and writes:
+\begin{itemize}[leftmargin=*]
+  \item \texttt{artifacts/benchmark\_comparison\_quadrotor\_3d.png}
+  \item \texttt{artifacts/benchmark\_metrics\_quadrotor\_3d.csv}
+\end{itemize}
+
+At the current tuning level:
+\begin{itemize}[leftmargin=*]
+  \item the quadrotor dynamics are stable enough to simulate all current 3D navigators across the default 3D benchmark set,
+  \item the existing 3D double-integrator benchmark path still runs unchanged after the addition,
+  \item the existing 2D benchmark path still runs unchanged after the addition,
+  \item but the quadrotor benchmark results are not yet as strong as the point-mass 3D results and still need dedicated gain tuning, especially in the clustered and cavity-like environments.
+\end{itemize}
+
+\textbf{Interpretation}
+
+\begin{itemize}[leftmargin=*]
+  \item This addition creates the needed structural bridge from the clean 3D navigation layer to the older quadrotor paper and ROS implementation.
+  \item The current quadrotor path is already useful for qualitative comparison and model-portability testing.
+  \item Full paper-level reproduction of the quadrotor results will likely require a second tuning pass that is specific to the quadrotor actuation and benchmark geometry, rather than reusing the point-mass gains directly.
+\end{itemize}
+
 \end{document}

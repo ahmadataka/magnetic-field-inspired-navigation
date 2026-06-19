@@ -38,6 +38,27 @@ class SimulationConfig:
     sensing_mode: str = "analytic"
     sensor_range: float = 6.0
     goal_relaxation_mode: str = "legacy"
+    quadrotor_mass: float = 1.0
+    quadrotor_gravity: float = 9.8
+    quadrotor_inertia: tuple[float, float, float] = (0.01, 0.01, 0.02)
+    quadrotor_arm_length: float = 0.21
+    quadrotor_thrust_coeff: float = 9.9865e-06
+    quadrotor_drag_coeff: float = 1.6e-2
+    quadrotor_kz: float = 1.0
+    quadrotor_kz2: float = 3.0
+    quadrotor_guidance_limit: float = 12.0
+    quadrotor_max_total_thrust: float = 25.0
+    quadrotor_max_thrust_rate: float = 200.0
+    quadrotor_max_rotor_speed: float = 1100.0
+    quadrotor_max_angular_speed: float = 8.0
+    quadrotor_angle_gain: float = 6.0
+    quadrotor_angle_damping: float = 1.5
+    quadrotor_yaw_gain: float = 0.8
+    quadrotor_yaw_damping: float = 0.8
+    quadrotor_force_to_tilt_gain: float = 18.0
+    quadrotor_max_tilt: float = 0.65
+    quadrotor_goal_tolerance: float = 0.35
+    quadrotor_velocity_tolerance: float = 0.15
 
 
 def make_paper_pd_config() -> SimulationConfig:

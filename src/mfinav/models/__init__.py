@@ -1,5 +1,6 @@
 from .differential_drive import DifferentialDriveCommand, DifferentialDriveModel, DifferentialDriveState
 from .double_integrator import DoubleIntegratorModel, DoubleIntegratorState
+from .quadrotor import QuadrotorModel, QuadrotorState
 
 __all__ = [
     "DifferentialDriveCommand",
@@ -7,4 +8,6 @@ __all__ = [
     "DifferentialDriveState",
     "DoubleIntegratorModel",
     "DoubleIntegratorState",
+    "QuadrotorModel",
+    "QuadrotorState",
 ]
