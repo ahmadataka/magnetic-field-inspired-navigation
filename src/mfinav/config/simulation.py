@@ -68,6 +68,19 @@ def make_paper_geometric_config() -> SimulationConfig:
     return cfg
 
 
+def make_paper_pd_3d_config() -> SimulationConfig:
+    cfg = make_paper_pd_config()
+    cfg.sensing_mode = "analytic"
+    cfg.r_l = 4.0
+    cfg.r_la = 2.0
+    cfg.c_field = 15.0
+    cfg.c_perp = 20.0
+    cfg.speed_limit = 1.0
+    cfg.kp_goal = 0.08
+    cfg.kp_goal_relaxed = 0.08
+    return cfg
+
+
 def make_paper_faithful_config() -> SimulationConfig:
     return make_paper_pd_config()
 

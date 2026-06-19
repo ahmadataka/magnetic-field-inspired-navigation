@@ -1625,23 +1625,42 @@ The first 3D milestone includes:
 
 \textbf{Benchmark outcome}
 
-The first 3D benchmark run shows:
+The tuned 3D benchmark run now shows:
 
 \begin{itemize}[leftmargin=*]
   \item \texttt{single\_sphere}: successful paper-style 3D navigation
-  \item \texttt{double\_sphere\_gap}: collision in the current implementation
-  \item \texttt{sphere\_cluster}: collision in the current implementation
+  \item \texttt{double\_sphere\_gap}: successful traversal of a narrow passage between two spheres
+  \item \texttt{sphere\_cluster}: successful repeated avoidance through a cluttered multi-sphere field
+  \item \texttt{offset\_cavity}: successful navigation around a reachable non-convex-like sphere composition
+  \item \texttt{archway}: successful navigation through a non-convex archway assembled from spheres
+\end{itemize}
+
+The 3D APF comparison remains much weaker:
+
+\begin{itemize}[leftmargin=*]
+  \item it collides in \texttt{single\_sphere}, \texttt{double\_sphere\_gap}, \texttt{sphere\_cluster}, and \texttt{offset\_cavity}
+  \item it reaches \texttt{archway}, but with a much longer and less efficient path than the magnetic-field-inspired controller
+\end{itemize}
+
+\textbf{Added stress case}
+
+To keep the benchmark suite honest, a separate stress scenario set was added
+under \texttt{make\_stress\_scenarios\_3d()}.
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{wide\_cavity\_trap}: a deeper composed-sphere cavity that still traps the current purely local 3D MFI controller
 \end{itemize}
 
 \textbf{Interpretation}
 
-This is a good first milestone outcome:
+This is a stronger 3D milestone outcome:
 
 \begin{itemize}[leftmargin=*]
   \item the 3D stack is alive and operational,
   \item the 2D stack remains preserved,
-  \item the simple 3D case already works,
-  \item but cluttered 3D obstacle handling still needs further work, especially in close-range collision avoidance and sensing robustness.
+  \item the paper-style 3D MFI controller now works on simple, narrow-passage, cluttered, and reachable non-convex-like benchmark cases,
+  \item APF provides a useful baseline comparison but is clearly less robust in these local-sensing 3D scenarios,
+  \item and deeper trap-like cavities remain an open limitation for the current purely local formulation.
 \end{itemize}
 
 \end{document}

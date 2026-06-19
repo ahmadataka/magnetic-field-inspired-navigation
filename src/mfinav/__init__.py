@@ -3,6 +3,7 @@ from .config import (
     make_paper_faithful_config,
     make_paper_geometric_config,
     make_paper_pd_config,
+    make_paper_pd_3d_config,
     make_pragmatic_config,
 )
 from .metrics import compute_metrics
@@ -17,7 +18,13 @@ from .navigators import (
     ReferenceNavigator,
 )
 from .obstacles import CircleObstacle, Obstacle, ObstacleCollection, PolygonObstacle, SphereObstacle
-from .scenarios import BenchmarkScenario, BenchmarkScenario3D, make_default_scenarios, make_default_scenarios_3d
+from .scenarios import (
+    BenchmarkScenario,
+    BenchmarkScenario3D,
+    make_default_scenarios,
+    make_default_scenarios_3d,
+    make_stress_scenarios_3d,
+)
 from .sensing import LocalSensingModel, LocalSensingObservation
 from .sim import simulate, write_history_csv
 
@@ -38,6 +45,7 @@ __all__ = [
     "Obstacle",
     "make_paper_geometric_config",
     "make_paper_pd_config",
+    "make_paper_pd_3d_config",
     "make_paper_faithful_config",
     "make_pragmatic_config",
     "make_default_scenarios",
@@ -50,4 +58,5 @@ __all__ = [
     "simulate",
     "write_history_csv",
     "make_default_scenarios_3d",
+    "make_stress_scenarios_3d",
 ]

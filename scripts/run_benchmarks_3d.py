@@ -16,12 +16,13 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from mfinav import (
+    ArtificialPotentialFieldNavigator,
     DoubleIntegratorState,
     MagneticFieldNavigator3D,
     SphereObstacle,
     compute_metrics,
     make_default_scenarios_3d,
-    make_paper_pd_config,
+    make_paper_pd_3d_config,
     simulate,
 )
 
@@ -33,6 +34,7 @@ def _initial_state(start: np.ndarray) -> DoubleIntegratorState:
 def _plot_projection(ax: plt.Axes, scenario, histories: dict[str, list[dict[str, float]]], axes: tuple[str, str]) -> None:
     colors = {
         "paper_pd_3d": "#1f77b4",
+        "apf_3d": "#ff7f0e",
     }
     x_key, y_key = axes
     for name, history in histories.items():
@@ -67,8 +69,7 @@ def _plot_projection(ax: plt.Axes, scenario, histories: dict[str, list[dict[str,
 
 def main() -> None:
     scenarios = make_default_scenarios_3d()
-    config = make_paper_pd_config()
-    config.sensing_mode = "analytic"
+    config = make_paper_pd_3d_config()
     artifacts = ROOT / "artifacts"
     artifacts.mkdir(parents=True, exist_ok=True)
 
@@ -84,29 +85,40 @@ def main() -> None:
             config,
             navigator=MagneticFieldNavigator3D(config),
         )
-        histories = {"paper_pd_3d": history}
+        apf_history = simulate(
+            _initial_state(scenario.start),
+            scenario.goal,
+            scenario.obstacles,
+            config,
+            navigator=ArtificialPotentialFieldNavigator(config),
+        )
+        histories = {
+            "paper_pd_3d": history,
+            "apf_3d": apf_history,
+        }
         for ax, proj in zip(row_axes, (("x", "y"), ("x", "z"), ("y", "z"))):
             _plot_projection(ax, scenario, histories, proj)
             ax.set_title(f"{scenario.name} {proj[0]}{proj[1]}")
 
-        metrics = compute_metrics(history, scenario.goal)
-        summary_rows.append(
-            {
-                "scenario": scenario.name,
-                "method": "paper_pd_3d",
-                "success": metrics["success"],
-                "goal_reached_once": metrics["goal_reached_once"],
-                "steps": metrics["steps"],
-                "path_length": metrics["path_length"],
-                "final_goal_distance": metrics["final_goal_distance"],
-                "min_clearance": metrics["min_clearance"],
-                "mean_speed": metrics["mean_speed"],
-                "collision": metrics["collision"],
-                "safety_violation": metrics["safety_violation"],
-                "time_to_goal_steps": metrics["time_to_goal_steps"],
-                "path_efficiency": metrics["path_efficiency"],
-            }
-        )
+        for method_name, method_history in histories.items():
+            metrics = compute_metrics(method_history, scenario.goal)
+            summary_rows.append(
+                {
+                    "scenario": scenario.name,
+                    "method": method_name,
+                    "success": metrics["success"],
+                    "goal_reached_once": metrics["goal_reached_once"],
+                    "steps": metrics["steps"],
+                    "path_length": metrics["path_length"],
+                    "final_goal_distance": metrics["final_goal_distance"],
+                    "min_clearance": metrics["min_clearance"],
+                    "mean_speed": metrics["mean_speed"],
+                    "collision": metrics["collision"],
+                    "safety_violation": metrics["safety_violation"],
+                    "time_to_goal_steps": metrics["time_to_goal_steps"],
+                    "path_efficiency": metrics["path_efficiency"],
+                }
+            )
 
     fig.tight_layout()
     plot_path = artifacts / "benchmark_comparison_3d.png"

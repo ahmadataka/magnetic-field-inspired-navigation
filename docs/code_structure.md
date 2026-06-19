@@ -102,9 +102,18 @@ The repository now includes an initial 3D path:
 - a 3D magnetic-field-inspired navigator
 - a dedicated 3D benchmark script:
   - `scripts/run_benchmarks_3d.py`
+- successful 3D benchmark cases for:
+  - single-sphere avoidance
+  - narrow double-sphere passage
+  - multi-sphere cluster avoidance
+  - offset non-convex-like cavity
+  - non-convex archway routing
+- an explicit stress-case generator:
+  - `make_stress_scenarios_3d()`
 
-This first 3D milestone is intended as a correctness baseline rather than a
-finished 3D benchmark suite.
+The default 3D suite is now intended to be a reproducible correctness
+baseline, while the stress scenarios capture harder local-sensing failure modes
+that still need additional work.
 
 ## Adding A New Navigation Method
 

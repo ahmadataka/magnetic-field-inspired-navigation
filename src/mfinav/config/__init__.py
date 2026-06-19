@@ -3,6 +3,7 @@ from .simulation import (
     make_paper_faithful_config,
     make_paper_geometric_config,
     make_paper_pd_config,
+    make_paper_pd_3d_config,
     make_pragmatic_config,
 )
 
@@ -11,5 +12,6 @@ __all__ = [
     "make_paper_faithful_config",
     "make_paper_geometric_config",
     "make_paper_pd_config",
+    "make_paper_pd_3d_config",
     "make_pragmatic_config",
 ]
