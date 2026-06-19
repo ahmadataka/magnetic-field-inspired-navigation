@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import csv
+import math
 import sys
 
 import matplotlib
@@ -80,9 +81,10 @@ def main() -> None:
     artifacts.mkdir(parents=True, exist_ok=True)
 
     summary_rows: list[dict[str, str | float]] = []
-    fig, axes = plt.subplots(1, len(scenarios), figsize=(6 * len(scenarios), 5.5))
-    if len(scenarios) == 1:
-        axes = [axes]
+    cols = min(3, len(scenarios))
+    rows = math.ceil(len(scenarios) / cols)
+    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 5.2 * rows))
+    axes = np.atleast_1d(axes).ravel()
 
     for ax, scenario in zip(axes, scenarios):
         mfi_history = simulate(
@@ -141,6 +143,9 @@ def main() -> None:
                     "path_efficiency": metrics["path_efficiency"],
                 }
             )
+
+    for ax in axes[len(scenarios):]:
+        ax.axis("off")
 
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=4, frameon=False)

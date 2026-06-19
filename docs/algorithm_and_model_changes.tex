@@ -1553,4 +1553,52 @@ After the refactor:
   \item the repository is now structurally ready for multiple robot models and multiple navigation methods.
 \end{itemize}
 
+\section*{Entry 2026-06-19: Stronger Benchmark Environments With True Facing Concavity}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Expanded the benchmark set beyond the earlier easy convex and away-facing concave cases
+  \item Added stronger multi-obstacle and truly concave-facing environments
+  \item Updated the benchmark plotting script to handle a larger scenario set cleanly
+\end{itemize}
+
+\textbf{New scenarios}
+
+The benchmark suite now includes:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{slalom\_multi\_convex}: alternating convex obstacles forming a repeated corridor / slalom problem
+  \item \texttt{facing\_u\_shape}: a non-convex U-shaped obstacle whose cavity faces the approaching robot
+  \item \texttt{mixed\_concave\_field}: a true concave-facing obstacle followed by additional downstream obstacles
+\end{itemize}
+
+\textbf{Why this matters}
+
+The earlier non-convex benchmark used a cavity that faced away from the robot,
+so although the obstacle was mathematically non-convex, the robot effectively
+interacted with it more like a convex obstacle from the approach direction.
+The new environments are more faithful tests of the intended non-convex
+navigation challenge.
+
+\textbf{Observed outcome}
+
+With the stronger environment set:
+
+\begin{itemize}[leftmargin=*]
+  \item both paper-style modes still succeed on the original \texttt{single\_convex} and \texttt{convex\_cluster} cases,
+  \item the paper-style geometric controller succeeds on the new \texttt{facing\_u\_shape} case,
+  \item the new \texttt{slalom\_multi\_convex} and \texttt{mixed\_concave\_field} cases are harder and expose remaining limitations,
+  \item the APF and pragmatic baselines remain clearly weaker in the more complex new environments.
+\end{itemize}
+
+\textbf{Interpretation}
+
+This benchmark update is useful because it separates:
+
+\begin{itemize}[leftmargin=*]
+  \item cases where the current implementation is already robust,
+  \item from cases that still require more work in repeated-obstacle and truly concave-facing navigation.
+\end{itemize}
+
 \end{document}
