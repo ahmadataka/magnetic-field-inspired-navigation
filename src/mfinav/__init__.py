@@ -18,7 +18,7 @@ from .navigators import (
     MagneticFieldNavigator3D,
     ReferenceNavigator,
 )
-from .obstacles import CircleObstacle, Obstacle, ObstacleCollection, PolygonObstacle, SphereObstacle
+from .obstacles import CircleObstacle, Obstacle, ObstacleCollection, PolygonObstacle, PrismObstacle, SphereObstacle
 from .scenarios import (
     BenchmarkScenario,
     BenchmarkScenario3D,
@@ -53,6 +53,7 @@ __all__ = [
     "make_default_scenarios",
     "ObstacleCollection",
     "PolygonObstacle",
+    "PrismObstacle",
     "SphereObstacle",
     "ReferenceNavigator",
     "SimulationConfig",

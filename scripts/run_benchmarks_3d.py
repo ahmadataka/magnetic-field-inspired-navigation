@@ -21,6 +21,7 @@ from mfinav import (
     ArtificialPotentialFieldNavigator,
     DoubleIntegratorState,
     MagneticFieldNavigator3D,
+    PrismObstacle,
     SphereObstacle,
     compute_metrics,
     make_default_scenarios_3d,
@@ -69,6 +70,65 @@ def _sphere_surface(center: np.ndarray, radius: float, n_theta: int = 18, n_phi:
     return xs, ys, zs
 
 
+def _prism_wireframe(prism: PrismObstacle) -> list[dict[str, object]]:
+    vertices = prism.vertices_xy
+    traces: list[dict[str, object]] = []
+    bottom_loop = np.column_stack((vertices, np.full(len(vertices), prism.z_min)))
+    top_loop = np.column_stack((vertices, np.full(len(vertices), prism.z_max)))
+    for loop, name in ((bottom_loop, "bottom"), (top_loop, "top")):
+        closed = np.vstack((loop, loop[0]))
+        traces.append(
+            {
+                "type": "scatter3d",
+                "mode": "lines",
+                "name": f"prism_{name}",
+                "x": closed[:, 0].tolist(),
+                "y": closed[:, 1].tolist(),
+                "z": closed[:, 2].tolist(),
+                "line": {"color": "#ef4444", "width": 5},
+                "hoverinfo": "skip",
+                "showlegend": False,
+                "meta": {"category": "context"},
+            }
+        )
+    for vertex in vertices:
+        traces.append(
+            {
+                "type": "scatter3d",
+                "mode": "lines",
+                "name": "prism_side",
+                "x": [float(vertex[0]), float(vertex[0])],
+                "y": [float(vertex[1]), float(vertex[1])],
+                "z": [prism.z_min, prism.z_max],
+                "line": {"color": "#ef4444", "width": 4},
+                "hoverinfo": "skip",
+                "showlegend": False,
+                "meta": {"category": "context"},
+            }
+        )
+    return traces
+
+
+def _plot_prism_projection(ax: plt.Axes, prism: PrismObstacle, axes: tuple[str, str]) -> None:
+    x_key, y_key = axes
+    axis_map = {"x": 0, "y": 1, "z": 2}
+    if axes == ("x", "y"):
+        polygon = np.vstack((prism.vertices_xy, prism.vertices_xy[0]))
+        ax.fill(polygon[:, 0], polygon[:, 1], color="#ef4444", alpha=0.18)
+        ax.plot(polygon[:, 0], polygon[:, 1], color="#ef4444", linewidth=1.5, alpha=0.8)
+        return
+
+    min_x = float(np.min(prism.vertices_xy[:, axis_map[x_key]])) if x_key != "z" else prism.z_min
+    max_x = float(np.max(prism.vertices_xy[:, axis_map[x_key]])) if x_key != "z" else prism.z_max
+    min_y = float(np.min(prism.vertices_xy[:, axis_map[y_key]])) if y_key != "z" else prism.z_min
+    max_y = float(np.max(prism.vertices_xy[:, axis_map[y_key]])) if y_key != "z" else prism.z_max
+
+    rectangle_x = [min_x, max_x, max_x, min_x, min_x]
+    rectangle_y = [min_y, min_y, max_y, max_y, min_y]
+    ax.fill(rectangle_x, rectangle_y, color="#ef4444", alpha=0.12)
+    ax.plot(rectangle_x, rectangle_y, color="#ef4444", linewidth=1.2, alpha=0.7)
+
+
 def _plot_projection(ax: plt.Axes, scenario, histories: dict[str, list[dict[str, float]]], axes: tuple[str, str]) -> None:
     x_key, y_key = axes
     for name, history in histories.items():
@@ -83,6 +143,8 @@ def _plot_projection(ax: plt.Axes, scenario, histories: dict[str, list[dict[str,
         if isinstance(obstacle, SphereObstacle):
             center = obstacle.center
             ax.scatter(center[0 if x_key == "x" else 1 if x_key == "y" else 2], center[0 if y_key == "x" else 1 if y_key == "y" else 2], color="#d62728", s=80, alpha=0.35)
+        elif isinstance(obstacle, PrismObstacle):
+            _plot_prism_projection(ax, obstacle, axes)
 
     ax.scatter(
         scenario.start[0 if x_key == "x" else 1 if x_key == "y" else 2],
@@ -120,15 +182,16 @@ def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
         "    .scenario { background: #ffffff; border: 1px solid #dddddd; border-radius: 16px; padding: 18px; margin: 0 0 22px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05); }",
         "    .plot { width: 100%; height: 760px; }",
         "    .caption { color: #555555; margin: 0 0 10px; }",
-        "    .controls { display: flex; gap: 10px; margin: 0 0 14px; flex-wrap: wrap; }",
+        "    .controls { display: flex; gap: 10px; margin: 0 0 14px; flex-wrap: wrap; align-items: center; }",
         "    .controls button { border: 1px solid #c9c9c9; background: #f3f4f6; color: #222222; border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 14px; }",
         "    .controls button.active { background: #111827; color: #ffffff; border-color: #111827; }",
+        "    .controls button.utility { background: #ffffff; }",
         "  </style>",
         "</head>",
         "<body>",
         "  <main>",
         "    <h1>Interactive 3D Benchmark Comparison</h1>",
-        "    <p>Rotate, pan, and zoom each scene. Blue is MFI-PD, green is MFI-Geometric, orange is APF, teal is the start, black is the goal, and red translucent surfaces are sphere obstacles.</p>",
+        "    <p>Rotate, pan, and zoom each scene. Blue is MFI-PD, green is MFI-Geometric, orange is APF, teal is the start, black is the goal, and red obstacle geometry shows spheres or extruded polygon prisms.</p>",
     ]
 
     script_lines = [
@@ -174,18 +237,27 @@ def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
         "    'scene.aspectmode': 'data'",
         "  };",
         "}",
-        "function applyAlgorithmView(plotId, traces, algorithm) {",
+        "function applyAlgorithmSelection(plotId, traces, selectedAlgorithms) {",
         "  const visibleMask = traces.map((trace) => {",
         "    const meta = trace.meta || {};",
         "    if (meta.category !== 'algorithm') return true;",
-        "    return algorithm === 'both' || meta.algorithm === algorithm;",
+        "    return selectedAlgorithms.includes(meta.algorithm);",
         "  });",
         "  Plotly.restyle(plotId, {visible: visibleMask});",
         "  const ranges = computeSceneRanges(traces, visibleMask);",
         "  if (ranges) Plotly.relayout(plotId, ranges);",
-        "  document.querySelectorAll(`[data-plot=\"${plotId}\"]`).forEach((button) => {",
-        "    button.classList.toggle('active', button.dataset.algorithm === algorithm);",
+        "  document.querySelectorAll(`[data-plot=\"${plotId}\"][data-role=\"toggle\"]`).forEach((button) => {",
+        "    button.classList.toggle('active', selectedAlgorithms.includes(button.dataset.algorithm));",
         "  });",
+        "}",
+        "function selectedAlgorithmsForPlot(plotId) {",
+        "  return Array.from(document.querySelectorAll(`[data-plot=\"${plotId}\"][data-role=\"toggle\"].active`)).map((button) => button.dataset.algorithm);",
+        "}",
+        "function refreshPlotSelection(plotId) {",
+        "  const index = Number(plotId.split('-')[1]);",
+        "  const traces = window[`data${index}`];",
+        "  const selected = selectedAlgorithmsForPlot(plotId);",
+        "  applyAlgorithmSelection(plotId, traces, selected);",
         "}",
     ]
     for index, scenario_data in enumerate(scenarios_data):
@@ -194,10 +266,11 @@ def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
         html_parts.append(f"      <h2>{scenario_data['name']}</h2>")
         html_parts.append(f"      <p class=\"caption\">{scenario_data['description']}</p>")
         html_parts.append("      <div class=\"controls\">")
-        html_parts.append(f"        <button class=\"active\" data-plot=\"{div_id}\" data-algorithm=\"both\">Both</button>")
+        html_parts.append(f"        <button class=\"utility\" data-plot=\"{div_id}\" data-action=\"all\">All</button>")
+        html_parts.append(f"        <button class=\"utility\" data-plot=\"{div_id}\" data-action=\"none\">None</button>")
         for method_name, spec in METHOD_SPECS.items():
             html_parts.append(
-                f"        <button data-plot=\"{div_id}\" data-algorithm=\"{method_name}\">{spec['label']}</button>"
+                f"        <button class=\"active\" data-role=\"toggle\" data-plot=\"{div_id}\" data-algorithm=\"{method_name}\">{spec['label']}</button>"
             )
         html_parts.append("      </div>")
         html_parts.append(f"      <div id=\"{div_id}\" class=\"plot\"></div>")
@@ -215,7 +288,7 @@ def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
             f"Plotly.newPlot('{div_id}', data{index}, layout{index}, {{responsive: true, displaylogo: false}});"
         )
         script_lines.append(
-            f"applyAlgorithmView('{div_id}', data{index}, 'both');"
+            f"refreshPlotSelection('{div_id}');"
         )
     script_lines.append(
         "document.querySelectorAll('.controls button').forEach((button) => {"
@@ -227,13 +300,55 @@ def _build_interactive_html(scenarios_data: list[dict[str, object]]) -> str:
         "    const plotId = button.dataset.plot;"
     )
     script_lines.append(
-        "    const index = Number(plotId.split('-')[1]);"
+        "    if (button.dataset.action === 'all') {"
     )
     script_lines.append(
-        "    const traces = window[`data${index}`];"
+        "      document.querySelectorAll(`[data-plot=\"${plotId}\"][data-role=\"toggle\"]`).forEach((toggle) => toggle.classList.add('active'));"
     )
     script_lines.append(
-        "    applyAlgorithmView(plotId, traces, button.dataset.algorithm);"
+        "      refreshPlotSelection(plotId);"
+    )
+    script_lines.append(
+        "      return;"
+    )
+    script_lines.append(
+        "    }"
+    )
+    script_lines.append(
+        "    if (button.dataset.action === 'none') {"
+    )
+    script_lines.append(
+        "      document.querySelectorAll(`[data-plot=\"${plotId}\"][data-role=\"toggle\"]`).forEach((toggle) => toggle.classList.remove('active'));"
+    )
+    script_lines.append(
+        "      refreshPlotSelection(plotId);"
+    )
+    script_lines.append(
+        "      return;"
+    )
+    script_lines.append(
+        "    }"
+    )
+    script_lines.append(
+        "    if (button.dataset.role === 'toggle') {"
+    )
+    script_lines.append(
+        "      const activeToggles = document.querySelectorAll(`[data-plot=\"${plotId}\"][data-role=\"toggle\"].active`).length;"
+    )
+    script_lines.append(
+        "      const willDeactivate = button.classList.contains('active');"
+    )
+    script_lines.append(
+        "      if (willDeactivate && activeToggles === 1) return;"
+    )
+    script_lines.append(
+        "      button.classList.toggle('active');"
+    )
+    script_lines.append(
+        "      refreshPlotSelection(plotId);"
+    )
+    script_lines.append(
+        "    }"
     )
     script_lines.append("  });")
     script_lines.append("});")
@@ -303,6 +418,8 @@ def main() -> None:
                         "meta": {"category": "context"},
                     }
                 )
+            elif isinstance(obstacle, PrismObstacle):
+                plot_traces.extend(_prism_wireframe(obstacle))
 
         for ax, proj in zip(row_axes, (("x", "y"), ("x", "z"), ("y", "z"))):
             _plot_projection(ax, scenario, histories, proj)

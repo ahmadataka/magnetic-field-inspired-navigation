@@ -1765,4 +1765,54 @@ With this more faithful 3D geometric benchmark variant:
   \item and it gives a usable 3D geometric comparison path even though the offset cavity case remains unsolved.
 \end{itemize}
 
+\section*{Entry 2026-06-19: 3D Extruded Polygon Obstacles for Convex and Non-Convex Benchmarks}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Added \texttt{PrismObstacle} as an extruded-polygon 3D obstacle model
+  \item Extended the 3D benchmark suite with convex and non-convex prism environments
+  \item Updated the interactive HTML viewer so prism obstacles appear as 3D wireframe solids
+\end{itemize}
+
+\textbf{Model choice}
+
+Instead of introducing a general triangle mesh pipeline, the 3D environment now
+uses a simpler and more reusable representation:
+
+\begin{itemize}[leftmargin=*]
+  \item a planar polygon footprint in \((x,y)\),
+  \item extruded between \(\,z_{\min}\,\) and \(\,z_{\max}\,\).
+\end{itemize}
+
+This preserves the spirit of the earlier 2D polygon benchmarks while keeping
+the obstacle interface compatible with the local closest-point sensing model.
+
+\textbf{New benchmark environments}
+
+The 3D default benchmark suite now additionally includes:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{convex\_prism\_block}: a single convex rectangular prism crossing the direct path
+  \item \texttt{nonconvex\_prism\_u}: a non-convex U-shaped prism whose opening faces the robot
+\end{itemize}
+
+\textbf{Current benchmark outcome}
+
+With the current controllers:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{paper\_pd\_3d} succeeds on both prism environments
+  \item \texttt{paper\_geometric\_3d} succeeds on both prism environments
+  \item \texttt{apf\_3d} succeeds on the convex prism block but still fails on the non-convex U-prism case
+\end{itemize}
+
+\textbf{Interpretation}
+
+\begin{itemize}[leftmargin=*]
+  \item the 3D benchmark suite is no longer restricted to sphere-only environments,
+  \item convex and non-convex obstacle structure can now be studied directly in 3D using polygon-derived solids,
+  \item and the prism model is a better bridge toward future robot and environment extensions than sphere-only approximations.
+\end{itemize}
+
 \end{document}

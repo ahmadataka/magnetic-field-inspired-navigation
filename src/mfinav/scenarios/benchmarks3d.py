@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..obstacles.collection import ObstacleCollection
+from ..obstacles.prism import PrismObstacle
 from ..obstacles.sphere import SphereObstacle
 
 
@@ -79,6 +80,56 @@ def make_default_scenarios_3d() -> list[BenchmarkScenario3D]:
                 ]
             ),
             description="A non-convex archway assembled from spheres that requires 3D routing.",
+        ),
+        BenchmarkScenario3D(
+            name="convex_prism_block",
+            start=np.array([0.0, -1.0, 0.0], dtype=float),
+            goal=np.array([12.0, 2.0, 0.6], dtype=float),
+            obstacles=ObstacleCollection(
+                obstacles=[
+                    PrismObstacle(
+                        vertices_xy=np.array(
+                            [
+                                [4.8, -1.8],
+                                [7.8, -1.8],
+                                [7.8, 1.3],
+                                [4.8, 1.3],
+                            ],
+                            dtype=float,
+                        ),
+                        z_min=-1.2,
+                        z_max=1.2,
+                    )
+                ]
+            ),
+            description="A single convex rectangular prism crossing the direct path.",
+        ),
+        BenchmarkScenario3D(
+            name="nonconvex_prism_u",
+            start=np.array([0.0, 0.0, 0.0], dtype=float),
+            goal=np.array([12.5, 0.0, 0.4], dtype=float),
+            obstacles=ObstacleCollection(
+                obstacles=[
+                    PrismObstacle(
+                        vertices_xy=np.array(
+                            [
+                                [4.2, -2.4],
+                                [8.5, -2.4],
+                                [8.5, -1.1],
+                                [5.6, -1.1],
+                                [5.6, 1.1],
+                                [8.5, 1.1],
+                                [8.5, 2.4],
+                                [4.2, 2.4],
+                            ],
+                            dtype=float,
+                        ),
+                        z_min=-1.4,
+                        z_max=1.4,
+                    )
+                ]
+            ),
+            description="A non-convex U-shaped prism with the opening facing the robot.",
         ),
     ]
 

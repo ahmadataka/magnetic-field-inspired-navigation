@@ -24,6 +24,7 @@ simulation infrastructure are separate.
   - `CircleObstacle`
   - `PolygonObstacle`
   - `ObstacleCollection`
+  - `PrismObstacle`
   - `SphereObstacle`
 
 - `src/mfinav/sensing/`
@@ -98,6 +99,7 @@ The repository now includes an initial 3D path:
 
 - 3D double-integrator state propagation
 - sphere obstacles
+- extruded polygon prisms for convex and non-convex 3D obstacle cases
 - exact local sensing via closest-point obstacle vectors
 - a 3D magnetic-field-inspired navigator
 - a dedicated 3D benchmark script:
@@ -108,6 +110,8 @@ The repository now includes an initial 3D path:
   - multi-sphere cluster avoidance
   - offset non-convex-like cavity
   - non-convex archway routing
+  - convex prism block avoidance
+  - non-convex U-prism avoidance
 - an explicit stress-case generator:
   - `make_stress_scenarios_3d()`
 

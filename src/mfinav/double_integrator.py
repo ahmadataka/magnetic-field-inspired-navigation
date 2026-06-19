@@ -24,6 +24,7 @@ from .obstacles.base import Obstacle
 from .obstacles.circle import CircleObstacle
 from .obstacles.collection import ObstacleCollection
 from .obstacles.polygon import PolygonObstacle
+from .obstacles.prism import PrismObstacle
 from .obstacles.sphere import SphereObstacle
 from .scenarios.benchmarks import BenchmarkScenario, make_default_scenarios
 from .scenarios.benchmarks3d import BenchmarkScenario3D, make_default_scenarios_3d, make_stress_scenarios_3d
@@ -61,6 +62,7 @@ __all__ = [
     "Obstacle",
     "ObstacleCollection",
     "PolygonObstacle",
+    "PrismObstacle",
     "SphereObstacle",
     "ReferenceNavigator",
     "SimulationConfig",
