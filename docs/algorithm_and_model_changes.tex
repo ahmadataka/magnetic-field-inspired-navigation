@@ -1507,4 +1507,50 @@ At the current 2D benchmark level, the remaining paper-PD issue was primarily a
 gain-tuning problem, not a goal-relaxation problem. This closes the previously
 open non-convex failure for the paper-style PD branch.
 
+\section*{Entry 2026-06-19: Modular Refactor of Models, Navigators, Obstacles, Sensing, and Simulation}
+
+\textbf{Status}
+
+\begin{itemize}[leftmargin=*]
+  \item Refactored the single-file implementation into a modular package layout
+  \item Separated robot dynamics, navigation algorithms, sensing, obstacles, scenarios, metrics, and simulation runner
+  \item Preserved the legacy public API through \texttt{mfinav.\_\_init\_\_} and the compatibility module \texttt{mfinav.double\_integrator}
+  \item Re-ran the benchmark suite and the non-convex diagnostic to confirm behavior was preserved
+\end{itemize}
+
+\textbf{New package layout}
+
+The implementation is now split into:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{models/} for robot dynamics
+  \item \texttt{navigators/} for magnetic-field-inspired and APF logic
+  \item \texttt{obstacles/} for obstacle geometry and queries
+  \item \texttt{sensing/} for local observation logic
+  \item \texttt{scenarios/} for benchmark definitions
+  \item \texttt{metrics/} for evaluation
+  \item \texttt{sim/} for generic simulation
+  \item \texttt{config/} and \texttt{utils/} for shared configuration and math helpers
+\end{itemize}
+
+\textbf{Why this change matters}
+
+This refactor is intended to make future work much cleaner:
+
+\begin{itemize}[leftmargin=*]
+  \item the current double-integrator model is now isolated from the navigation logic,
+  \item future models such as mobile robots or drones can be added without duplicating the navigation code,
+  \item future navigation algorithms can be added as separate navigators and compared in the same benchmark framework.
+\end{itemize}
+
+\textbf{Observed outcome}
+
+After the refactor:
+
+\begin{itemize}[leftmargin=*]
+  \item the polygon benchmark results were preserved,
+  \item the non-convex diagnostic results were preserved,
+  \item the repository is now structurally ready for multiple robot models and multiple navigation methods.
+\end{itemize}
+
 \end{document}
