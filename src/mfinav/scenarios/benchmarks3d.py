@@ -115,12 +115,12 @@ def make_default_scenarios_3d() -> list[BenchmarkScenario3D]:
                             [
                                 [4.2, -2.4],
                                 [8.5, -2.4],
-                                [8.5, -1.1],
-                                [5.6, -1.1],
-                                [5.6, 1.1],
-                                [8.5, 1.1],
                                 [8.5, 2.4],
                                 [4.2, 2.4],
+                                [4.2, 1.1],
+                                [7.1, 1.1],
+                                [7.1, -1.1],
+                                [4.2, -1.1],
                             ],
                             dtype=float,
                         ),
@@ -129,7 +129,7 @@ def make_default_scenarios_3d() -> list[BenchmarkScenario3D]:
                     )
                 ]
             ),
-            description="A non-convex U-shaped prism with the opening facing the robot.",
+            description="A non-convex U-shaped prism whose opening truly faces the robot.",
         ),
     ]
 
