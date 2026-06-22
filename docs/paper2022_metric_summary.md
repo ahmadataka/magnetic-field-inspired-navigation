@@ -1,0 +1,39 @@
+# Paper 2022 Metric Summary Across All Benchmarks
+
+This table consolidates the benchmark metrics already computed by the clean Python repo
+into a single paper-style summary across all current robot models and navigation methods.
+
+Metric interpretation:
+- `success_rate`: final-state success rate under the repo success radius and safety rule
+- `goal_reached_once_rate`: fraction of runs that entered the goal region at least once without a safety violation
+- `mean_path_length`: average travelled distance
+- `mean_time_to_goal_steps` / `mean_time_to_goal_seconds`: average first-hit time over finite goal-reaching runs only
+- `mean_final_goal_distance`: average final goal error, used here as an accuracy proxy
+- `mean_min_clearance` / `worst_min_clearance`: obstacle-avoidance margin summary
+- `collision_rate` / `safety_violation_rate`: hard and soft obstacle-avoidance failure rates
+- `mean_path_efficiency`: straight-line displacement divided by travelled path length
+
+All benchmark scripts currently use a common simulation step of `dt = 0.02 s`.
+
+| Model | Method | N | Succ | Succ Rate | Reach Once | Path | T_goal (steps) | T_goal (s) | Final Err | Mean Clr | Worst Clr | Coll Rate | Safe Viol | Mean Speed | Eff |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| differential_drive_2d | apf | 5 | 0 | 0.000 | 0.000 | 13.500 | - | - | 9.835 | 1.533 | 1.354 | 0.000 | 0.000 | 0.112 | 0.397 |
+| differential_drive_2d | haddadin | 5 | 4 | 0.800 | 0.800 | 13.286 | 3930.5 | 78.61 | 0.879 | 0.405 | -0.004 | 0.200 | 0.200 | 0.204 | 0.891 |
+| differential_drive_2d | paper_geometric | 5 | 2 | 0.400 | 0.400 | 18.862 | 4251.0 | 85.02 | 4.934 | 0.935 | 0.703 | 0.000 | 0.000 | 0.175 | 0.494 |
+| differential_drive_2d | paper_pd | 5 | 2 | 0.400 | 0.400 | 16.878 | 4050.5 | 81.01 | 0.471 | 1.337 | 0.263 | 0.000 | 0.000 | 0.154 | 0.744 |
+| differential_drive_2d | sabattini | 5 | 1 | 0.200 | 0.200 | 6.381 | 2925.0 | 58.50 | 5.963 | 0.096 | -0.011 | 0.800 | 0.800 | 0.449 | 1.000 |
+| double_integrator_2d | apf | 5 | 2 | 0.400 | 0.400 | 21.345 | 1415.0 | 28.30 | 6.418 | 1.232 | 1.019 | 0.000 | 0.000 | 0.324 | 0.460 |
+| double_integrator_2d | haddadin | 5 | 3 | 0.600 | 0.600 | 12.245 | 1303.7 | 26.07 | 2.046 | 0.459 | -0.008 | 0.400 | 0.400 | 0.771 | 0.864 |
+| double_integrator_2d | paper_geometric | 5 | 3 | 0.600 | 0.800 | 19.889 | 1202.2 | 24.05 | 0.250 | 0.976 | 0.788 | 0.000 | 0.000 | 0.420 | 0.636 |
+| double_integrator_2d | paper_pd | 5 | 2 | 0.400 | 0.400 | 15.996 | 2503.5 | 50.07 | 4.452 | 1.710 | 1.307 | 0.000 | 0.000 | 0.195 | 0.497 |
+| double_integrator_2d | sabattini | 5 | 1 | 0.200 | 0.200 | 6.384 | 871.0 | 17.42 | 5.960 | 0.092 | -0.016 | 0.800 | 0.800 | 0.829 | 1.000 |
+| double_integrator_3d | apf_3d | 7 | 2 | 0.286 | 0.286 | 496.638 | 992.0 | 19.84 | 4.779 | 0.249 | -0.489 | 0.571 | 0.571 | 12.547 | 0.468 |
+| double_integrator_3d | haddadin_3d | 7 | 2 | 0.286 | 0.286 | 199.582 | 1467.0 | 29.34 | 7.356 | 0.343 | -0.540 | 0.571 | 0.571 | 2.303 | 0.266 |
+| double_integrator_3d | paper_geometric_3d | 7 | 6 | 0.857 | 0.857 | 21.087 | 3172.7 | 63.45 | 0.964 | 2.146 | -0.011 | 0.143 | 0.143 | 0.342 | 0.613 |
+| double_integrator_3d | paper_pd_3d | 7 | 7 | 1.000 | 1.000 | 22.264 | 3846.6 | 76.93 | 0.189 | 1.752 | 0.379 | 0.000 | 0.000 | 0.306 | 0.653 |
+| double_integrator_3d | sabattini_3d | 7 | 1 | 0.143 | 0.143 | 7.575 | 968.0 | 19.36 | 5.020 | 0.062 | -0.019 | 0.714 | 0.857 | 0.901 | 1.000 |
+| quadrotor_3d | apf_3d | 7 | 0 | 0.000 | 0.000 | 18.905 | - | - | 5.712 | 0.274 | -0.088 | 0.714 | 0.714 | 1.298 | 0.761 |
+| quadrotor_3d | haddadin_3d | 7 | 0 | 0.000 | 0.000 | 64.992 | - | - | 4.869 | 0.340 | -0.046 | 0.571 | 0.571 | 1.381 | 0.293 |
+| quadrotor_3d | paper_geometric_3d | 7 | 1 | 0.143 | 0.714 | 130.160 | 1165.0 | 23.30 | 2.659 | 2.742 | -0.000 | 0.143 | 0.143 | 1.195 | 0.101 |
+| quadrotor_3d | paper_pd_3d | 7 | 0 | 0.000 | 0.143 | 59.494 | 1362.0 | 27.24 | 1.823 | 2.282 | -0.003 | 0.143 | 0.143 | 0.548 | 0.201 |
+| quadrotor_3d | sabattini_3d | 7 | 0 | 0.000 | 0.000 | 31.502 | - | - | 4.562 | 0.363 | -0.021 | 0.571 | 0.571 | 1.039 | 0.638 |
