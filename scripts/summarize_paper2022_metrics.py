@@ -280,6 +280,39 @@ def _write_html(summary_rows: list[dict[str, str]], scenario_rows: list[dict[str
         "path_efficiency": "high",
     }
 
+    overall_rows: list[dict[str, str]] = []
+    grouped_methods: dict[str, list[dict[str, str]]] = {}
+    for row in summary_rows:
+        grouped_methods.setdefault(row["method"], []).append(row)
+    for method, rows in sorted(grouped_methods.items()):
+        overall_rows.append(
+            {
+                "method": method,
+                "success_rate": _format_number(_mean([float(r["success_rate"]) for r in rows]), 3),
+                "goal_reached_once_rate": _format_number(_mean([float(r["goal_reached_once_rate"]) for r in rows]), 3),
+                "mean_final_goal_distance": _format_number(_mean([float(r["mean_final_goal_distance"]) for r in rows]), 3),
+                "collision_rate": _format_number(_mean([float(r["collision_rate"]) for r in rows]), 3),
+                "safety_violation_rate": _format_number(_mean([float(r["safety_violation_rate"]) for r in rows]), 3),
+                "mean_path_efficiency": _format_number(_mean([float(r["mean_path_efficiency"]) for r in rows]), 3),
+            }
+        )
+
+    best_success = max(overall_rows, key=lambda row: float(row["success_rate"]))
+    worst_success = min(overall_rows, key=lambda row: float(row["success_rate"]))
+    best_reach_once = max(overall_rows, key=lambda row: float(row["goal_reached_once_rate"]))
+    best_error = min(overall_rows, key=lambda row: float(row["mean_final_goal_distance"]))
+    best_collision = min(overall_rows, key=lambda row: float(row["collision_rate"]))
+    worst_collision = max(overall_rows, key=lambda row: float(row["collision_rate"]))
+
+    strongest_model = max(
+        summary_rows,
+        key=lambda row: (float(row["success_rate"]), -float(row["collision_rate"]), -float(row["mean_final_goal_distance"])),
+    )
+    weakest_model = min(
+        summary_rows,
+        key=lambda row: (float(row["success_rate"]), -float(row["collision_rate"]), -float(row["mean_final_goal_distance"])),
+    )
+
     lines = [
         "<!doctype html>",
         "<html lang=\"en\">",
@@ -297,6 +330,11 @@ def _write_html(summary_rows: list[dict[str, str]], scenario_rows: list[dict[str
         "h2 { margin-top: 28px; font-size: 22px; color: var(--accent); }",
         "h3 { margin-top: 18px; font-size: 18px; }",
         "p, li { color: var(--muted); }",
+        ".intro-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin: 18px 0 28px; }",
+        ".card { border: 1px solid var(--grid); border-radius: 16px; background: rgba(255,255,255,0.03); padding: 18px 18px 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); }",
+        ".card h3 { margin-top: 0; }",
+        ".metric-list { margin: 0; padding-left: 18px; }",
+        ".metric-list li { margin-bottom: 8px; }",
         ".legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0 20px; }",
         ".chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--grid); background: var(--panel); padding: 8px 12px; border-radius: 999px; }",
         ".swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }",
@@ -314,6 +352,7 @@ def _write_html(summary_rows: list[dict[str, str]], scenario_rows: list[dict[str
         "td.worst { background: color-mix(in srgb, var(--worst) 70%, transparent) !important; font-weight: 700; }",
         ".notes { margin: 0 0 8px; }",
         ".subtle { color: var(--muted); font-size: 14px; }",
+        "@media (max-width: 980px) { .intro-grid { grid-template-columns: 1fr; } }",
         "</style>",
         "</head>",
         "<body>",
@@ -321,6 +360,36 @@ def _write_html(summary_rows: list[dict[str, str]], scenario_rows: list[dict[str
         "<h1>Paper 2022 Metric Summary</h1>",
         "<p class=\"notes\">Friendlier benchmark summary across all current models and navigators. Green marks the best value and red marks the worst value within each table block.</p>",
         f"<p class=\"subtle\">Common benchmark step size: dt = {DEFAULT_DT:.2f} s.</p>",
+        "<div class=\"intro-grid\">",
+        "<section class=\"card\">",
+        "<h3>Metric Glossary</h3>",
+        "<ul class=\"metric-list\">",
+        "<li><strong>Succ</strong>: number of successful runs in that table block.</li>",
+        "<li><strong>Succ Rate</strong>: fraction of runs that finish inside the goal tolerance while also satisfying the safety criterion.</li>",
+        "<li><strong>Reach Once</strong>: fraction of runs that enter the goal region at least once, even if they do not stay there at the final state.</li>",
+        "<li><strong>Path</strong>: traveled trajectory length.</li>",
+        "<li><strong>T_goal (s)</strong>: time to first reach the goal region, averaged only over runs with finite goal-reaching time.</li>",
+        "<li><strong>Final Err</strong>: final distance to the goal, used here as an accuracy proxy.</li>",
+        "<li><strong>Mean Clr</strong>: average closest-obstacle clearance summary for the block.</li>",
+        "<li><strong>Worst Clr</strong>: smallest clearance observed in the block. Negative means penetration or collision.</li>",
+        "<li><strong>Coll Rate</strong>: fraction of runs whose minimum clearance goes below zero.</li>",
+        "<li><strong>Safe Viol</strong>: fraction of runs whose minimum clearance drops below the configured safety clearance margin.</li>",
+        "<li><strong>Eff</strong>: path efficiency, computed as straight-line displacement divided by traveled path length.</li>",
+        "</ul>",
+        "</section>",
+        "<section class=\"card\">",
+        "<h3>How To Read Colors</h3>",
+        "<ul class=\"metric-list\">",
+        "<li>Green marks the best value within the current table block.</li>",
+        "<li>Red marks the worst value within the current table block.</li>",
+        "<li>Aggregate tables compare methods within the same model family.</li>",
+        "<li>Per-scenario tables compare methods within the same scenario.</li>",
+        "<li>For success, clearance, and efficiency, larger is better.</li>",
+        "<li>For time, final error, collision rate, and safety violation rate, smaller is better.</li>",
+        "<li>Cells with <strong>-</strong> mean the metric is undefined for that row, usually because the method never reached the goal.</li>",
+        "</ul>",
+        "</section>",
+        "</div>",
         "<div class=\"legend\">",
         "<span class=\"chip\"><span class=\"swatch best-swatch\"></span> Best in table block</span>",
         "<span class=\"chip\"><span class=\"swatch worst-swatch\"></span> Worst in table block</span>",
@@ -338,6 +407,41 @@ def _write_html(summary_rows: list[dict[str, str]], scenario_rows: list[dict[str
         rows = [row for row in scenario_rows if row["model"] == model and row["scenario"] == scenario]
         title = f"{model.replace('_', ' ').title()} - {scenario.replace('_', ' ')}"
         lines.extend(_render_table(title, rows, scenario_columns, scenario_rules))
+
+    lines.extend(
+        [
+            "<h2>Overall Summary</h2>",
+            "<section class=\"card\">",
+            "<p><strong>Across all current benchmarks, the strongest method in general is "
+            f"<code>{best_success['method']}</code></strong>, with the highest average success rate "
+            f"({best_success['success_rate']}) across the model families now implemented.</p>",
+            "<p><strong>The weakest method in general is "
+            f"<code>{worst_success['method']}</code></strong>, with the lowest average success rate "
+            f"({worst_success['success_rate']}).</p>",
+            "<p>The most reliable \"almost-there\" behavior comes from "
+            f"<code>{best_reach_once['method']}</code>, which has the best average goal-region reach-once rate "
+            f"({best_reach_once['goal_reached_once_rate']}). "
+            f"The best average final accuracy comes from <code>{best_error['method']}</code> "
+            f"with mean final error {best_error['mean_final_goal_distance']}.</p>",
+            "<p>From a safety perspective, the best average collision rate is achieved by "
+            f"<code>{best_collision['method']}</code> ({best_collision['collision_rate']}), "
+            f"while the worst average collision rate belongs to <code>{worst_collision['method']}</code> "
+            f"({worst_collision['collision_rate']}).</p>",
+            "<p>At the model-specific level, the single strongest benchmark block right now is "
+            f"<code>{strongest_model['model']} / {strongest_model['method']}</code> "
+            f"with success rate {strongest_model['success_rate']}. "
+            f"The weakest block is <code>{weakest_model['model']} / {weakest_model['method']}</code> "
+            f"with success rate {weakest_model['success_rate']}.</p>",
+            "<p>A comparison caveat is important here: the current <code>Haddadin</code> baseline is not purely local in the same sense as MFI. "
+            "In this clean repo it uses local obstacle distance and direction, but it also uses obstacle center or centroid information to build its transverse avoidance term. "
+            "<code>MFI</code>, by contrast, relies only on local obstacle sensing, closest-point averaging, and goal relaxation. "
+            "So when MFI performs comparably well, or better in some cases, it is doing so under a weaker information assumption and with a more reactive formulation.</p>",
+            "<p>In practical terms, the current repo is strongest for the point-mass double-integrator benchmarks, "
+            "especially the 3D paper-style variants. The main remaining weakness is the quadrotor benchmark family, "
+            "where all methods still lag behind the point-mass results and need more controller tuning or model-specific navigation adaptation.</p>",
+            "</section>",
+        ]
+    )
 
     lines.extend(["</main>", "</body>", "</html>"])
     OUTPUT_HTML.write_text("\n".join(lines) + "\n")

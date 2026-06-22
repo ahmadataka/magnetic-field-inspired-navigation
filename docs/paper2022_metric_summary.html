@@ -14,6 +14,11 @@ h1 { font-size: 32px; }
 h2 { margin-top: 28px; font-size: 22px; color: var(--accent); }
 h3 { margin-top: 18px; font-size: 18px; }
 p, li { color: var(--muted); }
+.intro-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin: 18px 0 28px; }
+.card { border: 1px solid var(--grid); border-radius: 16px; background: rgba(255,255,255,0.03); padding: 18px 18px 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+.card h3 { margin-top: 0; }
+.metric-list { margin: 0; padding-left: 18px; }
+.metric-list li { margin-bottom: 8px; }
 .legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0 20px; }
 .chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--grid); background: var(--panel); padding: 8px 12px; border-radius: 999px; }
 .swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
@@ -31,6 +36,7 @@ td.best { background: color-mix(in srgb, var(--best) 70%, transparent) !importan
 td.worst { background: color-mix(in srgb, var(--worst) 70%, transparent) !important; font-weight: 700; }
 .notes { margin: 0 0 8px; }
 .subtle { color: var(--muted); font-size: 14px; }
+@media (max-width: 980px) { .intro-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -38,6 +44,36 @@ td.worst { background: color-mix(in srgb, var(--worst) 70%, transparent) !import
 <h1>Paper 2022 Metric Summary</h1>
 <p class="notes">Friendlier benchmark summary across all current models and navigators. Green marks the best value and red marks the worst value within each table block.</p>
 <p class="subtle">Common benchmark step size: dt = 0.02 s.</p>
+<div class="intro-grid">
+<section class="card">
+<h3>Metric Glossary</h3>
+<ul class="metric-list">
+<li><strong>Succ</strong>: number of successful runs in that table block.</li>
+<li><strong>Succ Rate</strong>: fraction of runs that finish inside the goal tolerance while also satisfying the safety criterion.</li>
+<li><strong>Reach Once</strong>: fraction of runs that enter the goal region at least once, even if they do not stay there at the final state.</li>
+<li><strong>Path</strong>: traveled trajectory length.</li>
+<li><strong>T_goal (s)</strong>: time to first reach the goal region, averaged only over runs with finite goal-reaching time.</li>
+<li><strong>Final Err</strong>: final distance to the goal, used here as an accuracy proxy.</li>
+<li><strong>Mean Clr</strong>: average closest-obstacle clearance summary for the block.</li>
+<li><strong>Worst Clr</strong>: smallest clearance observed in the block. Negative means penetration or collision.</li>
+<li><strong>Coll Rate</strong>: fraction of runs whose minimum clearance goes below zero.</li>
+<li><strong>Safe Viol</strong>: fraction of runs whose minimum clearance drops below the configured safety clearance margin.</li>
+<li><strong>Eff</strong>: path efficiency, computed as straight-line displacement divided by traveled path length.</li>
+</ul>
+</section>
+<section class="card">
+<h3>How To Read Colors</h3>
+<ul class="metric-list">
+<li>Green marks the best value within the current table block.</li>
+<li>Red marks the worst value within the current table block.</li>
+<li>Aggregate tables compare methods within the same model family.</li>
+<li>Per-scenario tables compare methods within the same scenario.</li>
+<li>For success, clearance, and efficiency, larger is better.</li>
+<li>For time, final error, collision rate, and safety violation rate, smaller is better.</li>
+<li>Cells with <strong>-</strong> mean the metric is undefined for that row, usually because the method never reached the goal.</li>
+</ul>
+</section>
+</div>
 <div class="legend">
 <span class="chip"><span class="swatch best-swatch"></span> Best in table block</span>
 <span class="chip"><span class="swatch worst-swatch"></span> Worst in table block</span>
@@ -2439,6 +2475,16 @@ td.worst { background: color-mix(in srgb, var(--worst) 70%, transparent) !import
 </tbody>
 </table>
 </div>
+</section>
+<h2>Overall Summary</h2>
+<section class="card">
+<p><strong>Across all current benchmarks, the strongest method in general is <code>haddadin</code></strong>, with the highest average success rate (0.700) across the model families now implemented.</p>
+<p><strong>The weakest method in general is <code>sabattini_3d</code></strong>, with the lowest average success rate (0.071).</p>
+<p>The most reliable "almost-there" behavior comes from <code>paper_geometric_3d</code>, which has the best average goal-region reach-once rate (0.785). The best average final accuracy comes from <code>paper_pd_3d</code> with mean final error 1.006.</p>
+<p>From a safety perspective, the best average collision rate is achieved by <code>apf</code> (0.000), while the worst average collision rate belongs to <code>sabattini</code> (0.800).</p>
+<p>At the model-specific level, the single strongest benchmark block right now is <code>double_integrator_3d / paper_pd_3d</code> with success rate 1.000. The weakest block is <code>quadrotor_3d / apf_3d</code> with success rate 0.000.</p>
+<p>A comparison caveat is important here: the current <code>Haddadin</code> baseline is not purely local in the same sense as MFI. In this clean repo it uses local obstacle distance and direction, but it also uses obstacle center or centroid information to build its transverse avoidance term. <code>MFI</code>, by contrast, relies only on local obstacle sensing, closest-point averaging, and goal relaxation. So when MFI performs comparably well, or better in some cases, it is doing so under a weaker information assumption and with a more reactive formulation.</p>
+<p>In practical terms, the current repo is strongest for the point-mass double-integrator benchmarks, especially the 3D paper-style variants. The main remaining weakness is the quadrotor benchmark family, where all methods still lag behind the point-mass results and need more controller tuning or model-specific navigation adaptation.</p>
 </section>
 </main>
 </body>
