@@ -100,3 +100,12 @@ class PolygonObstacle:
                 if best_t is None or t < best_t:
                     best_t = t
         return best_t
+
+    def set_time(self, time_s: float) -> None:
+        _ = time_s
+
+    def snapshot(self) -> dict[str, object]:
+        return {
+            "kind": "polygon",
+            "vertices": [[float(vertex[0]), float(vertex[1])] for vertex in self.vertices],
+        }

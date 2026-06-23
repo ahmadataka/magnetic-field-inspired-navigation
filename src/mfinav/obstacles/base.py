@@ -6,6 +6,9 @@ import numpy as np
 
 
 class Obstacle(Protocol):
+    def set_time(self, time_s: float) -> None:
+        ...
+
     def closest_vector(self, position: np.ndarray) -> np.ndarray:
         ...
 
@@ -18,4 +21,7 @@ class Obstacle(Protocol):
         direction: np.ndarray,
         max_range: float,
     ) -> float | None:
+        ...
+
+    def snapshot(self) -> dict[str, object]:
         ...

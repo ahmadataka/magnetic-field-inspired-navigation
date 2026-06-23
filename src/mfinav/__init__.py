@@ -28,12 +28,24 @@ from .navigators import (
     ReferenceNavigator,
     SabattiniNavigator,
 )
-from .obstacles import CircleObstacle, Obstacle, ObstacleCollection, PolygonObstacle, PrismObstacle, SphereObstacle
+from .obstacles import (
+    CircleObstacle,
+    DynamicObstacleCollection,
+    MovingCircleObstacle,
+    MovingPolygonObstacle,
+    Obstacle,
+    ObstacleCollection,
+    PolygonObstacle,
+    PrismObstacle,
+    SphereObstacle,
+)
 from .scenarios import (
     BenchmarkScenario,
     BenchmarkScenario3D,
+    DynamicBenchmarkScenario,
     make_default_scenarios,
     make_default_scenarios_3d,
+    make_dynamic_scenarios_2d,
     make_stress_scenarios_3d,
 )
 from .sensing import LocalSensingModel, LocalSensingObservation
@@ -44,6 +56,7 @@ __all__ = [
     "BenchmarkScenario",
     "BoundaryFollowingField",
     "CircleObstacle",
+    "DynamicObstacleCollection",
     "CollisionAvoidanceField",
     "compute_metrics",
     "DifferentialDriveCommand",
@@ -66,6 +79,8 @@ __all__ = [
     "make_pragmatic_config",
     "make_default_scenarios",
     "ObstacleCollection",
+    "MovingCircleObstacle",
+    "MovingPolygonObstacle",
     "PolygonObstacle",
     "PrismObstacle",
     "QuadrotorModel",
@@ -74,11 +89,13 @@ __all__ = [
     "ReferenceNavigator",
     "SimulationConfig",
     "BenchmarkScenario3D",
+    "DynamicBenchmarkScenario",
     "SabattiniNavigator",
     "simulate",
     "simulate_differential_drive",
     "simulate_quadrotor",
     "write_history_csv",
     "make_default_scenarios_3d",
+    "make_dynamic_scenarios_2d",
     "make_stress_scenarios_3d",
 ]

@@ -41,9 +41,9 @@ def _nearest_obstacle(position: np.ndarray, obstacle: Obstacle) -> Obstacle:
 
 def _obstacle_center_vector(position: np.ndarray, obstacle: Obstacle, fallback: np.ndarray) -> np.ndarray:
     local_obstacle = _nearest_obstacle(position, obstacle)
-    if isinstance(local_obstacle, (CircleObstacle, SphereObstacle)):
+    if hasattr(local_obstacle, "center"):
         return np.asarray(local_obstacle.center, dtype=float) - position
-    if isinstance(local_obstacle, PolygonObstacle):
+    if hasattr(local_obstacle, "vertices"):
         return np.mean(local_obstacle.vertices, axis=0) - position
     if isinstance(local_obstacle, PrismObstacle):
         centroid_xy = np.mean(local_obstacle.vertices_xy, axis=0)

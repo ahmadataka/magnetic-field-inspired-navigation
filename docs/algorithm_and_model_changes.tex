@@ -2026,4 +2026,71 @@ At the current tuning level:
   \item Full paper-level reproduction of the quadrotor results will likely require a second tuning pass that is specific to the quadrotor actuation and benchmark geometry, rather than reusing the point-mass gains directly.
 \end{itemize}
 
+\section*{Entry 2026-06-23: Dynamic 2D Obstacle Benchmarks}
+
+\textbf{Summary}
+
+\begin{itemize}[leftmargin=*]
+  \item Added a dynamic-obstacle layer for the 2D benchmark path using time-varying translational motion for circles and polygons.
+  \item Extended the simulation runner so obstacle geometry can be updated at each simulation step through a common \texttt{set\_time()} interface.
+  \item Added a dedicated dynamic benchmark suite with moving circular, convex polygonal, and non-convex polygonal obstacles.
+  \item Added an interactive HTML benchmark report that shows the robot trajectories together with the moving obstacle geometry.
+\end{itemize}
+
+\textbf{Model extension}
+
+For the first dynamic benchmark pass, each obstacle follows a prescribed
+translational motion:
+\[
+p_O(t) = p_O(0) + v_O t .
+\]
+
+For circles this updates the obstacle center directly. For polygons it shifts
+every vertex by the same translation vector:
+\[
+v_i(t) = v_i(0) + v_O t .
+\]
+
+The navigation algorithms themselves are unchanged. They are evaluated against
+the obstacle geometry at the current simulation time \(t_k = k\,\Delta t\), so
+the reactive comparison now includes time-varying obstacle motion without
+introducing any prediction or future-state estimation into the navigators.
+
+\textbf{Benchmark set}
+
+The first dynamic 2D suite contains:
+\begin{itemize}[leftmargin=*]
+  \item \texttt{moving\_circle\_crossing}: a circular obstacle sweeping upward across the path,
+  \item \texttt{moving\_convex\_sweeper}: moving convex polygonal obstacles crossing and drifting along the route,
+  \item \texttt{moving\_u\_shape}: a non-convex U-shaped obstacle whose mouth faces the robot while the whole obstacle drifts during the encounter.
+\end{itemize}
+
+\textbf{Artifacts}
+
+The dynamic benchmark writes:
+\begin{itemize}[leftmargin=*]
+  \item \texttt{artifacts/benchmark\_comparison\_dynamic\_2d.png}
+  \item \texttt{artifacts/benchmark\_comparison\_dynamic\_2d.html}
+  \item \texttt{artifacts/benchmark\_metrics\_dynamic\_2d.csv}
+\end{itemize}
+
+\textbf{First result snapshot}
+
+In the first dynamic benchmark pass:
+\begin{itemize}[leftmargin=*]
+  \item both paper-style MFI variants succeeded in all three moving-obstacle scenarios,
+  \item APF also succeeded in all three current dynamic scenarios,
+  \item Haddadin failed the moving-circle crossing case but succeeded in the moving convex and moving non-convex polygon cases,
+  \item Sabattini failed all three current dynamic scenarios under the present tuning and success criterion,
+  \item and the original static 2D benchmark suite still runs after the dynamic-obstacle extension.
+\end{itemize}
+
+\textbf{Interpretation}
+
+\begin{itemize}[leftmargin=*]
+  \item This is the first benchmark step where the clean repo explicitly evaluates the navigators against moving obstacles rather than only static geometry.
+  \item The current dynamic layer is still kinematic obstacle motion, not deformable or interaction-coupled motion.
+  \item It is already sufficient to compare reactivity and robustness under time-varying obstacle geometry, especially between the local MFI variants and the less reactive baselines.
+\end{itemize}
+
 \end{document}

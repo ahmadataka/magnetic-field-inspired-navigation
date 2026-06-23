@@ -13,6 +13,9 @@ class CircleObstacle:
     center: np.ndarray
     radius: float
 
+    def set_time(self, time_s: float) -> None:
+        _ = time_s
+
     def closest_vector(self, position: np.ndarray) -> np.ndarray:
         delta = position - self.center
         distance = _norm(delta)
@@ -54,3 +57,10 @@ class CircleObstacle:
         if not valid:
             return None
         return min(valid)
+
+    def snapshot(self) -> dict[str, object]:
+        return {
+            "kind": "circle",
+            "center": [float(self.center[0]), float(self.center[1])],
+            "radius": float(self.radius),
+        }

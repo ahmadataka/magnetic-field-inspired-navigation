@@ -15,6 +15,7 @@ from ..utils.math2d import _norm
 
 def _history_row(
     step: int,
+    time_s: float,
     state: DoubleIntegratorState,
     accel: np.ndarray,
     goal_distance: float,
@@ -23,6 +24,7 @@ def _history_row(
 ) -> dict[str, float]:
     row = {
         "step": float(step),
+        "time": float(time_s),
         "goal_distance": goal_distance,
         "obstacle_distance": obstacle_distance,
         "signed_clearance": signed_clearance,
@@ -49,6 +51,9 @@ def simulate(
     history: list[dict[str, float]] = []
 
     for step in range(cfg.steps):
+        time_s = step * cfg.dt
+        if hasattr(obstacle, "set_time"):
+            obstacle.set_time(time_s)
         goal_vector = goal - state.position
         observation = active_navigator.sensing.observe(state, obstacle)
         accel = active_navigator.command(state, goal, obstacle)
@@ -57,6 +62,7 @@ def simulate(
         history.append(
             _history_row(
                 step,
+                time_s,
                 state,
                 accel,
                 _norm(goal_vector),

@@ -13,6 +13,11 @@ from ..utils.math2d import _norm
 class ObstacleCollection:
     obstacles: list[Obstacle]
 
+    def set_time(self, time_s: float) -> None:
+        for obstacle in self.obstacles:
+            if hasattr(obstacle, "set_time"):
+                obstacle.set_time(time_s)
+
     def closest_vector(self, position: np.ndarray) -> np.ndarray:
         if not self.obstacles:
             return np.array([1e6, 0.0], dtype=float)
@@ -50,3 +55,9 @@ class ObstacleCollection:
         if not self.obstacles:
             return math.inf
         return min(obstacle.clearance(position) for obstacle in self.obstacles)
+
+    def snapshot(self) -> dict[str, object]:
+        return {
+            "kind": "collection",
+            "obstacles": [obstacle.snapshot() for obstacle in self.obstacles if hasattr(obstacle, "snapshot")],
+        }

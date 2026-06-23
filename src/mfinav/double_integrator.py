@@ -26,11 +26,13 @@ from .navigators.mfi import (
 from .obstacles.base import Obstacle
 from .obstacles.circle import CircleObstacle
 from .obstacles.collection import ObstacleCollection
+from .obstacles.dynamic import DynamicObstacleCollection, MovingCircleObstacle, MovingPolygonObstacle
 from .obstacles.polygon import PolygonObstacle
 from .obstacles.prism import PrismObstacle
 from .obstacles.sphere import SphereObstacle
 from .scenarios.benchmarks import BenchmarkScenario, make_default_scenarios
 from .scenarios.benchmarks3d import BenchmarkScenario3D, make_default_scenarios_3d, make_stress_scenarios_3d
+from .scenarios.dynamic_benchmarks import DynamicBenchmarkScenario, make_dynamic_scenarios_2d
 from .sensing.local import LocalSensingModel, LocalSensingObservation
 from .sim.runner import simulate, write_history_csv
 from .sim.differential_drive import simulate_differential_drive
@@ -52,6 +54,7 @@ from .utils.math2d import (
 __all__ = [
     "ArtificialPotentialFieldNavigator",
     "BenchmarkScenario",
+    "DynamicBenchmarkScenario",
     "BoundaryFollowingField",
     "CircleObstacle",
     "CollisionAvoidanceField",
@@ -71,6 +74,9 @@ __all__ = [
     "MagneticFieldNavigator",
     "MagneticFieldNavigator3D",
     "Obstacle",
+    "DynamicObstacleCollection",
+    "MovingCircleObstacle",
+    "MovingPolygonObstacle",
     "ObstacleCollection",
     "PolygonObstacle",
     "PrismObstacle",
@@ -91,6 +97,7 @@ __all__ = [
     "_unit",
     "make_default_scenarios",
     "make_default_scenarios_3d",
+    "make_dynamic_scenarios_2d",
     "make_stress_scenarios_3d",
     "make_paper_faithful_config",
     "make_paper_geometric_config",
