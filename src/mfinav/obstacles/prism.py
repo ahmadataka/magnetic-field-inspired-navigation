@@ -98,3 +98,13 @@ class PrismObstacle:
             return -min(side_distance, position_z - self.z_min, self.z_max - position_z)
         return _norm(self.closest_vector(position))
 
+    def set_time(self, time_s: float) -> None:
+        _ = time_s
+
+    def snapshot(self) -> dict[str, object]:
+        return {
+            "kind": "prism",
+            "vertices_xy": [[float(vertex[0]), float(vertex[1])] for vertex in self.vertices_xy],
+            "z_min": float(self.z_min),
+            "z_max": float(self.z_max),
+        }

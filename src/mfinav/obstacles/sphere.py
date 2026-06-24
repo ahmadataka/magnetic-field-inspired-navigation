@@ -49,3 +49,13 @@ class SphereObstacle:
         if not valid:
             return None
         return min(valid)
+
+    def set_time(self, time_s: float) -> None:
+        _ = time_s
+
+    def snapshot(self) -> dict[str, object]:
+        return {
+            "kind": "sphere",
+            "center": [float(self.center[0]), float(self.center[1]), float(self.center[2])],
+            "radius": float(self.radius),
+        }

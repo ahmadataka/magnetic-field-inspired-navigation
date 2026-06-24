@@ -14,6 +14,7 @@ from ..utils.math2d import _norm
 
 def _history_row(
     step: int,
+    time_s: float,
     state: QuadrotorState,
     diagnostics: dict[str, np.ndarray | float],
     goal_distance: float,
@@ -26,6 +27,7 @@ def _history_row(
     rotor_speed = np.asarray(diagnostics["rotor_speed"], dtype=float)
     return {
         "step": float(step),
+        "time": float(time_s),
         "x": float(state.position[0]),
         "y": float(state.position[1]),
         "z": float(state.position[2]),
@@ -71,6 +73,9 @@ def simulate_quadrotor(
     history: list[dict[str, float]] = []
 
     for step in range(cfg.steps):
+        time_s = step * cfg.dt
+        if hasattr(obstacle, "set_time"):
+            obstacle.set_time(time_s)
         goal_vector = goal - state.position
         observation = navigator.sensing.observe(state, obstacle)
         guidance = np.asarray(navigator.command(state, goal, obstacle), dtype=float)
@@ -84,6 +89,7 @@ def simulate_quadrotor(
         history.append(
             _history_row(
                 step,
+                time_s,
                 state,
                 diagnostics_stub,
                 _norm(goal_vector),

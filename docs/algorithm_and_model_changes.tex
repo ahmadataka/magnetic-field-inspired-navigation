@@ -2110,4 +2110,78 @@ After extending the suite with harder motion:
   \item It is already sufficient to compare reactivity and robustness under time-varying obstacle geometry, especially between the local MFI variants and the less reactive baselines.
 \end{itemize}
 
+\section*{Entry 2026-06-24: Dynamic Obstacles Extended to Differential Drive and 3D Models}
+
+\textbf{Summary}
+
+\begin{itemize}[leftmargin=*]
+  \item Extended the dynamic-obstacle benchmark path from the 2D point-mass model to the 2D differential-drive model.
+  \item Added moving 3D sphere and moving 3D prism obstacle models.
+  \item Added a shared 3D dynamic benchmark suite for both the 3D double-integrator and the 3D quadrotor model.
+  \item Added interactive HTML reports for:
+  \begin{itemize}[leftmargin=*]
+    \item dynamic differential-drive 2D,
+    \item dynamic double-integrator 3D,
+    \item dynamic quadrotor 3D.
+  \end{itemize}
+\end{itemize}
+
+\textbf{Dynamic obstacle extension}
+
+The 2D dynamic layer already used translational obstacle motion and mild
+deterministic wandering through sinusoidal drift. The same structure is now used
+in 3D:
+\[
+p_O(t) = p_O(0) + v_O t + a_O \odot \sin(\omega_O t + \phi_O) .
+\]
+
+For spheres this updates the obstacle center directly. For prisms it shifts the
+polygon footprint and, if needed, the vertical interval by the same
+time-dependent offset.
+
+\textbf{New dynamic benchmark families}
+
+The extended dynamic suite now includes:
+\begin{itemize}[leftmargin=*]
+  \item \texttt{moving\_sphere\_crossing\_3d},
+  \item \texttt{head\_on\_sphere\_3d},
+  \item \texttt{wandering\_sphere\_3d},
+  \item \texttt{moving\_prism\_gate\_3d},
+  \item \texttt{mixed\_static\_dynamic\_field\_3d}.
+\end{itemize}
+
+These are reused across both the 3D point-mass and quadrotor benchmark paths so
+the cross-model comparison is based on the same moving obstacle geometry.
+
+\textbf{Artifacts}
+
+The new benchmark runners write:
+\begin{itemize}[leftmargin=*]
+  \item \texttt{artifacts/benchmark\_comparison\_dynamic\_diff\_drive\_2d.html}
+  \item \texttt{artifacts/benchmark\_metrics\_dynamic\_diff\_drive\_2d.csv}
+  \item \texttt{artifacts/benchmark\_comparison\_dynamic\_3d.html}
+  \item \texttt{artifacts/benchmark\_metrics\_dynamic\_3d.csv}
+  \item \texttt{artifacts/benchmark\_comparison\_dynamic\_quadrotor\_3d.html}
+  \item \texttt{artifacts/benchmark\_metrics\_dynamic\_quadrotor\_3d.csv}
+\end{itemize}
+
+\textbf{First outcome snapshot}
+
+\begin{itemize}[leftmargin=*]
+  \item In dynamic differential-drive 2D, the geometric paper-style mode is the strongest overall among the current moving-obstacle scenarios.
+  \item The new differential-drive head-on circle case is noticeably harder for the paper-style PD mode and for the center-based baselines than the earlier crossing cases.
+  \item In dynamic 3D point-mass benchmarks, \texttt{paper\_geometric\_3d} is currently the most successful of the five tested methods across the new moving sphere and moving prism cases.
+  \item The dynamic 3D head-on sphere case is currently unsolved by all tested point-mass methods under the present gains.
+  \item In dynamic quadrotor 3D, the paper-style geometric mode is currently the strongest of the tested methods, but the full moving-obstacle benchmark set is still much harder than the static quadrotor set.
+  \item The mixed static-plus-dynamic 3D field remains unsolved across the present 3D models and indicates the next tuning / theory target.
+\end{itemize}
+
+\textbf{Interpretation}
+
+\begin{itemize}[leftmargin=*]
+  \item The clean repo can now test moving-obstacle behavior across three different robot-model assumptions using a common scenario philosophy.
+  \item This creates a stronger bridge from the original static-obstacle paper to a future dynamic-obstacle extension.
+  \item The current results already suggest that actuator model, steering law, and information assumption interact more strongly in dynamic 3D than in the original static 2D paper setting.
+\end{itemize}
+
 \end{document}

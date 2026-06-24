@@ -14,6 +14,7 @@ from ..utils.math2d import _norm
 
 def _history_row(
     step: int,
+    time_s: float,
     state: DifferentialDriveState,
     guidance: np.ndarray,
     goal_distance: float,
@@ -23,6 +24,7 @@ def _history_row(
     velocity = state.velocity
     return {
         "step": float(step),
+        "time": float(time_s),
         "x": float(state.position[0]),
         "y": float(state.position[1]),
         "vx": float(velocity[0]),
@@ -54,6 +56,9 @@ def simulate_differential_drive(
     history: list[dict[str, float]] = []
 
     for step in range(cfg.steps):
+        time_s = step * cfg.dt
+        if hasattr(obstacle, "set_time"):
+            obstacle.set_time(time_s)
         goal_vector = goal - state.position
         observation = navigator.sensing.observe(state, obstacle)
         guidance = np.asarray(navigator.command(state, goal, obstacle), dtype=float)
@@ -61,6 +66,7 @@ def simulate_differential_drive(
         history.append(
             _history_row(
                 step,
+                time_s,
                 state,
                 guidance,
                 _norm(goal_vector),
