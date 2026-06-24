@@ -64,14 +64,14 @@ def _make_metrics_row(scenario_name: str, method_name: str, metrics: dict[str, f
     }
 
 
-def _sample_indices(max_len: int, target_frames: int = 120) -> list[int]:
+def _sample_indices(max_len: int, target_frames: int = 60) -> list[int]:
     if max_len <= 1:
         return [0]
     count = min(target_frames, max_len)
     return sorted({int(round(value)) for value in np.linspace(0, max_len - 1, count)})
 
 
-def _circle_points(center: list[float], radius: float, samples: int = 64) -> tuple[list[float], list[float]]:
+def _circle_points(center: list[float], radius: float, samples: int = 36) -> tuple[list[float], list[float]]:
     angles = np.linspace(0.0, 2.0 * math.pi, samples)
     xs = [center[0] + radius * math.cos(angle) for angle in angles]
     ys = [center[1] + radius * math.sin(angle) for angle in angles]
@@ -370,7 +370,7 @@ def main() -> None:
         }
 
         max_len = max(len(history) for history in histories.values())
-        frame_indices = _sample_indices(max_len, target_frames=110)
+        frame_indices = _sample_indices(max_len, target_frames=55)
         time_samples = [index * config_pd.dt for index in frame_indices]
         obstacle_snapshots = scenario.obstacles.snapshots_over_time(time_samples)
 

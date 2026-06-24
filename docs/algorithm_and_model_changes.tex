@@ -2065,6 +2065,13 @@ The first dynamic 2D suite contains:
   \item \texttt{moving\_u\_shape}: a non-convex U-shaped obstacle whose mouth faces the robot while the whole obstacle drifts during the encounter.
 \end{itemize}
 
+It now also contains harder motion patterns:
+\begin{itemize}[leftmargin=*]
+  \item \texttt{head\_on\_circle}: a circular obstacle moving directly toward the robot along the goal line,
+  \item \texttt{wandering\_circle}: a dynamic circular obstacle with deterministic sinusoidal drift that appears mildly random from the robot's viewpoint,
+  \item \texttt{mixed\_static\_dynamic\_field}: a mixed scene containing static convex obstacles, a moving circle, and a drifting non-convex polygon.
+\end{itemize}
+
 \textbf{Artifacts}
 
 The dynamic benchmark writes:
@@ -2083,6 +2090,16 @@ In the first dynamic benchmark pass:
   \item Haddadin failed the moving-circle crossing case but succeeded in the moving convex and moving non-convex polygon cases,
   \item Sabattini failed all three current dynamic scenarios under the present tuning and success criterion,
   \item and the original static 2D benchmark suite still runs after the dynamic-obstacle extension.
+\end{itemize}
+
+After extending the suite with harder motion:
+\begin{itemize}[leftmargin=*]
+  \item both paper-style MFI variants still succeed in the new \texttt{head\_on\_circle} and \texttt{wandering\_circle} cases,
+  \item APF fails the new head-on circle case even though it remains successful in several of the easier dynamic cases,
+  \item Haddadin continues to struggle in the more reactive dynamic cases and collides in the head-on and wandering-circle benchmarks under the present implementation,
+  \item the new mixed static-plus-dynamic field is currently unsolved by all tested methods under the present gains and stopping criterion,
+  \item the paper-style geometric controller gets closest to solving that mixed field while preserving safe clearance, and
+  \item the paper-style PD controller remains successful in more of the hard dynamic cases than the center-aware Haddadin baseline.
 \end{itemize}
 
 \textbf{Interpretation}
