@@ -1,0 +1,233 @@
+#VRML_SIM R2023b utf8
+
+WorldInfo {
+  basicTimeStep 64
+  title "MFI local arena"
+}
+Viewpoint {
+  orientation -0.2324493692067285 -0.14943881545798998 0.9610594836896971 3.9676615263416637
+  position -0.8231152161081814 -0.7596966464698575 0.3039243417628778
+  follow "mfi_robot"
+}
+Background {
+  skyColor [
+    0.92 0.94 0.98
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.8
+  intensity 1
+  direction -0.3 -0.4 -1
+}
+DEF FLOOR Solid {
+  translation 0 0 -0.02
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.2 0.2 0.2
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 3.8 3.8 0.04
+      }
+    }
+  ]
+  name "floor"
+  boundingObject Box {
+    size 3.8 3.8 0.04
+  }
+}
+DEF WALL_N Solid {
+  translation 0 1.9 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 3.8 0.06 0.2
+      }
+    }
+  ]
+  name "wall_n"
+  boundingObject Box {
+    size 3.8 0.06 0.2
+  }
+}
+DEF WALL_S Solid {
+  translation 0 -1.9 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 3.8 0.06 0.2
+      }
+    }
+  ]
+  name "wall_s"
+  boundingObject Box {
+    size 3.8 0.06 0.2
+  }
+}
+DEF WALL_E Solid {
+  translation 1.9 0 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 0.06 3.8 0.2
+      }
+    }
+  ]
+  name "wall_e"
+  boundingObject Box {
+    size 0.06 3.8 0.2
+  }
+}
+DEF WALL_W Solid {
+  translation -1.9 0 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 0.06 3.8 0.2
+      }
+    }
+  ]
+  name "wall_w"
+  boundingObject Box {
+    size 0.06 3.8 0.2
+  }
+}
+DEF GOAL Transform {
+  translation 1.1 1.0 0.02
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0.8 0.2
+        roughness 0.6
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.02
+        radius 0.08
+      }
+    }
+  ]
+}
+DEF OBSTACLE_A Solid {
+  translation 0.25 0.15 0.06
+  rotation 0 0 1 0.3
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.75 0.2 0.2
+      }
+      geometry Box {
+        size 0.22 0.22 0.12
+      }
+    }
+  ]
+  name "obstacle_a"
+  boundingObject Box {
+    size 0.22 0.22 0.12
+  }
+}
+DEF OBSTACLE_B Solid {
+  translation 0.65 0.7 0.06
+  rotation 0 0 1 -0.25
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.75 0.2 0.2
+      }
+      geometry Box {
+        size 0.26 0.18 0.12
+      }
+    }
+  ]
+  name "obstacle_b"
+  boundingObject Box {
+    size 0.26 0.18 0.12
+  }
+}
+DEF OBSTACLE_C Solid {
+  translation 0.8 -0.55 0.06
+  rotation 0 0 1 0.6
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.75 0.2 0.2
+      }
+      geometry Box {
+        size 0.18 0.28 0.12
+      }
+    }
+  ]
+  name "obstacle_c"
+  boundingObject Box {
+    size 0.18 0.28 0.12
+  }
+}
+DEF MFI_ROBOT Robot {
+  translation -1.1 -1.0 0.035
+  rotation 0 0 1 0.75
+  controller "mfi_epuck_python"
+  supervisor TRUE
+  synchronization TRUE
+  name "mfi_robot"
+  children [
+    Transform {
+      translation 0 0 0.025
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.15 0.15 0.18
+            roughness 0.7
+          }
+          geometry Cylinder {
+            height 0.05
+            radius 0.05
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0.055 0.02
+      rotation 1 0 0 1.57
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.05 0.05 0.05
+          }
+          geometry Cylinder {
+            height 0.01
+            radius 0.02
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 -0.055 0.02
+      rotation 1 0 0 1.57
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.05 0.05 0.05
+          }
+          geometry Cylinder {
+            height 0.01
+            radius 0.02
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -2184,4 +2184,42 @@ The new benchmark runners write:
   \item The current results already suggest that actuator model, steering law, and information assumption interact more strongly in dynamic 3D than in the original static 2D paper setting.
 \end{itemize}
 
+\section*{Entry 2026-06-29: First Local Webots Integration on macOS}
+
+\textbf{Summary}
+
+\begin{itemize}[leftmargin=*]
+  \item Added a first local Webots project inside the clean repo for rapid simulator-side controller development on macOS.
+  \item Added a simple e-puck arena world with a goal marker and several box obstacles.
+  \item Added a Python Webots controller that imports the existing \texttt{mfinav} package and runs the paper-style geometric differential-drive guidance path.
+\end{itemize}
+
+\textbf{Scope}
+
+This first Webots bridge is intentionally development-oriented rather than fully
+sensor-faithful. The e-puck is run as a Webots \texttt{Supervisor}, so the
+controller reads:
+\begin{itemize}[leftmargin=*]
+  \item the robot pose from Webots ground truth,
+  \item obstacle poses from Webots ground truth,
+  \item and then maps the resulting guidance vector to left and right wheel speeds.
+\end{itemize}
+
+\textbf{Artifacts}
+
+The local Webots files are:
+\begin{itemize}[leftmargin=*]
+  \item \texttt{webots/worlds/mfi\_epuck\_arena.wbt}
+  \item \texttt{webots/controllers/mfi\_epuck\_python/mfi\_epuck\_python.py}
+  \item \texttt{docs/webots\_local\_setup.md}
+\end{itemize}
+
+\textbf{Interpretation}
+
+\begin{itemize}[leftmargin=*]
+  \item This is the lightest realistic simulator bridge now available in the repo for local Mac development.
+  \item It is already useful for closed-loop behavior checks, world design, and controller debugging without reintroducing full ROS complexity.
+  \item The next realism step would be to replace the supervisor-based ground-truth obstacle geometry and pose access with true e-puck proximity sensing and odometry.
+\end{itemize}
+
 \end{document}
