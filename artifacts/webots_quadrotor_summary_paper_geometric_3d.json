@@ -1,0 +1,49 @@
+{
+  "status": "goal_reached",
+  "steps": 572,
+  "scenario": "webots_quadrotor_static_smoke",
+  "method": "paper_geometric_3d",
+  "goal_tolerance": 0.35,
+  "velocity_tolerance": 0.18,
+  "metrics": {
+    "steps": 572.0,
+    "path_length": 6.349123559455991,
+    "final_goal_distance": 0.3490388409435996,
+    "min_clearance": 14.684199335621594,
+    "mean_speed": 0.5549933181342638,
+    "success": 1.0,
+    "goal_reached_once": 1.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": 571.0,
+    "path_efficiency": 0.665961921730863
+  },
+  "final_state": {
+    "x": 1.6024731304438795,
+    "y": 1.2092016197565156,
+    "z": 0.83341089331336,
+    "speed_norm": 0.294698457129784
+  },
+  "start": [
+    -1.8,
+    -1.3,
+    0.65
+  ],
+  "goal": [
+    1.8,
+    1.3,
+    1.1
+  ],
+  "obstacles": [
+    {
+      "kind": "sphere",
+      "center": [
+        10.0,
+        10.0,
+        10.0
+      ],
+      "radius": 0.5
+    }
+  ],
+  "webots_exit_code": 0
+}

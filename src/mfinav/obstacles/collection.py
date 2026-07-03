@@ -20,7 +20,9 @@ class ObstacleCollection:
 
     def closest_vector(self, position: np.ndarray) -> np.ndarray:
         if not self.obstacles:
-            return np.array([1e6, 0.0], dtype=float)
+            fallback = np.zeros_like(np.asarray(position, dtype=float))
+            fallback[0] = 1e6
+            return fallback
         closest = self.obstacles[0].closest_vector(position)
         min_distance = _norm(closest)
         for obstacle in self.obstacles[1:]:

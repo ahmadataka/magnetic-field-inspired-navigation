@@ -41,7 +41,8 @@ class LocalSensingModel:
         else:
             sensed_vectors = [obstacle.closest_vector(state.position)]
         if not sensed_vectors:
-            fallback = np.array([self.config.sensor_range * 10.0, 0.0], dtype=float)
+            fallback = np.zeros_like(state.position, dtype=float)
+            fallback[0] = self.config.sensor_range * 10.0
             return LocalSensingObservation(
                 closest_obstacle_vector=fallback,
                 distance_to_obstacle=math.inf,

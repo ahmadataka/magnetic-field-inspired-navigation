@@ -1,0 +1,4 @@
+File not found: '/Applications/Webots.app/resources/qt_warning_filters.conf'.
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 0 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+INFO: mfi_quadrotor_python: Starting controller: /Library/Frameworks/Python.framework/Versions/3.13/bin/python3 -u mfi_quadrotor_python.py
+INFO: mfi_quadrotor_python: Terminating.

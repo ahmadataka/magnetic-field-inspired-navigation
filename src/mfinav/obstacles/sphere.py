@@ -18,7 +18,7 @@ class SphereObstacle:
             raise ValueError("SphereObstacle requires a 3D center vector.")
 
     def closest_vector(self, position: np.ndarray) -> np.ndarray:
-        delta = position - self.center
+        delta = self.center - position
         distance = _norm(delta)
         if distance < EPS:
             return np.array([self.radius, 0.0, 0.0], dtype=float)
