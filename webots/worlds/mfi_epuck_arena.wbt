@@ -6,7 +6,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.5213170125513537 -0.550708046966413 0.6518812924382558 4.218704350013546
-  position 0.7224851263311493 0.6342936905793048 7.307220477027011
+  position 3.3 0.3 16.5
   follow "mfi_robot"
 }
 Background {
@@ -28,85 +28,85 @@ DEF FLOOR Solid {
         metalness 0
       }
       geometry Box {
-        size 3.8 3.8 0.04
+        size 13 7 0.04
       }
     }
   ]
   name "floor"
   boundingObject Box {
-    size 3.8 3.8 0.04
+    size 13 7 0.04
   }
 }
 DEF WALL_N Solid {
-  translation 0 1.9 0.1
+  translation 3 3.5 0.1
   children [
     Shape {
       appearance PBRAppearance {
         baseColor 0.55 0.55 0.6
       }
       geometry Box {
-        size 3.8 0.06 0.2
+        size 13 0.06 0.2
       }
     }
   ]
   name "wall_n"
   boundingObject Box {
-    size 3.8 0.06 0.2
+    size 13 0.06 0.2
   }
 }
 DEF WALL_S Solid {
-  translation 0 -1.9 0.1
+  translation 3 -3.5 0.1
   children [
     Shape {
       appearance PBRAppearance {
         baseColor 0.55 0.55 0.6
       }
       geometry Box {
-        size 3.8 0.06 0.2
+        size 13 0.06 0.2
       }
     }
   ]
   name "wall_s"
   boundingObject Box {
-    size 3.8 0.06 0.2
+    size 13 0.06 0.2
   }
 }
 DEF WALL_E Solid {
-  translation 1.9 0 0.1
+  translation 9.5 0 0.1
   children [
     Shape {
       appearance PBRAppearance {
         baseColor 0.55 0.55 0.6
       }
       geometry Box {
-        size 0.06 3.8 0.2
+        size 0.06 7 0.2
       }
     }
   ]
   name "wall_e"
   boundingObject Box {
-    size 0.06 3.8 0.2
+    size 0.06 7 0.2
   }
 }
 DEF WALL_W Solid {
-  translation -1.9 0 0.1
+  translation -3.5 0 0.1
   children [
     Shape {
       appearance PBRAppearance {
         baseColor 0.55 0.55 0.6
       }
       geometry Box {
-        size 0.06 3.8 0.2
+        size 0.06 7 0.2
       }
     }
   ]
   name "wall_w"
   boundingObject Box {
-    size 0.06 3.8 0.2
+    size 0.06 7 0.2
   }
 }
 DEF GOAL Pose {
-  translation 1.1 1 0.02
+  translation 10 1.5 0.02
   children [
     Shape {
       appearance PBRAppearance {
@@ -122,62 +122,26 @@ DEF GOAL Pose {
   ]
 }
 DEF OBSTACLE_A Solid {
-  translation 0.25 0.15 0.06
-  rotation 0 0 1 0.3
+  translation 5 0 0.06
+  rotation 0 0 1 0
   children [
     Shape {
       appearance PBRAppearance {
         baseColor 0.75 0.2 0.2
       }
       geometry Box {
-        size 0.22 0.22 0.12
+        size 2 2 0.12
       }
     }
   ]
   name "obstacle_a"
   boundingObject Box {
-    size 0.22 0.22 0.12
-  }
-}
-DEF OBSTACLE_B Solid {
-  translation 0.65 0.7 0.06
-  rotation 0 0 1 -0.25
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.75 0.2 0.2
-      }
-      geometry Box {
-        size 0.26 0.18 0.12
-      }
-    }
-  ]
-  name "obstacle_b"
-  boundingObject Box {
-    size 0.26 0.18 0.12
-  }
-}
-DEF OBSTACLE_C Solid {
-  translation 0.8 -0.55 0.06
-  rotation 0 0 1 0.6
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.75 0.2 0.2
-      }
-      geometry Box {
-        size 0.18 0.28 0.12
-      }
-    }
-  ]
-  name "obstacle_c"
-  boundingObject Box {
-    size 0.18 0.28 0.12
+    size 2 2 0.12
   }
 }
 DEF MFI_ROBOT Robot {
-  translation -1.1 -1 0.035
-  rotation 0 0 1 0.75
+  translation 0 0 0.035
+  rotation 0 0 1 0.14888994760949725
   children [
     Pose {
       translation 0 0 0.025

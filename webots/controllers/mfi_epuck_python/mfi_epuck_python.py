@@ -22,17 +22,16 @@ if str(SRC_ROOT) not in sys.path:
 
 from controller import Supervisor  # type: ignore
 
-from mfinav import DifferentialDriveModel, DifferentialDriveState, PolygonObstacle, ReferenceNavigator, compute_metrics, make_paper_geometric_config
+from mfinav import DifferentialDriveModel, DifferentialDriveState, ObstacleCollection, PolygonObstacle, ReferenceNavigator, compute_metrics, make_paper_geometric_config
 
 
 GOAL_TOLERANCE = 0.10
 DEFAULT_MAX_STEPS = 2500
 DEFAULT_DT = 0.064
+DEFAULT_INTERNAL_DT = 0.02
 
 OBSTACLE_SPECS = [
-    {"def": "OBSTACLE_A", "size": np.array([0.22, 0.22], dtype=float)},
-    {"def": "OBSTACLE_B", "size": np.array([0.26, 0.18], dtype=float)},
-    {"def": "OBSTACLE_C", "size": np.array([0.18, 0.28], dtype=float)},
+    {"def": "OBSTACLE_A", "size": np.array([2.0, 2.0], dtype=float)},
 ]
 
 
@@ -123,6 +122,7 @@ def main() -> None:
     history_output = os.environ.get("MFINAV_WEBOTS_HISTORY")
     summary_output = os.environ.get("MFINAV_WEBOTS_SUMMARY")
     auto_quit = os.environ.get("MFINAV_WEBOTS_QUIT", "0") == "1"
+    internal_dt = float(os.environ.get("MFINAV_WEBOTS_INTERNAL_DT", str(DEFAULT_INTERNAL_DT)))
 
     config = make_paper_geometric_config()
     config.max_linear_speed = 0.18
@@ -170,22 +170,17 @@ def main() -> None:
             break
         time_s = step * dt
         goal_position = np.asarray(goal_node.getPosition(), dtype=float)[:2]
-        closest_obstacle = None
-        closest_distance = math.inf
-        closest_clearance = math.inf
-        for node, size_xy in obstacle_nodes:
-            obstacle = _obstacle_from_node(node, size_xy)
-            distance = float(np.linalg.norm(obstacle.closest_vector(state.position)))
-            clearance = float(obstacle.clearance(state.position))
-            if distance < closest_distance:
-                closest_distance = distance
-                closest_obstacle = obstacle
-                closest_clearance = clearance
-
-        if closest_obstacle is None:
+        obstacles = [_obstacle_from_node(node, size_xy) for node, size_xy in obstacle_nodes]
+        if not obstacles:
             continue
+        obstacle_collection = ObstacleCollection(obstacles)
 
-        guidance = np.asarray(navigator.command(state, goal_position, closest_obstacle), dtype=float)
+        guidance = np.asarray(navigator.command(state, goal_position, obstacle_collection), dtype=float)
+        observation = navigator.last_observation
+        if observation is None:
+            continue
+        closest_distance = float(observation.distance_to_obstacle)
+        closest_clearance = float(observation.signed_clearance)
         goal_distance = float(np.linalg.norm(goal_position - state.position))
         history.append(
             _history_row(
@@ -198,8 +193,13 @@ def main() -> None:
                 closest_clearance,
             )
         )
-        command = model.guidance_to_command(state, guidance)
-        state = model.step(state, command, dt)
+        remaining_dt = dt
+        while remaining_dt > 1e-9:
+            step_dt = min(internal_dt, remaining_dt)
+            guidance_step = np.asarray(navigator.command(state, goal_position, obstacle_collection), dtype=float)
+            command = model.guidance_to_command(state, guidance_step)
+            state = model.step(state, command, step_dt)
+            remaining_dt -= step_dt
         translation_field.setSFVec3f([float(state.position[0]), float(state.position[1]), 0.035])
         rotation_field.setSFRotation([0.0, 0.0, 1.0, float(state.heading)])
 

@@ -36,12 +36,10 @@ COLORS = {
 }
 
 OBSTACLE_SPECS = [
-    {"center": (0.25, 0.15), "size": (0.22, 0.22), "yaw": 0.3},
-    {"center": (0.65, 0.7), "size": (0.26, 0.18), "yaw": -0.25},
-    {"center": (0.8, -0.55), "size": (0.18, 0.28), "yaw": 0.6},
+    {"center": (5.0, 0.0), "size": (2.0, 2.0), "yaw": 0.0},
 ]
-START = (-1.1, -1.0)
-GOAL = (1.1, 1.0)
+START = (0.0, 0.0)
+GOAL = (10.0, 1.5)
 
 
 def _rotation_matrix_2d(theta: float) -> list[list[float]]:
