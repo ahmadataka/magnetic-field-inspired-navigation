@@ -1,0 +1,34 @@
+{
+  "status": "goal_reached",
+  "steps": 480,
+  "goal_tolerance": 0.3,
+  "scenario": "wandering_circle",
+  "method": "paper_geometric",
+  "metrics": {
+    "steps": 480.0,
+    "path_length": 3.1964561802117943,
+    "final_goal_distance": 0.2969702804790872,
+    "min_clearance": 0.6554929426457204,
+    "mean_speed": 0.10792464200230793,
+    "success": 1.0,
+    "goal_reached_once": 1.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": 479.0,
+    "path_efficiency": 0.8512361290639577
+  },
+  "final_state": {
+    "x": 2.7208525589863024,
+    "y": -0.11061369685572046,
+    "heading": 0.8699403914477681
+  },
+  "start": [
+    0.0,
+    -0.08892693981581608
+  ],
+  "goal": [
+    2.8901255440140226,
+    0.1333904097237241
+  ],
+  "webots_exit_code": 0
+}

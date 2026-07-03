@@ -1,0 +1,196 @@
+#VRML_SIM R2023b utf8
+
+WorldInfo {
+  title "MFI Webots dynamic benchmark - wandering_circle"
+  basicTimeStep 64
+}
+Viewpoint {
+  orientation -0.5213170125513537 -0.550708046966413 0.6518812924382558 4.218704350013546
+  position 1.795753 1.186073 7.800000
+  follow "mfi_robot"
+}
+Background {
+  skyColor [
+    0.92 0.94 0.98
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.8
+  direction -0.3 -0.4 -1
+}
+DEF FLOOR Solid {
+  translation 1.795753 2.161073 -0.02
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.2 0.2 0.2
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 5.591507 6.500000 0.04
+      }
+    }
+  ]
+  name "floor"
+  boundingObject Box {
+    size 5.591507 6.500000 0.04
+  }
+}
+DEF WALL_N Solid {
+  translation 1.795753 5.411073 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 5.591507 0.06 0.2
+      }
+    }
+  ]
+  name "wall_n"
+  boundingObject Box {
+    size 5.591507 0.06 0.2
+  }
+}
+DEF WALL_S Solid {
+  translation 1.795753 -1.088927 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 5.591507 0.06 0.2
+      }
+    }
+  ]
+  name "wall_s"
+  boundingObject Box {
+    size 5.591507 0.06 0.2
+  }
+}
+DEF WALL_E Solid {
+  translation 4.591507 2.161073 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 0.06 6.500000 0.2
+      }
+    }
+  ]
+  name "wall_e"
+  boundingObject Box {
+    size 0.06 6.500000 0.2
+  }
+}
+DEF WALL_W Solid {
+  translation -1.000000 2.161073 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 0.06 6.500000 0.2
+      }
+    }
+  ]
+  name "wall_w"
+  boundingObject Box {
+    size 0.06 6.500000 0.2
+  }
+}
+DEF GOAL Pose {
+  translation 2.890126 0.133390 0.02
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0.8 0.2
+        roughness 0.6
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.02
+        radius 0.18
+      }
+    }
+  ]
+}
+DEF OBSTACLE_1 Solid {
+  translation 1.489526 0.000000 0.06
+  children [
+    Shape {
+          appearance PBRAppearance {
+            baseColor 0.75 0.2 0.2
+          }
+          geometry Cylinder {
+            height 0.120000
+            radius 0.244549
+          }
+        }
+  ]
+  name "obstacle_1"
+  boundingObject Cylinder {
+    height 0.12
+    radius 0.244549
+  }
+}
+DEF MFI_ROBOT Robot {
+  translation 0.000000 -0.088927 0.035
+  rotation 0 0 1 0.076771891270
+  children [
+    Pose {
+      translation 0 0 0.025
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.15 0.15 0.18
+            roughness 0.7
+          }
+          geometry Cylinder {
+            height 0.05
+            radius 0.05
+          }
+        }
+      ]
+    }
+    Pose {
+      translation 0 0.055 0.02
+      rotation 1 0 0 1.57
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.05 0.05 0.05
+          }
+          geometry Cylinder {
+            height 0.01
+            radius 0.02
+          }
+        }
+      ]
+    }
+    Pose {
+      translation 0 -0.055 0.02
+      rotation 1 0 0 1.57
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.05 0.05 0.05
+          }
+          geometry Cylinder {
+            height 0.01
+            radius 0.02
+          }
+        }
+      ]
+    }
+  ]
+  name "mfi_robot"
+  controller "mfi_epuck_python"
+  supervisor TRUE
+}

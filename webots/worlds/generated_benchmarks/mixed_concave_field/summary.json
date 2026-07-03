@@ -1,0 +1,33 @@
+{
+  "status": "timeout",
+  "steps": 2500,
+  "goal_tolerance": 0.1,
+  "scenario": "mixed_concave_field",
+  "metrics": {
+    "steps": 2500.0,
+    "path_length": 7.598533894270094,
+    "final_goal_distance": 4.877881355509382,
+    "min_clearance": 0.9482892545356132,
+    "mean_speed": 0.04450477308906222,
+    "success": 0.0,
+    "goal_reached_once": 0.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": Infinity,
+    "path_efficiency": 0.05601014515374199
+  },
+  "final_state": {
+    "x": -0.35108823495544933,
+    "y": -0.3605579840751373,
+    "heading": -1.5838705093998375
+  },
+  "start": [
+    0.0,
+    -0.12
+  ],
+  "goal": [
+    4.5,
+    0.15
+  ],
+  "webots_exit_code": 1
+}

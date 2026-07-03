@@ -1,0 +1,34 @@
+{
+  "status": "goal_reached",
+  "steps": 2428,
+  "goal_tolerance": 0.3,
+  "scenario": "slalom_multi_convex",
+  "method": "paper_geometric",
+  "metrics": {
+    "steps": 2428.0,
+    "path_length": 8.199072155741138,
+    "final_goal_distance": 0.29894081721766347,
+    "min_clearance": 0.463843297441589,
+    "mean_speed": 0.04997198505458569,
+    "success": 1.0,
+    "goal_reached_once": 1.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": 2427.0,
+    "path_efficiency": 0.5253869499487466
+  },
+  "final_state": {
+    "x": 4.301865428978416,
+    "y": -0.22384884177689474,
+    "heading": 0.8117544716118082
+  },
+  "start": [
+    0.0,
+    0.0
+  ],
+  "goal": [
+    4.5,
+    0.0
+  ],
+  "webots_exit_code": 0
+}

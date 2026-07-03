@@ -1,0 +1,419 @@
+#VRML_SIM R2023b utf8
+
+WorldInfo {
+  title "MFI Webots dynamic benchmark - mixed_static_dynamic_field"
+  basicTimeStep 64
+}
+Viewpoint {
+  orientation -0.5213170125513537 -0.550708046966413 0.6518812924382558 4.218704350013546
+  position 0.292588 0.330917 7.800000
+  follow "mfi_robot"
+}
+Background {
+  skyColor [
+    0.92 0.94 0.98
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.8
+  direction -0.3 -0.4 -1
+}
+DEF FLOOR Solid {
+  translation 0.292588 1.305917 -0.02
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.2 0.2 0.2
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 2.585176 6.500000 0.04
+      }
+    }
+  ]
+  name "floor"
+  boundingObject Box {
+    size 2.585176 6.500000 0.04
+  }
+}
+DEF WALL_N Solid {
+  translation 0.292588 4.555917 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 2.585176 0.06 0.2
+      }
+    }
+  ]
+  name "wall_n"
+  boundingObject Box {
+    size 2.585176 0.06 0.2
+  }
+}
+DEF WALL_S Solid {
+  translation 0.292588 -1.944083 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 2.585176 0.06 0.2
+      }
+    }
+  ]
+  name "wall_s"
+  boundingObject Box {
+    size 2.585176 0.06 0.2
+  }
+}
+DEF WALL_E Solid {
+  translation 1.585176 1.305917 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 0.06 6.500000 0.2
+      }
+    }
+  ]
+  name "wall_e"
+  boundingObject Box {
+    size 0.06 6.500000 0.2
+  }
+}
+DEF WALL_W Solid {
+  translation -1.000000 1.305917 0.1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+      }
+      geometry Box {
+        size 0.06 6.500000 0.2
+      }
+    }
+  ]
+  name "wall_w"
+  boundingObject Box {
+    size 0.06 6.500000 0.2
+  }
+}
+DEF GOAL Pose {
+  translation 0.585176 0.011704 0.02
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0.8 0.2
+        roughness 0.6
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.02
+        radius 0.18
+      }
+    }
+  ]
+}
+DEF OBSTACLE_1 Solid {
+  translation 0.165800 -0.068270 0.0
+  children [
+    Shape {
+          appearance PBRAppearance {
+            baseColor 0.75 0.2 0.2
+          }
+          geometry IndexedFaceSet {
+            coord Coordinate {
+              point [
+              -0.037061 -0.040962 0,
+              0.037061 -0.040962 0,
+              0.037061 0.040962 0,
+              -0.037061 0.040962 0,
+              -0.037061 -0.040962 0.120000,
+              0.037061 -0.040962 0.120000,
+              0.037061 0.040962 0.120000,
+              -0.037061 0.040962 0.120000
+              ]
+            }
+            coordIndex [
+            3, 0, 1, -1
+            5, 4, 7, -1
+            1, 2, 3, -1
+            7, 6, 5, -1
+            0, 1, 5, -1
+            0, 5, 4, -1
+            1, 2, 6, -1
+            1, 6, 5, -1
+            2, 3, 7, -1
+            2, 7, 6, -1
+            3, 0, 4, -1
+            3, 4, 7, -1
+            ]
+            creaseAngle 1.2
+          }
+        }
+  ]
+  name "obstacle_1"
+  boundingObject Group {
+    children [
+      Shape {
+          appearance PBRAppearance {
+            baseColor 0.75 0.2 0.2
+          }
+          geometry IndexedFaceSet {
+            coord Coordinate {
+              point [
+              -0.037061 -0.040962 0,
+              0.037061 -0.040962 0,
+              0.037061 0.040962 0,
+              -0.037061 0.040962 0,
+              -0.037061 -0.040962 0.120000,
+              0.037061 -0.040962 0.120000,
+              0.037061 0.040962 0.120000,
+              -0.037061 0.040962 0.120000
+              ]
+            }
+            coordIndex [
+            3, 0, 1, -1
+            5, 4, 7, -1
+            1, 2, 3, -1
+            7, 6, 5, -1
+            0, 1, 5, -1
+            0, 5, 4, -1
+            1, 2, 6, -1
+            1, 6, 5, -1
+            2, 3, 7, -1
+            2, 7, 6, -1
+            3, 0, 4, -1
+            3, 4, 7, -1
+            ]
+            creaseAngle 1.2
+          }
+        }
+    ]
+  }
+}
+DEF OBSTACLE_2 Solid {
+  translation 0.288687 -0.101430 0.06
+  children [
+    Shape {
+          appearance PBRAppearance {
+            baseColor 0.75 0.2 0.2
+          }
+          geometry Cylinder {
+            height 0.120000
+            radius 0.037061
+          }
+        }
+  ]
+  name "obstacle_2"
+  boundingObject Cylinder {
+    height 0.12
+    radius 0.037061
+  }
+}
+DEF OBSTACLE_3 Solid {
+  translation 0.421326 0.004876 0.0
+  children [
+    Shape {
+          appearance PBRAppearance {
+            baseColor 0.75 0.2 0.2
+          }
+          geometry IndexedFaceSet {
+            coord Coordinate {
+              point [
+              -0.046814 -0.075098 0,
+              0.066320 -0.075098 0,
+              0.066320 0.077048 0,
+              -0.046814 0.077048 0,
+              -0.046814 0.038036 0,
+              0.027308 0.038036 0,
+              0.027308 -0.039987 0,
+              -0.046814 -0.039987 0,
+              -0.046814 -0.075098 0.120000,
+              0.066320 -0.075098 0.120000,
+              0.066320 0.077048 0.120000,
+              -0.046814 0.077048 0.120000,
+              -0.046814 0.038036 0.120000,
+              0.027308 0.038036 0.120000,
+              0.027308 -0.039987 0.120000,
+              -0.046814 -0.039987 0.120000
+              ]
+            }
+            coordIndex [
+            7, 0, 1, -1
+            9, 8, 15, -1
+            2, 3, 4, -1
+            12, 11, 10, -1
+            2, 4, 5, -1
+            13, 12, 10, -1
+            1, 2, 5, -1
+            13, 10, 9, -1
+            1, 5, 6, -1
+            14, 13, 9, -1
+            1, 6, 7, -1
+            15, 14, 9, -1
+            0, 1, 9, -1
+            0, 9, 8, -1
+            1, 2, 10, -1
+            1, 10, 9, -1
+            2, 3, 11, -1
+            2, 11, 10, -1
+            3, 4, 12, -1
+            3, 12, 11, -1
+            4, 5, 13, -1
+            4, 13, 12, -1
+            5, 6, 14, -1
+            5, 14, 13, -1
+            6, 7, 15, -1
+            6, 15, 14, -1
+            7, 0, 8, -1
+            7, 8, 15, -1
+            ]
+            creaseAngle 1.2
+          }
+        }
+  ]
+  name "obstacle_3"
+  boundingObject Group {
+    children [
+      Shape {
+          appearance PBRAppearance {
+            baseColor 0.75 0.2 0.2
+          }
+          geometry IndexedFaceSet {
+            coord Coordinate {
+              point [
+              -0.046814 -0.075098 0,
+              0.066320 -0.075098 0,
+              0.066320 0.077048 0,
+              -0.046814 0.077048 0,
+              -0.046814 0.038036 0,
+              0.027308 0.038036 0,
+              0.027308 -0.039987 0,
+              -0.046814 -0.039987 0,
+              -0.046814 -0.075098 0.120000,
+              0.066320 -0.075098 0.120000,
+              0.066320 0.077048 0.120000,
+              -0.046814 0.077048 0.120000,
+              -0.046814 0.038036 0.120000,
+              0.027308 0.038036 0.120000,
+              0.027308 -0.039987 0.120000,
+              -0.046814 -0.039987 0.120000
+              ]
+            }
+            coordIndex [
+            7, 0, 1, -1
+            9, 8, 15, -1
+            2, 3, 4, -1
+            12, 11, 10, -1
+            2, 4, 5, -1
+            13, 12, 10, -1
+            1, 2, 5, -1
+            13, 10, 9, -1
+            1, 5, 6, -1
+            14, 13, 9, -1
+            1, 6, 7, -1
+            15, 14, 9, -1
+            0, 1, 9, -1
+            0, 9, 8, -1
+            1, 2, 10, -1
+            1, 10, 9, -1
+            2, 3, 11, -1
+            2, 11, 10, -1
+            3, 4, 12, -1
+            3, 12, 11, -1
+            4, 5, 13, -1
+            4, 13, 12, -1
+            5, 6, 14, -1
+            5, 14, 13, -1
+            6, 7, 15, -1
+            6, 15, 14, -1
+            7, 0, 8, -1
+            7, 8, 15, -1
+            ]
+            creaseAngle 1.2
+          }
+        }
+    ]
+  }
+}
+DEF OBSTACLE_4 Solid {
+  translation 0.514954 0.050715 0.06
+  children [
+    Shape {
+          appearance PBRAppearance {
+            baseColor 0.75 0.2 0.2
+          }
+          geometry Cylinder {
+            height 0.120000
+            radius 0.033160
+          }
+        }
+  ]
+  name "obstacle_4"
+  boundingObject Cylinder {
+    height 0.12
+    radius 0.033160
+  }
+}
+DEF MFI_ROBOT Robot {
+  translation 0.000000 -0.007802 0.035
+  rotation 0 0 1 0.033320995878
+  children [
+    Pose {
+      translation 0 0 0.025
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.15 0.15 0.18
+            roughness 0.7
+          }
+          geometry Cylinder {
+            height 0.05
+            radius 0.05
+          }
+        }
+      ]
+    }
+    Pose {
+      translation 0 0.055 0.02
+      rotation 1 0 0 1.57
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.05 0.05 0.05
+          }
+          geometry Cylinder {
+            height 0.01
+            radius 0.02
+          }
+        }
+      ]
+    }
+    Pose {
+      translation 0 -0.055 0.02
+      rotation 1 0 0 1.57
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.05 0.05 0.05
+          }
+          geometry Cylinder {
+            height 0.01
+            radius 0.02
+          }
+        }
+      ]
+    }
+  ]
+  name "mfi_robot"
+  controller "mfi_epuck_python"
+  supervisor TRUE
+}

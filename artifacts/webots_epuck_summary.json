@@ -1,0 +1,31 @@
+{
+  "status": "goal_reached",
+  "steps": 2365,
+  "goal_tolerance": 0.1,
+  "metrics": {
+    "steps": 2365.0,
+    "path_length": 11.474237162537166,
+    "final_goal_distance": 0.0979217926116262,
+    "min_clearance": 1.0350387486631139,
+    "mean_speed": 0.06623888745052313,
+    "success": 1.0,
+    "goal_reached_once": 1.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": 2364.0,
+    "path_efficiency": 0.8727947792788182
+  },
+  "final_state": {
+    "x": 9.902121298213071,
+    "y": 1.4970953133078053,
+    "heading": 0.02966768440622393
+  },
+  "start": [
+    0.0,
+    0.0
+  ],
+  "goal": [
+    10.0,
+    1.5
+  ]
+}
