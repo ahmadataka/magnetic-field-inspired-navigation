@@ -4,6 +4,7 @@ import csv
 import json
 import math
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -13,10 +14,17 @@ from pid_controller import pid_velocity_fixed_height_controller
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+SRC_ROOT = PROJECT_ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from mfinav import DoubleIntegratorState, MagneticFieldNavigator, ObstacleCollection, PolygonObstacle, make_paper_geometric_config
+
 HISTORY_ENV = "MFINAV_WEBOTS_HISTORY"
 SUMMARY_ENV = "MFINAV_WEBOTS_SUMMARY"
 AUTO_QUIT_ENV = "MFINAV_WEBOTS_QUIT"
 MAX_STEPS_ENV = "MFINAV_WEBOTS_MAX_STEPS"
+NAV_MODE_ENV = "MFINAV_WEBOTS_NAV_MODE"
 
 GOAL = np.array([1.2, 0.9, 1.0], dtype=float)
 GOAL_TOLERANCE = 0.18
@@ -30,6 +38,12 @@ DEFAULT_MAX_STEPS = 1800
 HOVER_HEIGHT = 1.0
 MIN_COLLISION_STEP = 500
 MOVE_ENABLE_TIME = 6.0
+MFI_OBSTACLES = ObstacleCollection(
+    obstacles=[
+        PolygonObstacle(vertices=np.array([[0.225, -0.075], [0.575, -0.075], [0.575, 0.275], [0.225, 0.275]], dtype=float)),
+        PolygonObstacle(vertices=np.array([[-0.425, 0.575], [-0.175, 0.575], [-0.175, 1.125], [-0.425, 1.125]], dtype=float)),
+    ]
+)
 
 
 def _wrap_angle(angle: float) -> float:
@@ -80,6 +94,22 @@ if __name__ == "__main__":
     summary_output = os.environ.get(SUMMARY_ENV)
     auto_quit = os.environ.get(AUTO_QUIT_ENV, "0") == "1"
     max_steps = int(os.environ.get(MAX_STEPS_ENV, str(DEFAULT_MAX_STEPS)))
+    nav_mode = os.environ.get(NAV_MODE_ENV, "mfi")
+
+    mfi_config = make_paper_geometric_config()
+    mfi_config.r_l = 0.9
+    mfi_config.r_la = 0.45
+    mfi_config.c_field = 2.8
+    mfi_config.c_perp = 4.5
+    mfi_config.speed_limit = XY_SPEED_LIMIT
+    mfi_config.kp_goal_relaxed = 0.12
+    mfi_config.kp_geom = 2.0
+    mfi_config.sensor_range = 1.8
+    mfi_config.delta_r = 0.12
+    mfi_config.sensing_mode = "raycast"
+    mfi_config.max_acceleration = 2.5
+    mfi_config.max_speed_norm = XY_SPEED_LIMIT
+    mfi_navigator = MagneticFieldNavigator(mfi_config)
 
     while robot.step(timestep) != -1:
         if robot.getTime() > 2.0:
@@ -92,6 +122,7 @@ if __name__ == "__main__":
         "goal": GOAL.tolist(),
         "goal_tolerance": GOAL_TOLERANCE,
         "steps": 0,
+        "nav_mode": nav_mode,
     }
 
     past_position = np.array(gps.getValues(), dtype=float)
@@ -130,10 +161,19 @@ if __name__ == "__main__":
             desired_yaw_rate = 0.0
             desired_altitude = float(HOVER_HEIGHT)
         else:
-            desired_velocity_world = KP_XY * goal_error_world[:2]
-            speed_norm = float(np.linalg.norm(desired_velocity_world))
-            if speed_norm > XY_SPEED_LIMIT:
-                desired_velocity_world *= XY_SPEED_LIMIT / speed_norm
+            if nav_mode == "mfi":
+                planar_state = DoubleIntegratorState(position=position[:2].copy(), velocity=velocity_global[:2].copy())
+                planar_goal = GOAL[:2].copy()
+                planar_guidance = np.asarray(mfi_navigator.command(planar_state, planar_goal, MFI_OBSTACLES), dtype=float)
+                desired_velocity_world = velocity_global[:2] + dt * planar_guidance
+                speed_norm = float(np.linalg.norm(desired_velocity_world))
+                if speed_norm > XY_SPEED_LIMIT:
+                    desired_velocity_world *= XY_SPEED_LIMIT / speed_norm
+            else:
+                desired_velocity_world = KP_XY * goal_error_world[:2]
+                speed_norm = float(np.linalg.norm(desired_velocity_world))
+                if speed_norm > XY_SPEED_LIMIT:
+                    desired_velocity_world *= XY_SPEED_LIMIT / speed_norm
 
             desired_vx = desired_velocity_world[0] * cos_yaw + desired_velocity_world[1] * sin_yaw
             desired_vy = -desired_velocity_world[0] * sin_yaw + desired_velocity_world[1] * cos_yaw
