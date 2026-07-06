@@ -1,0 +1,78 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/bitcraze/crazyflie/protos/Crazyflie.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/Floor.proto"
+
+WorldInfo {
+  title "MFI Crazyflie arena"
+  basicTimeStep 32
+}
+Viewpoint {
+  orientation -0.16377740306514843 0.3701985956311306 0.9143043323986831 0.653664866547213
+  position -2.090150778481645 -1.4060944953149796 1.6503653588909395
+  follow "Crazyflie"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+Floor {
+}
+DEF GOAL Pose {
+  translation 1.2 0.9 0.03
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0.8 0.2
+        roughness 0.6
+      }
+      geometry Cylinder {
+        height 0.02
+        radius 0.12
+      }
+    }
+  ]
+}
+DEF OBSTACLE_A Solid {
+  translation 0.4 0.1 0.12
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.78 0.22 0.22
+      }
+      geometry Box {
+        size 0.35 0.35 0.24
+      }
+    }
+  ]
+  name "obstacle_a"
+  boundingObject Box {
+    size 0.35 0.35 0.24
+  }
+}
+DEF OBSTACLE_B Solid {
+  translation -0.3 0.85 0.18
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.78 0.22 0.22
+      }
+      geometry Box {
+        size 0.25 0.55 0.36
+      }
+    }
+  ]
+  name "obstacle_b"
+  boundingObject Box {
+    size 0.25 0.55 0.36
+  }
+}
+Crazyflie {
+  translation -1.2 -0.9 0.08
+  rotation 0 0 1 0
+  name "Crazyflie"
+  controller "mfi_crazyflie_python"
+  supervisor TRUE
+}
