@@ -27,10 +27,9 @@ YAW_RATE_LIMIT = 1.2
 KP_XY = 0.8
 KP_YAW = 1.4
 DEFAULT_MAX_STEPS = 1800
-TAKEOFF_HEIGHT = 0.8
-MIN_COLLISION_STEP = 60
-TAKEOFF_DURATION = 2.0
-TAKEOFF_RELEASE_HEIGHT = 0.55
+HOVER_HEIGHT = 1.0
+MIN_COLLISION_STEP = 500
+MOVE_ENABLE_TIME = 6.0
 
 
 def _wrap_angle(angle: float) -> float:
@@ -58,13 +57,13 @@ if __name__ == "__main__":
 
     m1_motor = robot.getDevice("m1_motor")
     m1_motor.setPosition(float("inf"))
-    m1_motor.setVelocity(1)
+    m1_motor.setVelocity(-1)
     m2_motor = robot.getDevice("m2_motor")
     m2_motor.setPosition(float("inf"))
     m2_motor.setVelocity(1)
     m3_motor = robot.getDevice("m3_motor")
     m3_motor.setPosition(float("inf"))
-    m3_motor.setVelocity(1)
+    m3_motor.setVelocity(-1)
     m4_motor = robot.getDevice("m4_motor")
     m4_motor.setPosition(float("inf"))
     m4_motor.setVelocity(1)
@@ -81,6 +80,10 @@ if __name__ == "__main__":
     summary_output = os.environ.get(SUMMARY_ENV)
     auto_quit = os.environ.get(AUTO_QUIT_ENV, "0") == "1"
     max_steps = int(os.environ.get(MAX_STEPS_ENV, str(DEFAULT_MAX_STEPS)))
+
+    while robot.step(timestep) != -1:
+        if robot.getTime() > 2.0:
+            break
 
     history: list[dict[str, float]] = []
     summary: dict[str, object] = {
@@ -121,12 +124,11 @@ if __name__ == "__main__":
         v_y = -velocity_global[0] * sin_yaw + velocity_global[1] * cos_yaw
 
         goal_error_world = GOAL - position
-        in_takeoff = now < TAKEOFF_DURATION and position[2] < TAKEOFF_RELEASE_HEIGHT
-        if in_takeoff:
+        if now < MOVE_ENABLE_TIME:
             desired_vx = 0.0
             desired_vy = 0.0
             desired_yaw_rate = 0.0
-            desired_altitude = float(TAKEOFF_HEIGHT)
+            desired_altitude = float(HOVER_HEIGHT)
         else:
             desired_velocity_world = KP_XY * goal_error_world[:2]
             speed_norm = float(np.linalg.norm(desired_velocity_world))
@@ -139,7 +141,7 @@ if __name__ == "__main__":
             desired_heading = math.atan2(goal_error_world[1], goal_error_world[0])
             yaw_error = _wrap_angle(desired_heading - yaw)
             desired_yaw_rate = max(-YAW_RATE_LIMIT, min(YAW_RATE_LIMIT, KP_YAW * yaw_error))
-            desired_altitude = float(GOAL[2])
+            desired_altitude = float(HOVER_HEIGHT)
 
         motor_power = pid.pid(
             dt,
@@ -155,9 +157,9 @@ if __name__ == "__main__":
             v_y,
         )
 
-        m1_motor.setVelocity(motor_power[0])
+        m1_motor.setVelocity(-motor_power[0])
         m2_motor.setVelocity(motor_power[1])
-        m3_motor.setVelocity(motor_power[2])
+        m3_motor.setVelocity(-motor_power[2])
         m4_motor.setVelocity(motor_power[3])
 
         goal_distance = float(np.linalg.norm(goal_error_world))

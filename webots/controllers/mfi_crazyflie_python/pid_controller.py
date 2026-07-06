@@ -54,7 +54,7 @@ class pid_velocity_fixed_height_controller:
             gains["kp_z"] * alt_error
             + gains["kd_z"] * alt_deriv
             + gains["ki_z"] * np.clip(self.altitude_integrator, -2, 2)
-            + 320
+            + 48
         )
         self.past_alt_error = alt_error
 

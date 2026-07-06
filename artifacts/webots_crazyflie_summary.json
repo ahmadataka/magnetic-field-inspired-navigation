@@ -1,5 +1,5 @@
 {
-  "status": "collision",
+  "status": "goal_reached",
   "scenario": "webots_crazyflie_static_smoke",
   "goal": [
     1.2,
@@ -7,17 +7,17 @@
     1.0
   ],
   "goal_tolerance": 0.18,
-  "steps": 61,
+  "steps": 411,
   "final_state": {
-    "x": -1.2,
-    "y": -0.9,
-    "z": 0.014980355144974233
+    "x": 1.0896061940192745,
+    "y": 0.8141600816775177,
+    "z": 1.0006061349589068
   },
-  "final_goal_distance": 3.15757243792606,
+  "final_goal_distance": 0.13984152236052386,
   "start": [
     -1.2,
     -0.9,
-    0.06995456
+    0.01498037372817166
   ],
-  "webots_exit_code": 2
+  "webots_exit_code": 0
 }
