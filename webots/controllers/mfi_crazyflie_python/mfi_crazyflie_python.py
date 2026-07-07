@@ -21,11 +21,16 @@ if str(SRC_ROOT) not in sys.path:
 from mfinav import (
     DoubleIntegratorState,
     MagneticFieldNavigator,
+    MagneticFieldNavigator3D,
     ObstacleCollection,
     PolygonObstacle,
+    PrismObstacle,
+    SphereObstacle,
     compute_metrics,
     make_paper_geometric_config,
+    make_paper_geometric_3d_config,
     make_paper_pd_config,
+    make_paper_pd_3d_config,
 )
 
 HISTORY_ENV = "MFINAV_WEBOTS_HISTORY"
@@ -42,9 +47,13 @@ GOAL_TOLERANCE = 0.18
 ALTITUDE_TOLERANCE = 0.12
 VELOCITY_TOLERANCE = 0.12
 XY_SPEED_LIMIT = 0.35
+Z_SPEED_LIMIT = 0.35
 YAW_RATE_LIMIT = 1.2
 KP_XY = 0.8
+KP_Z = 0.9
 KP_YAW = 1.4
+ALTITUDE_SETPOINT_BLEND = 0.12
+ALTITUDE_VELOCITY_FEEDFORWARD = 0.35
 DEFAULT_MAX_STEPS = 1800
 HOVER_HEIGHT = 1.0
 MIN_COLLISION_STEP = 500
@@ -67,7 +76,26 @@ def _load_scenario() -> tuple[np.ndarray, np.ndarray, float, ObstacleCollection,
     hover_height = float(data.get("hover_height", HOVER_HEIGHT))
     obstacles = []
     for obstacle_spec in data.get("obstacles", []):
-        obstacles.append(PolygonObstacle(vertices=np.asarray(obstacle_spec["vertices"], dtype=float)))
+        kind = obstacle_spec.get("kind", "polygon")
+        if kind == "polygon":
+            obstacles.append(PolygonObstacle(vertices=np.asarray(obstacle_spec["vertices"], dtype=float)))
+        elif kind == "sphere":
+            obstacles.append(
+                SphereObstacle(
+                    center=np.asarray(obstacle_spec["center"], dtype=float),
+                    radius=float(obstacle_spec["radius"]),
+                )
+            )
+        elif kind == "prism":
+            obstacles.append(
+                PrismObstacle(
+                    vertices_xy=np.asarray(obstacle_spec["vertices_xy"], dtype=float),
+                    z_min=float(obstacle_spec["z_min"]),
+                    z_max=float(obstacle_spec["z_max"]),
+                )
+            )
+        else:
+            raise ValueError(f"Unsupported obstacle kind for Webots Crazyflie controller: {kind}")
     return goal, start, hover_height, ObstacleCollection(obstacles=obstacles), str(data.get("name", "webots_crazyflie"))
 
 
@@ -83,6 +111,17 @@ def _apply_overrides(config) -> None:
 
 def _wrap_angle(angle: float) -> float:
     return math.atan2(math.sin(angle), math.cos(angle))
+
+
+def _clip_norm(vec: np.ndarray, limit: float) -> np.ndarray:
+    magnitude = float(np.linalg.norm(vec))
+    if magnitude <= limit or magnitude <= 1e-9:
+        return vec
+    return vec * (limit / magnitude)
+
+
+def _goal_speed_cap(goal_distance: float, hard_cap: float) -> float:
+    return min(hard_cap, max(0.08, 0.05 + 0.8 * goal_distance))
 
 
 def _write_history_csv(history: list[dict[str, float]], output_path: Path) -> None:
@@ -131,29 +170,41 @@ if __name__ == "__main__":
     auto_quit = os.environ.get(AUTO_QUIT_ENV, "0") == "1"
     max_steps = int(os.environ.get(MAX_STEPS_ENV, str(DEFAULT_MAX_STEPS)))
     method_name = os.environ.get(METHOD_ENV, "")
-    nav_mode = os.environ.get(NAV_MODE_ENV, "mfi" if method_name.startswith("paper_") else "waypoint")
+    default_nav_mode = "mfi3d" if method_name.endswith("_3d") else ("mfi" if method_name.startswith("paper_") else "waypoint")
+    nav_mode = os.environ.get(NAV_MODE_ENV, default_nav_mode)
     goal, start_translation, hover_height, mfi_obstacles, scenario_name = _load_scenario()
 
-    if method_name == "paper_pd":
+    if method_name == "paper_pd_3d":
+        mfi_config = make_paper_pd_3d_config()
+    elif method_name == "paper_geometric_3d":
+        mfi_config = make_paper_geometric_3d_config()
+    elif method_name == "paper_pd":
         mfi_config = make_paper_pd_config()
     else:
         mfi_config = make_paper_geometric_config()
-    mfi_config.r_l = 0.9
-    mfi_config.r_la = 0.45
-    mfi_config.c_field = 2.8
-    mfi_config.c_perp = 4.5
-    mfi_config.speed_limit = XY_SPEED_LIMIT
-    mfi_config.kp_goal_relaxed = 0.12
-    mfi_config.kp_geom = 2.0
-    mfi_config.sensor_range = 1.8
-    mfi_config.delta_r = 0.12
-    mfi_config.sensing_mode = "raycast"
-    mfi_config.max_acceleration = 2.5
-    mfi_config.max_speed_norm = XY_SPEED_LIMIT
+    if method_name.endswith("_3d"):
+        mfi_config.sensing_mode = "analytic"
+        mfi_config.max_acceleration = 2.5
+        mfi_config.max_speed_norm = 0.7
+    else:
+        mfi_config.r_l = 0.9
+        mfi_config.r_la = 0.45
+        mfi_config.c_field = 2.8
+        mfi_config.c_perp = 4.5
+        mfi_config.speed_limit = XY_SPEED_LIMIT
+        mfi_config.kp_goal_relaxed = 0.12
+        mfi_config.kp_geom = 2.0
+        mfi_config.sensor_range = 1.8
+        mfi_config.delta_r = 0.12
+        mfi_config.sensing_mode = "raycast"
+        mfi_config.max_acceleration = 2.5
+        mfi_config.max_speed_norm = XY_SPEED_LIMIT
     _apply_overrides(mfi_config)
-    mfi_navigator = MagneticFieldNavigator(mfi_config)
+    mfi_navigator = MagneticFieldNavigator3D(mfi_config) if method_name.endswith("_3d") else MagneticFieldNavigator(mfi_config)
 
     translation_field.setSFVec3f([float(start_translation[0]), float(start_translation[1]), float(start_translation[2])])
+
+    desired_altitude_state = float(hover_height)
 
     while robot.step(timestep) != -1:
         if robot.getTime() > 2.0:
@@ -174,7 +225,6 @@ if __name__ == "__main__":
     past_time = robot.getTime()
     first_time = True
     exit_code = 0
-
     while robot.step(timestep) != -1:
         step = len(history)
         if step >= max_steps:
@@ -204,9 +254,21 @@ if __name__ == "__main__":
             desired_vx = 0.0
             desired_vy = 0.0
             desired_yaw_rate = 0.0
-            desired_altitude = float(hover_height)
+            desired_altitude_state = float(hover_height)
         else:
-            if nav_mode == "mfi":
+            if nav_mode == "mfi3d":
+                full_state = DoubleIntegratorState(position=position.copy(), velocity=velocity_global.copy())
+                guidance = np.asarray(mfi_navigator.command(full_state, goal.copy(), mfi_obstacles), dtype=float)
+                desired_velocity_world = velocity_global + dt * guidance
+                desired_velocity_world = _clip_norm(
+                    desired_velocity_world,
+                    _goal_speed_cap(float(np.linalg.norm(goal_error_world)), float(mfi_config.max_speed_norm)),
+                )
+                desired_velocity_world[2] = float(np.clip(desired_velocity_world[2], -Z_SPEED_LIMIT, Z_SPEED_LIMIT))
+                target_altitude = float(goal[2] + ALTITUDE_VELOCITY_FEEDFORWARD * desired_velocity_world[2])
+                desired_altitude_state += ALTITUDE_SETPOINT_BLEND * (target_altitude - desired_altitude_state)
+                desired_altitude_state = float(np.clip(desired_altitude_state, 0.25, max(goal[2], hover_height) + 0.9))
+            elif nav_mode == "mfi":
                 planar_state = DoubleIntegratorState(position=position[:2].copy(), velocity=velocity_global[:2].copy())
                 planar_goal = goal[:2].copy()
                 planar_guidance = np.asarray(mfi_navigator.command(planar_state, planar_goal, mfi_obstacles), dtype=float)
@@ -214,19 +276,24 @@ if __name__ == "__main__":
                 speed_norm = float(np.linalg.norm(desired_velocity_world))
                 if speed_norm > XY_SPEED_LIMIT:
                     desired_velocity_world *= XY_SPEED_LIMIT / speed_norm
+                desired_altitude_state = float(hover_height)
             else:
                 desired_velocity_world = KP_XY * goal_error_world[:2]
-                speed_norm = float(np.linalg.norm(desired_velocity_world))
-                if speed_norm > XY_SPEED_LIMIT:
-                    desired_velocity_world *= XY_SPEED_LIMIT / speed_norm
+                desired_velocity_world = _clip_norm(
+                    desired_velocity_world,
+                    _goal_speed_cap(float(np.linalg.norm(goal_error_world)), XY_SPEED_LIMIT),
+                )
+                target_altitude = float(goal[2] + ALTITUDE_VELOCITY_FEEDFORWARD * np.clip(KP_Z * goal_error_world[2], -Z_SPEED_LIMIT, Z_SPEED_LIMIT))
+                desired_altitude_state += ALTITUDE_SETPOINT_BLEND * (target_altitude - desired_altitude_state)
+                desired_altitude_state = float(np.clip(desired_altitude_state, 0.25, max(goal[2], hover_height) + 0.9))
 
-            desired_vx = desired_velocity_world[0] * cos_yaw + desired_velocity_world[1] * sin_yaw
-            desired_vy = -desired_velocity_world[0] * sin_yaw + desired_velocity_world[1] * cos_yaw
+            desired_vx = float(desired_velocity_world[0] * cos_yaw + desired_velocity_world[1] * sin_yaw)
+            desired_vy = float(-desired_velocity_world[0] * sin_yaw + desired_velocity_world[1] * cos_yaw)
 
             desired_heading = math.atan2(goal_error_world[1], goal_error_world[0])
             yaw_error = _wrap_angle(desired_heading - yaw)
             desired_yaw_rate = max(-YAW_RATE_LIMIT, min(YAW_RATE_LIMIT, KP_YAW * yaw_error))
-            desired_altitude = float(hover_height)
+        desired_altitude = desired_altitude_state
 
         motor_power = pid.pid(
             dt,
@@ -248,7 +315,8 @@ if __name__ == "__main__":
         m4_motor.setVelocity(motor_power[3])
 
         goal_distance = float(np.linalg.norm(goal_error_world))
-        signed_clearance = float(mfi_obstacles.clearance(position[:2])) if mfi_obstacles.obstacles else math.inf
+        clearance_position = position.copy() if method_name.endswith("_3d") else position[:2]
+        signed_clearance = float(mfi_obstacles.clearance(clearance_position)) if mfi_obstacles.obstacles else math.inf
         history.append(
             {
                 "step": float(step),
