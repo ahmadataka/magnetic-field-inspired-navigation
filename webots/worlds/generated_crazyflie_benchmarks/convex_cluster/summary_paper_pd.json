@@ -1,0 +1,38 @@
+{
+  "status": "timeout",
+  "scenario": "convex_cluster",
+  "goal": [
+    2.4,
+    0.32727272727272727,
+    1.0
+  ],
+  "goal_tolerance": 0.18,
+  "steps": 1800,
+  "nav_mode": "mfi",
+  "method": "paper_pd",
+  "final_state": {
+    "x": 2.6263230978251624,
+    "y": -0.18737854795883413,
+    "z": 1.000020953837747
+  },
+  "final_goal_distance": 0.5660868028482128,
+  "start": [
+    -3.804201694724563e-18,
+    -0.21818181818181817,
+    0.014980373728171658
+  ],
+  "metrics": {
+    "steps": 1800.0,
+    "path_length": 16.003436350610414,
+    "final_goal_distance": 0.5660868028482128,
+    "min_clearance": 0.255877601446584,
+    "mean_speed": 0.2778374366425421,
+    "success": 0.0,
+    "goal_reached_once": 1.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": 1175.0,
+    "path_efficiency": 0.17528306010889635
+  },
+  "webots_exit_code": 1
+}

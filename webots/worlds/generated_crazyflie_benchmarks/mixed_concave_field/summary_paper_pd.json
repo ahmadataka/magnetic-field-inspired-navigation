@@ -1,0 +1,38 @@
+{
+  "status": "collision",
+  "scenario": "mixed_concave_field",
+  "goal": [
+    2.4,
+    0.08,
+    1.0
+  ],
+  "goal_tolerance": 0.18,
+  "steps": 825,
+  "nav_mode": "mfi",
+  "method": "paper_pd",
+  "final_state": {
+    "x": 0.7544306853327768,
+    "y": 1.0228158471228834,
+    "z": 0.033300417162165835
+  },
+  "final_goal_distance": 2.1286869601750364,
+  "start": [
+    3.0202160338497466e-18,
+    -0.064,
+    0.014980373728171664
+  ],
+  "metrics": {
+    "steps": 825.0,
+    "path_length": 9.913073299455057,
+    "final_goal_distance": 2.1286869601750364,
+    "min_clearance": 0.23393189397118946,
+    "mean_speed": 0.3754952007369341,
+    "success": 0.0,
+    "goal_reached_once": 1.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": 569.0,
+    "path_efficiency": 0.13347312338267714
+  },
+  "webots_exit_code": 2
+}

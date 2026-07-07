@@ -18,13 +18,24 @@ SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from mfinav import DoubleIntegratorState, MagneticFieldNavigator, ObstacleCollection, PolygonObstacle, make_paper_geometric_config
+from mfinav import (
+    DoubleIntegratorState,
+    MagneticFieldNavigator,
+    ObstacleCollection,
+    PolygonObstacle,
+    compute_metrics,
+    make_paper_geometric_config,
+    make_paper_pd_config,
+)
 
 HISTORY_ENV = "MFINAV_WEBOTS_HISTORY"
 SUMMARY_ENV = "MFINAV_WEBOTS_SUMMARY"
 AUTO_QUIT_ENV = "MFINAV_WEBOTS_QUIT"
 MAX_STEPS_ENV = "MFINAV_WEBOTS_MAX_STEPS"
 NAV_MODE_ENV = "MFINAV_WEBOTS_NAV_MODE"
+SCENARIO_JSON_ENV = "MFINAV_WEBOTS_SCENARIO_JSON"
+METHOD_ENV = "MFINAV_WEBOTS_METHOD"
+CONFIG_JSON_ENV = "MFINAV_WEBOTS_CONFIG_JSON"
 
 GOAL = np.array([1.2, 0.9, 1.0], dtype=float)
 GOAL_TOLERANCE = 0.18
@@ -44,6 +55,30 @@ MFI_OBSTACLES = ObstacleCollection(
         PolygonObstacle(vertices=np.array([[-0.425, 0.575], [-0.175, 0.575], [-0.175, 1.125], [-0.425, 1.125]], dtype=float)),
     ]
 )
+
+
+def _load_scenario() -> tuple[np.ndarray, np.ndarray, float, ObstacleCollection, str]:
+    raw = os.environ.get(SCENARIO_JSON_ENV)
+    if not raw:
+        return GOAL.copy(), np.array([-1.2, -0.9, 0.08], dtype=float), HOVER_HEIGHT, MFI_OBSTACLES, "webots_crazyflie_static_smoke"
+    data = json.loads(raw)
+    goal = np.asarray(data["goal"], dtype=float)
+    start = np.asarray(data["start"], dtype=float)
+    hover_height = float(data.get("hover_height", HOVER_HEIGHT))
+    obstacles = []
+    for obstacle_spec in data.get("obstacles", []):
+        obstacles.append(PolygonObstacle(vertices=np.asarray(obstacle_spec["vertices"], dtype=float)))
+    return goal, start, hover_height, ObstacleCollection(obstacles=obstacles), str(data.get("name", "webots_crazyflie"))
+
+
+def _apply_overrides(config) -> None:
+    raw = os.environ.get(CONFIG_JSON_ENV)
+    if not raw:
+        return
+    overrides = json.loads(raw)
+    for key, value in overrides.items():
+        if hasattr(config, key):
+            setattr(config, key, value)
 
 
 def _wrap_angle(angle: float) -> float:
@@ -68,6 +103,7 @@ def _write_summary_json(output_path: Path, summary: dict[str, object]) -> None:
 if __name__ == "__main__":
     robot = Supervisor()
     timestep = int(robot.getBasicTimeStep())
+    translation_field = robot.getSelf().getField("translation")
 
     m1_motor = robot.getDevice("m1_motor")
     m1_motor.setPosition(float("inf"))
@@ -94,9 +130,14 @@ if __name__ == "__main__":
     summary_output = os.environ.get(SUMMARY_ENV)
     auto_quit = os.environ.get(AUTO_QUIT_ENV, "0") == "1"
     max_steps = int(os.environ.get(MAX_STEPS_ENV, str(DEFAULT_MAX_STEPS)))
-    nav_mode = os.environ.get(NAV_MODE_ENV, "mfi")
+    method_name = os.environ.get(METHOD_ENV, "")
+    nav_mode = os.environ.get(NAV_MODE_ENV, "mfi" if method_name.startswith("paper_") else "waypoint")
+    goal, start_translation, hover_height, mfi_obstacles, scenario_name = _load_scenario()
 
-    mfi_config = make_paper_geometric_config()
+    if method_name == "paper_pd":
+        mfi_config = make_paper_pd_config()
+    else:
+        mfi_config = make_paper_geometric_config()
     mfi_config.r_l = 0.9
     mfi_config.r_la = 0.45
     mfi_config.c_field = 2.8
@@ -109,7 +150,10 @@ if __name__ == "__main__":
     mfi_config.sensing_mode = "raycast"
     mfi_config.max_acceleration = 2.5
     mfi_config.max_speed_norm = XY_SPEED_LIMIT
+    _apply_overrides(mfi_config)
     mfi_navigator = MagneticFieldNavigator(mfi_config)
+
+    translation_field.setSFVec3f([float(start_translation[0]), float(start_translation[1]), float(start_translation[2])])
 
     while robot.step(timestep) != -1:
         if robot.getTime() > 2.0:
@@ -118,11 +162,12 @@ if __name__ == "__main__":
     history: list[dict[str, float]] = []
     summary: dict[str, object] = {
         "status": "unknown",
-        "scenario": "webots_crazyflie_static_smoke",
-        "goal": GOAL.tolist(),
+        "scenario": scenario_name,
+        "goal": goal.tolist(),
         "goal_tolerance": GOAL_TOLERANCE,
         "steps": 0,
         "nav_mode": nav_mode,
+        "method": method_name or nav_mode,
     }
 
     past_position = np.array(gps.getValues(), dtype=float)
@@ -154,17 +199,17 @@ if __name__ == "__main__":
         v_x = velocity_global[0] * cos_yaw + velocity_global[1] * sin_yaw
         v_y = -velocity_global[0] * sin_yaw + velocity_global[1] * cos_yaw
 
-        goal_error_world = GOAL - position
+        goal_error_world = goal - position
         if now < MOVE_ENABLE_TIME:
             desired_vx = 0.0
             desired_vy = 0.0
             desired_yaw_rate = 0.0
-            desired_altitude = float(HOVER_HEIGHT)
+            desired_altitude = float(hover_height)
         else:
             if nav_mode == "mfi":
                 planar_state = DoubleIntegratorState(position=position[:2].copy(), velocity=velocity_global[:2].copy())
-                planar_goal = GOAL[:2].copy()
-                planar_guidance = np.asarray(mfi_navigator.command(planar_state, planar_goal, MFI_OBSTACLES), dtype=float)
+                planar_goal = goal[:2].copy()
+                planar_guidance = np.asarray(mfi_navigator.command(planar_state, planar_goal, mfi_obstacles), dtype=float)
                 desired_velocity_world = velocity_global[:2] + dt * planar_guidance
                 speed_norm = float(np.linalg.norm(desired_velocity_world))
                 if speed_norm > XY_SPEED_LIMIT:
@@ -181,7 +226,7 @@ if __name__ == "__main__":
             desired_heading = math.atan2(goal_error_world[1], goal_error_world[0])
             yaw_error = _wrap_angle(desired_heading - yaw)
             desired_yaw_rate = max(-YAW_RATE_LIMIT, min(YAW_RATE_LIMIT, KP_YAW * yaw_error))
-            desired_altitude = float(HOVER_HEIGHT)
+            desired_altitude = float(hover_height)
 
         motor_power = pid.pid(
             dt,
@@ -203,6 +248,7 @@ if __name__ == "__main__":
         m4_motor.setVelocity(motor_power[3])
 
         goal_distance = float(np.linalg.norm(goal_error_world))
+        signed_clearance = float(mfi_obstacles.clearance(position[:2])) if mfi_obstacles.obstacles else math.inf
         history.append(
             {
                 "step": float(step),
@@ -222,6 +268,7 @@ if __name__ == "__main__":
                 "desired_yaw_rate": float(desired_yaw_rate),
                 "desired_altitude": float(desired_altitude),
                 "goal_distance": goal_distance,
+                "signed_clearance": signed_clearance,
                 "motor_m1": float(motor_power[0]),
                 "motor_m2": float(motor_power[1]),
                 "motor_m3": float(motor_power[2]),
@@ -238,7 +285,7 @@ if __name__ == "__main__":
         speed_total = float(np.linalg.norm(velocity_global))
         if (
             goal_distance <= GOAL_TOLERANCE
-            and abs(position[2] - GOAL[2]) <= ALTITUDE_TOLERANCE
+            and abs(position[2] - goal[2]) <= ALTITUDE_TOLERANCE
             and speed_total <= VELOCITY_TOLERANCE
         ):
             summary["status"] = "goal_reached"
@@ -256,6 +303,8 @@ if __name__ == "__main__":
     if history:
         summary["final_goal_distance"] = float(history[-1]["goal_distance"])
         summary["start"] = [history[0]["x"], history[0]["y"], history[0]["z"]]
+        metrics = compute_metrics(history, goal, success_radius=GOAL_TOLERANCE)
+        summary["metrics"] = {key: float(value) for key, value in metrics.items()}
 
     if history_output:
         _write_history_csv(history, Path(history_output))

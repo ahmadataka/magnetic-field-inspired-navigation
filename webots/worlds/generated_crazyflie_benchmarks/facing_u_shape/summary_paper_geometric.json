@@ -1,0 +1,38 @@
+{
+  "status": "collision",
+  "scenario": "facing_u_shape",
+  "goal": [
+    2.4,
+    0.0,
+    1.0
+  ],
+  "goal_tolerance": 0.18,
+  "steps": 501,
+  "nav_mode": "mfi",
+  "method": "paper_geometric",
+  "final_state": {
+    "x": 1.4784874522350053,
+    "y": -2.494913026811686,
+    "z": 0.014950902693834738
+  },
+  "final_goal_distance": 2.836211929871721,
+  "start": [
+    5.607341719700365e-18,
+    -4.843903773379661e-19,
+    0.014980373728171662
+  ],
+  "metrics": {
+    "steps": 501.0,
+    "path_length": 7.127509272010091,
+    "final_goal_distance": 2.836211929871721,
+    "min_clearance": 0.08008793375633219,
+    "mean_speed": 0.44458016916230575,
+    "success": 0.0,
+    "goal_reached_once": 0.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": Infinity,
+    "path_efficiency": 0.4068867371231885
+  },
+  "webots_exit_code": 2
+}
