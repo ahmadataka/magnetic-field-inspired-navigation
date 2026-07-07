@@ -1,0 +1,38 @@
+{
+  "status": "timeout",
+  "scenario": "offset_cavity",
+  "goal": [
+    3.2,
+    0.0,
+    0.5755555555555556
+  ],
+  "goal_tolerance": 0.18,
+  "steps": 2200,
+  "nav_mode": "mfi3d",
+  "method": "paper_pd_3d",
+  "final_state": {
+    "x": 2.9928240872093226,
+    "y": -0.03944752322861441,
+    "z": 0.4551020482972159
+  },
+  "final_goal_distance": 0.2419745119975536,
+  "start": [
+    5.921513252375319e-17,
+    -1.9295314093907036e-17,
+    0.014979674903495626
+  ],
+  "metrics": {
+    "steps": 2200.0,
+    "path_length": 18.14779606833006,
+    "final_goal_distance": 0.2419745119975536,
+    "min_clearance": 0.47268961623048006,
+    "mean_speed": 0.2577811941524154,
+    "success": 0.0,
+    "goal_reached_once": 0.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": Infinity,
+    "path_efficiency": 0.16672711179001035
+  },
+  "webots_exit_code": 1
+}

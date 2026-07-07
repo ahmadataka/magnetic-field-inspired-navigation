@@ -31,6 +31,7 @@ from mfinav import (  # noqa: E402
     make_paper_pd_config,
     simulate,
 )
+from mfinav.utils.paths import benchmark_artifact_dir  # noqa: E402
 
 
 METHOD_SPECS = {
@@ -319,7 +320,7 @@ def main() -> None:
     scenarios = make_dynamic_scenarios_2d()
     config_pd = make_paper_pd_config()
     config_geometric = make_paper_geometric_config()
-    artifacts = ROOT / "artifacts"
+    artifacts = benchmark_artifact_dir(ROOT, "dynamic_double_integrator_2d")
     artifacts.mkdir(parents=True, exist_ok=True)
 
     summary_rows: list[dict[str, str | float]] = []

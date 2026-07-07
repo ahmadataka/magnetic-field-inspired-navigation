@@ -31,6 +31,7 @@ from mfinav import (
     make_paper_pd_3d_config,
     simulate,
 )
+from mfinav.utils.paths import benchmark_artifact_dir
 
 METHOD_SPECS = {
     "paper_pd_3d": {"label": "MFI-PD", "color": "#1f77b4"},
@@ -368,7 +369,7 @@ def main() -> None:
     config_pd = make_paper_pd_3d_config()
     config_geometric = make_paper_geometric_3d_config()
     config_apf = make_paper_pd_3d_config()
-    artifacts = ROOT / "artifacts"
+    artifacts = benchmark_artifact_dir(ROOT, "double_integrator_3d")
     artifacts.mkdir(parents=True, exist_ok=True)
 
     summary_rows: list[dict[str, str | float]] = []

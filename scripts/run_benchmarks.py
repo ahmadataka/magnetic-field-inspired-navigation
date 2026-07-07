@@ -31,6 +31,7 @@ from mfinav import (
     make_paper_pd_config,
     simulate,
 )
+from mfinav.utils.paths import benchmark_artifact_dir
 
 
 def _initial_state(start: np.ndarray) -> DoubleIntegratorState:
@@ -78,7 +79,7 @@ def main() -> None:
     scenarios = make_default_scenarios()
     paper_pd_config = make_paper_pd_config()
     paper_geometric_config = make_paper_geometric_config()
-    artifacts = ROOT / "artifacts"
+    artifacts = benchmark_artifact_dir(ROOT, "double_integrator_2d")
     artifacts.mkdir(parents=True, exist_ok=True)
 
     summary_rows: list[dict[str, str | float]] = []

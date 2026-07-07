@@ -19,10 +19,11 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from mfinav import PolygonObstacle  # noqa: E402
+from mfinav.utils.paths import smoke_artifact_dir  # noqa: E402
 
 
 WORLD = ROOT / "webots" / "worlds" / "mfi_epuck_arena.wbt"
-ARTIFACTS = ROOT / "artifacts"
+ARTIFACTS = smoke_artifact_dir(ROOT, "webots_epuck")
 HISTORY_CSV = ARTIFACTS / "webots_epuck_history.csv"
 SUMMARY_JSON = ARTIFACTS / "webots_epuck_summary.json"
 PLOT_PNG = ARTIFACTS / "webots_epuck_trajectory.png"

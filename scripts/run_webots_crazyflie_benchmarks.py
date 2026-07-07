@@ -22,10 +22,11 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from mfinav import PolygonObstacle, make_default_scenarios  # noqa: E402
+from mfinav.utils.paths import benchmark_artifact_dir, generated_world_dir  # noqa: E402
 
 
-ARTIFACTS = ROOT / "artifacts"
-WORLD_DIR = ROOT / "webots" / "worlds" / "generated_crazyflie_benchmarks"
+ARTIFACTS = benchmark_artifact_dir(ROOT, "webots_crazyflie_static")
+WORLD_DIR = generated_world_dir(ROOT, "crazyflie", "static")
 METRICS_CSV = ARTIFACTS / "benchmark_metrics_webots_crazyflie.csv"
 PLOT_PNG = ARTIFACTS / "benchmark_comparison_webots_crazyflie.png"
 SCENARIO_JSON_ENV = "MFINAV_WEBOTS_SCENARIO_JSON"

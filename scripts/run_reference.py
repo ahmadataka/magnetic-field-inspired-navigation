@@ -21,6 +21,7 @@ from mfinav import (
     simulate,
 )
 from mfinav.double_integrator import write_history_csv
+from mfinav.utils.paths import reference_artifact_dir
 
 
 def main() -> None:
@@ -33,9 +34,10 @@ def main() -> None:
     config = SimulationConfig()
 
     history = simulate(state, goal, obstacle, config)
-    output = ROOT / "artifacts" / "reference_trajectory.csv"
+    output_dir = reference_artifact_dir(ROOT, "double_integrator")
+    output = output_dir / "trajectory.csv"
     write_history_csv(history, output)
-    plot_output = ROOT / "artifacts" / "reference_trajectory.png"
+    plot_output = output_dir / "trajectory.png"
 
     xs = [row["x"] for row in history]
     ys = [row["y"] for row in history]

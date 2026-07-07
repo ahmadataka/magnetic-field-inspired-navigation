@@ -26,6 +26,7 @@ from mfinav import (
     make_paper_geometric_config,
     make_paper_pd_config,
 )
+from mfinav.utils.paths import diagnostic_artifact_dir
 
 
 def _initial_state(start: np.ndarray) -> DoubleIntegratorState:
@@ -166,7 +167,7 @@ def _plot_timeseries(axs: list[plt.Axes], histories: dict[str, list[dict[str, fl
 
 def main() -> None:
     scenario = next(s for s in make_default_scenarios() if s.name == "nonconvex_u_shape")
-    artifacts = ROOT / "artifacts"
+    artifacts = diagnostic_artifact_dir(ROOT, "nonconvex")
     artifacts.mkdir(parents=True, exist_ok=True)
 
     pd_config = make_paper_pd_config()

@@ -3,22 +3,28 @@ from __future__ import annotations
 import csv
 import math
 from pathlib import Path
+import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACTS = ROOT / "artifacts"
 DOCS = ROOT / "docs"
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from mfinav.utils.paths import benchmark_artifact_dir, summary_artifact_dir
+
 DEFAULT_DT = 0.02
 OUTPUT_HTML = DOCS / "paper2022_metric_summary.html"
 
 INPUTS = [
-    ("double_integrator_2d", ARTIFACTS / "benchmark_metrics.csv"),
-    ("double_integrator_3d", ARTIFACTS / "benchmark_metrics_3d.csv"),
-    ("differential_drive_2d", ARTIFACTS / "benchmark_metrics_diff_drive.csv"),
-    ("quadrotor_3d", ARTIFACTS / "benchmark_metrics_quadrotor_3d.csv"),
+    ("double_integrator_2d", benchmark_artifact_dir(ROOT, "double_integrator_2d") / "benchmark_metrics.csv"),
+    ("double_integrator_3d", benchmark_artifact_dir(ROOT, "double_integrator_3d") / "benchmark_metrics_3d.csv"),
+    ("differential_drive_2d", benchmark_artifact_dir(ROOT, "differential_drive_2d") / "benchmark_metrics_diff_drive.csv"),
+    ("quadrotor_3d", benchmark_artifact_dir(ROOT, "quadrotor_3d") / "benchmark_metrics_quadrotor_3d.csv"),
 ]
 
-OUTPUT_CSV = ARTIFACTS / "paper2022_metric_summary_all_models.csv"
+OUTPUT_CSV = summary_artifact_dir(ROOT, "paper2022") / "all_models.csv"
 OUTPUT_MD = DOCS / "paper2022_metric_summary.md"
 
 

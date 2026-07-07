@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 import matplotlib
 matplotlib.use("Agg")
@@ -13,7 +14,13 @@ import matplotlib.pyplot as plt
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACTS = ROOT / "artifacts"
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from mfinav.utils.paths import smoke_artifact_dir
+
+ARTIFACTS = smoke_artifact_dir(ROOT, "webots_crazyflie")
 WORLD_PATH = ROOT / "webots" / "worlds" / "mfi_crazyflie_arena.wbt"
 HISTORY_PATH = ARTIFACTS / "webots_crazyflie_history.csv"
 SUMMARY_PATH = ARTIFACTS / "webots_crazyflie_summary.json"

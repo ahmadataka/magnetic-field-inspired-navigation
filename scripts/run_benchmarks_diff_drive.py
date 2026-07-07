@@ -31,6 +31,7 @@ from mfinav import (
     make_paper_pd_config,
     simulate_differential_drive,
 )
+from mfinav.utils.paths import benchmark_artifact_dir
 
 
 COLORS = {
@@ -88,7 +89,7 @@ def main() -> None:
     scenarios = make_default_scenarios()
     config_pd = _diff_drive_config(make_paper_pd_config())
     config_geometric = _diff_drive_config(make_paper_geometric_config())
-    artifacts = ROOT / "artifacts"
+    artifacts = benchmark_artifact_dir(ROOT, "differential_drive_2d")
     artifacts.mkdir(parents=True, exist_ok=True)
 
     summary_rows: list[dict[str, str | float]] = []

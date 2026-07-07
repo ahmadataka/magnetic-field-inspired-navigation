@@ -26,10 +26,11 @@ from mfinav import (  # noqa: E402
     compute_metrics,
     make_default_scenarios_3d,
 )
+from mfinav.utils.paths import benchmark_artifact_dir, generated_world_dir  # noqa: E402
 
 
-ARTIFACTS = ROOT / "artifacts"
-WORLD_DIR = ROOT / "webots" / "worlds" / "generated_crazyflie_benchmarks_3d"
+ARTIFACTS = benchmark_artifact_dir(ROOT, "webots_crazyflie_3d")
+WORLD_DIR = generated_world_dir(ROOT, "crazyflie", "3d")
 METRICS_CSV = ARTIFACTS / "benchmark_metrics_webots_crazyflie_3d.csv"
 PLOT_PNG = ARTIFACTS / "benchmark_comparison_webots_crazyflie_3d.png"
 PLOT_HTML = ARTIFACTS / "benchmark_comparison_webots_crazyflie_3d.html"

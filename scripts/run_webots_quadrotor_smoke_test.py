@@ -19,7 +19,10 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 
-ARTIFACTS = ROOT / "artifacts"
+from mfinav.utils.paths import smoke_artifact_dir  # noqa: E402
+
+
+ARTIFACTS = smoke_artifact_dir(ROOT, "webots_quadrotor")
 WORLD_PATH = ROOT / "webots" / "worlds" / "mfi_quadrotor_arena.wbt"
 PLOT_PATH = ARTIFACTS / "webots_quadrotor_smoke.png"
 HISTORY_PATH = ARTIFACTS / "webots_quadrotor_history.csv"

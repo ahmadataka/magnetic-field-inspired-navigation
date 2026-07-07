@@ -1,0 +1,62 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/bitcraze/crazyflie/protos/Crazyflie.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/Floor.proto"
+
+WorldInfo {
+  title "MFI Webots Crazyflie 3D benchmark - single_sphere"
+  basicTimeStep 32
+}
+Viewpoint {
+  orientation -0.229 0.469 0.853 0.708
+  position -2.080000 -2.560000 4.298000
+  follow "Crazyflie"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+Floor {
+  size 4.500000 4.500000
+}
+DEF GOAL Pose {
+  translation 3.200000 0.480000 0.828000
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0.8 0.2
+        roughness 0.6
+      }
+      geometry Sphere {
+        radius 0.06
+      }
+    }
+  ]
+}
+DEF OBSTACLE_1 Solid {
+  translation 1.600000 0.160000 0.668000
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.75 0.2 0.2
+        roughness 0.55
+      }
+      geometry Sphere {
+        radius 0.448000
+      }
+    }
+  ]
+  name "obstacle_1"
+  boundingObject Sphere {
+    radius 0.448000
+  }
+}
+Crazyflie {
+  translation 0.000000 0.000000 0.508000
+  rotation 0 0 1 0
+  name "Crazyflie"
+  controller "mfi_crazyflie_python"
+  supervisor TRUE
+}

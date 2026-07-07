@@ -21,11 +21,12 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from mfinav import CircleObstacle, MovingCircleObstacle, MovingPolygonObstacle, PolygonObstacle, make_dynamic_scenarios_2d  # noqa: E402
+from mfinav.utils.paths import benchmark_artifact_dir, generated_world_dir  # noqa: E402
 from run_benchmarks_dynamic_2d import METHOD_SPECS as BASE_METHOD_SPECS, _make_metrics_row, _plot_static_snapshot  # noqa: E402
 
 
-ARTIFACTS = ROOT / "artifacts"
-WORLD_DIR = ROOT / "webots" / "worlds" / "generated_dynamic_benchmarks"
+ARTIFACTS = benchmark_artifact_dir(ROOT, "webots_epuck_dynamic")
+WORLD_DIR = generated_world_dir(ROOT, "epuck", "dynamic")
 METRICS_CSV = ARTIFACTS / "benchmark_metrics_dynamic_webots_epuck.csv"
 PLOT_PNG = ARTIFACTS / "benchmark_comparison_dynamic_webots_epuck.png"
 SCENARIO_JSON_ENV = "MFINAV_WEBOTS_SCENARIO_JSON"

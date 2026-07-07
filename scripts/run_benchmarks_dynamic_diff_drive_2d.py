@@ -29,6 +29,7 @@ from mfinav import (  # noqa: E402
     make_paper_pd_config,
     simulate_differential_drive,
 )
+from mfinav.utils.paths import benchmark_artifact_dir  # noqa: E402
 from run_benchmarks_dynamic_2d import (  # noqa: E402
     METHOD_SPECS,
     _build_interactive_html,
@@ -61,7 +62,7 @@ def main() -> None:
     scenarios = make_dynamic_scenarios_2d()
     config_pd = _diff_drive_config(make_paper_pd_config())
     config_geometric = _diff_drive_config(make_paper_geometric_config())
-    artifacts = ROOT / "artifacts"
+    artifacts = benchmark_artifact_dir(ROOT, "dynamic_differential_drive_2d")
     artifacts.mkdir(parents=True, exist_ok=True)
 
     summary_rows: list[dict[str, str | float]] = []
