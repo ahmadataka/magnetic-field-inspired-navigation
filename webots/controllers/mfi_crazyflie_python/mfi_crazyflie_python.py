@@ -24,6 +24,8 @@ from mfinav import (
     HaddadinNavigator,
     MagneticFieldNavigator,
     MagneticFieldNavigator3D,
+    MovingPrismObstacle,
+    MovingSphereObstacle,
     ObstacleCollection,
     PolygonObstacle,
     PrismObstacle,
@@ -83,20 +85,63 @@ def _load_scenario() -> tuple[np.ndarray, np.ndarray, float, ObstacleCollection,
         if kind == "polygon":
             obstacles.append(PolygonObstacle(vertices=np.asarray(obstacle_spec["vertices"], dtype=float)))
         elif kind == "sphere":
-            obstacles.append(
-                SphereObstacle(
-                    center=np.asarray(obstacle_spec["center"], dtype=float),
-                    radius=float(obstacle_spec["radius"]),
-                )
+            velocity = np.asarray(obstacle_spec.get("velocity", [0.0, 0.0, 0.0]), dtype=float)
+            oscillation_amplitude = obstacle_spec.get("oscillation_amplitude")
+            oscillation_frequency = obstacle_spec.get("oscillation_frequency")
+            oscillation_phase = obstacle_spec.get("oscillation_phase")
+            is_dynamic = (
+                float(np.linalg.norm(velocity)) > 0.0
+                or oscillation_amplitude is not None
+                or oscillation_frequency is not None
             )
+            if is_dynamic:
+                obstacles.append(
+                    MovingSphereObstacle(
+                        initial_center=np.asarray(obstacle_spec["center"], dtype=float),
+                        radius=float(obstacle_spec["radius"]),
+                        velocity=velocity,
+                        oscillation_amplitude=None if oscillation_amplitude is None else np.asarray(oscillation_amplitude, dtype=float),
+                        oscillation_frequency=None if oscillation_frequency is None else np.asarray(oscillation_frequency, dtype=float),
+                        oscillation_phase=None if oscillation_phase is None else np.asarray(oscillation_phase, dtype=float),
+                    )
+                )
+            else:
+                obstacles.append(
+                    SphereObstacle(
+                        center=np.asarray(obstacle_spec["center"], dtype=float),
+                        radius=float(obstacle_spec["radius"]),
+                    )
+                )
         elif kind == "prism":
-            obstacles.append(
-                PrismObstacle(
-                    vertices_xy=np.asarray(obstacle_spec["vertices_xy"], dtype=float),
-                    z_min=float(obstacle_spec["z_min"]),
-                    z_max=float(obstacle_spec["z_max"]),
-                )
+            velocity = np.asarray(obstacle_spec.get("velocity", [0.0, 0.0, 0.0]), dtype=float)
+            oscillation_amplitude = obstacle_spec.get("oscillation_amplitude")
+            oscillation_frequency = obstacle_spec.get("oscillation_frequency")
+            oscillation_phase = obstacle_spec.get("oscillation_phase")
+            is_dynamic = (
+                float(np.linalg.norm(velocity)) > 0.0
+                or oscillation_amplitude is not None
+                or oscillation_frequency is not None
             )
+            if is_dynamic:
+                obstacles.append(
+                    MovingPrismObstacle(
+                        initial_vertices_xy=np.asarray(obstacle_spec["vertices_xy"], dtype=float),
+                        z_min=float(obstacle_spec["z_min"]),
+                        z_max=float(obstacle_spec["z_max"]),
+                        velocity=velocity,
+                        oscillation_amplitude=None if oscillation_amplitude is None else np.asarray(oscillation_amplitude, dtype=float),
+                        oscillation_frequency=None if oscillation_frequency is None else np.asarray(oscillation_frequency, dtype=float),
+                        oscillation_phase=None if oscillation_phase is None else np.asarray(oscillation_phase, dtype=float),
+                    )
+                )
+            else:
+                obstacles.append(
+                    PrismObstacle(
+                        vertices_xy=np.asarray(obstacle_spec["vertices_xy"], dtype=float),
+                        z_min=float(obstacle_spec["z_min"]),
+                        z_max=float(obstacle_spec["z_max"]),
+                    )
+                )
         else:
             raise ValueError(f"Unsupported obstacle kind for Webots Crazyflie controller: {kind}")
     return goal, start, hover_height, ObstacleCollection(obstacles=obstacles), str(data.get("name", "webots_crazyflie"))
@@ -253,6 +298,7 @@ if __name__ == "__main__":
 
         now = robot.getTime()
         dt = max(now - past_time, 1e-3)
+        mfi_obstacles.set_time(now)
         position = np.array(gps.getValues(), dtype=float)
         roll, pitch, yaw = imu.getRollPitchYaw()
         yaw_rate = gyro.getValues()[2]

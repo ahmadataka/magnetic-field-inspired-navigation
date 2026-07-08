@@ -1,0 +1,38 @@
+{
+  "status": "collision",
+  "scenario": "moving_sphere_crossing_3d",
+  "goal": [
+    3.2000000000000006,
+    0.14545454545454548,
+    0.6709090909090909
+  ],
+  "goal_tolerance": 0.18,
+  "steps": 501,
+  "nav_mode": "mfi3d",
+  "method": "paper_pd_3d",
+  "final_state": {
+    "x": 1.58229321964047,
+    "y": -0.5250948638524872,
+    "z": 0.014953692352069614
+  },
+  "final_goal_distance": 1.8699971182970603,
+  "start": [
+    -3.5158761424660506e-17,
+    5.983278413386251e-17,
+    0.01497946223026833
+  ],
+  "metrics": {
+    "steps": 501.0,
+    "path_length": 5.977642501493177,
+    "final_goal_distance": 1.8699971182970603,
+    "min_clearance": 1.139910012061552,
+    "mean_speed": 0.3728569424584066,
+    "success": 0.0,
+    "goal_reached_once": 0.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": Infinity,
+    "path_efficiency": 0.2788969395242374
+  },
+  "webots_exit_code": 0
+}
