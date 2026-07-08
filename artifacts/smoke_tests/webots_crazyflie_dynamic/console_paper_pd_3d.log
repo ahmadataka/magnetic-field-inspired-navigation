@@ -1,11 +1,4 @@
 File not found: '/Applications/Webots.app/resources/qt_warning_filters.conf'.
 UNSUPPORTED (log once): POSSIBLE ISSUE: unit 0 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
-WARNING: Crazyflie "Crazyflie": The controller directory has not been found, searched the following locations:
-/Users/ahmadataka/Documents/Bitbucket - Ataka/magnetic-field-inspired-navigation/webots/worlds/generated/crazyflie/controllers/mfi_crazyflie_python/
-/Applications/Webots.app/Contents/projects/robots/bitcraze/crazyflie/controllers/mfi_crazyflie_python/
-/Applications/Webots.app/Contents/projects/default/controllers/mfi_crazyflie_python/
-/Applications/Webots.app/Contents/Resources/projects/controllers/mfi_crazyflie_python/
-WARNING: mfi_crazyflie_python: Could not find the controller directory.
-Starting the <generic> controller instead.
-INFO: <generic>: Starting controller: /Applications/Webots.app/Contents/Resources/projects/controllers/generic/generic
-INFO: <generic>: Terminating.
+INFO: mfi_crazyflie_python: Starting controller: /Library/Frameworks/Python.framework/Versions/3.13/bin/python3 -u mfi_crazyflie_python.py
+INFO: mfi_crazyflie_python: Terminating.

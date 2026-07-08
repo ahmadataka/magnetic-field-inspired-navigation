@@ -1,3 +1,3 @@
 scenario,method,status,success,goal_reached_once,steps,path_length,final_goal_distance,min_clearance,mean_speed,collision,safety_violation,time_to_goal_steps,path_efficiency,webots_exit_code
-moving_sphere_crossing_3d,paper_pd_3d,collision,0.0,0.0,501.0,5.977642501493177,1.8699971182970603,1.139910012061552,0.3728569424584066,0.0,0.0,inf,0.2788969395242374,0.0
-moving_sphere_crossing_3d,paper_geometric_3d,timeout,0.0,0.0,80.0,0.14344921411784198,3.244039642190272,1.3764056747634126,0.05603484926478197,0.0,0.0,inf,1.0,1.0
+moving_sphere_crossing_3d,paper_pd_3d,goal_reached,1.0,1.0,1946.0,13.794878287166036,0.17856932858336963,1.2607374819398947,0.22152618009966038,0.0,0.0,1826.0,0.22472883946830657,0.0
+moving_sphere_crossing_3d,paper_geometric_3d,goal_reached,1.0,1.0,695.0,6.202430799652179,0.08575997112092965,1.3198744181908668,0.27888627696277757,0.0,0.0,615.0,0.5171862889145372,0.0
