@@ -1,0 +1,34 @@
+{
+  "status": "timeout",
+  "steps": 2500,
+  "goal_tolerance": 0.3,
+  "scenario": "slalom_multi_convex",
+  "method": "apf",
+  "metrics": {
+    "steps": 2500.0,
+    "path_length": 6.835364304211252,
+    "final_goal_distance": 2.9167186036283823,
+    "min_clearance": 0.9438769443566204,
+    "mean_speed": 0.04264900852392107,
+    "success": 0.0,
+    "goal_reached_once": 0.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": Infinity,
+    "path_efficiency": 0.5784367686848353
+  },
+  "final_state": {
+    "x": 3.0417214387821097,
+    "y": 2.5259990203173435,
+    "heading": -3.1415926527516027
+  },
+  "start": [
+    0.0,
+    0.0
+  ],
+  "goal": [
+    4.5,
+    0.0
+  ],
+  "webots_exit_code": 1
+}

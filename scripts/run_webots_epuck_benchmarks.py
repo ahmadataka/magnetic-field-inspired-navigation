@@ -38,6 +38,9 @@ WEBOTS_MARGIN = 1.0
 METHOD_SPECS = {
     "paper_pd": {"label": "PAPER_PD", "color": "#1f77b4"},
     "paper_geometric": {"label": "PAPER_GEOMETRIC", "color": "#2ca02c"},
+    "apf": {"label": "APF", "color": "#ff7f0e"},
+    "haddadin": {"label": "HADDADIN", "color": "#8b5cf6"},
+    "sabattini": {"label": "SABATTINI", "color": "#d97706"},
 }
 METHOD_CONFIG_OVERRIDES = {
     "paper_pd": {
@@ -58,6 +61,9 @@ METHOD_CONFIG_OVERRIDES = {
         "r_l": 2.5,
         "r_la": 1.0,
     },
+    "apf": {},
+    "haddadin": {},
+    "sabattini": {},
 }
 
 

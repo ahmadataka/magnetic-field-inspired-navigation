@@ -1,0 +1,34 @@
+{
+  "status": "timeout",
+  "steps": 2500,
+  "goal_tolerance": 0.3,
+  "scenario": "convex_cluster",
+  "method": "apf",
+  "metrics": {
+    "steps": 2500.0,
+    "path_length": 0.4365263802655402,
+    "final_goal_distance": 5.015506010053103,
+    "min_clearance": 1.3090909090909093,
+    "mean_speed": 0.002716597953185114,
+    "success": 0.0,
+    "goal_reached_once": 0.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": Infinity,
+    "path_efficiency": 0.9309861956328708
+  },
+  "final_state": {
+    "x": -0.4059048090524381,
+    "y": -0.42914767028195155,
+    "heading": 1.5707963224910602
+  },
+  "start": [
+    0.0,
+    -0.4090909090909091
+  ],
+  "goal": [
+    4.5,
+    0.6136363636363636
+  ],
+  "webots_exit_code": 1
+}

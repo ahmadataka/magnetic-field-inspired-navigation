@@ -22,7 +22,23 @@ if str(SRC_ROOT) not in sys.path:
 
 from controller import Supervisor  # type: ignore
 
-from mfinav import CircleObstacle, DifferentialDriveModel, DifferentialDriveState, MovingCircleObstacle, MovingPolygonObstacle, ObstacleCollection, PolygonObstacle, ReferenceNavigator, compute_metrics, make_paper_geometric_config, make_paper_pd_config
+from mfinav import (
+    ArtificialPotentialFieldNavigator,
+    CircleObstacle,
+    DifferentialDriveModel,
+    DifferentialDriveState,
+    HaddadinNavigator,
+    LocalSensingModel,
+    MovingCircleObstacle,
+    MovingPolygonObstacle,
+    ObstacleCollection,
+    PolygonObstacle,
+    ReferenceNavigator,
+    SabattiniNavigator,
+    compute_metrics,
+    make_paper_geometric_config,
+    make_paper_pd_config,
+)
 
 
 GOAL_TOLERANCE = 0.10
@@ -217,8 +233,19 @@ def main() -> None:
 
     if method_name == "paper_pd":
         config = make_paper_pd_config()
+        navigator_factory = lambda cfg: ReferenceNavigator(cfg)
     elif method_name == "paper_geometric":
         config = make_paper_geometric_config()
+        navigator_factory = lambda cfg: ReferenceNavigator(cfg)
+    elif method_name == "apf":
+        config = make_paper_pd_config()
+        navigator_factory = lambda cfg: ArtificialPotentialFieldNavigator(cfg)
+    elif method_name == "haddadin":
+        config = make_paper_pd_config()
+        navigator_factory = lambda cfg: HaddadinNavigator(cfg)
+    elif method_name == "sabattini":
+        config = make_paper_pd_config()
+        navigator_factory = lambda cfg: SabattiniNavigator(cfg)
     else:
         raise ValueError(f"Unsupported Webots method: {method_name}")
 
@@ -229,8 +256,9 @@ def main() -> None:
     config.min_forward_factor = 0.2
     _apply_env_config_overrides(config)
 
-    navigator = ReferenceNavigator(config)
+    navigator = navigator_factory(config)
     model = DifferentialDriveModel(config)
+    sensing = LocalSensingModel(config)
 
     self_node = robot.getSelf()
     translation_field = self_node.getField("translation")
@@ -323,9 +351,7 @@ def main() -> None:
         obstacle_collection = ObstacleCollection(obstacles)
 
         guidance = np.asarray(navigator.command(state, goal_position, obstacle_collection), dtype=float)
-        observation = navigator.last_observation
-        if observation is None:
-            continue
+        observation = sensing.observe(state, obstacle_collection)
         closest_distance = float(observation.distance_to_obstacle)
         closest_clearance = float(observation.signed_clearance)
         goal_distance = float(np.linalg.norm(goal_position - state.position))

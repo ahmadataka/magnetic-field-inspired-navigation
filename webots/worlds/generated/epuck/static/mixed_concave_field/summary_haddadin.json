@@ -1,0 +1,34 @@
+{
+  "status": "goal_reached",
+  "steps": 1313,
+  "goal_tolerance": 0.3,
+  "scenario": "mixed_concave_field",
+  "method": "haddadin",
+  "metrics": {
+    "steps": 1313.0,
+    "path_length": 5.522785884270588,
+    "final_goal_distance": 0.29952568177575967,
+    "min_clearance": 0.32689520157350793,
+    "mean_speed": 0.06353944783555164,
+    "success": 1.0,
+    "goal_reached_once": 1.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": 1312.0,
+    "path_efficiency": 0.8032014841453883
+  },
+  "final_state": {
+    "x": 4.43585236964989,
+    "y": -0.14257599963718703,
+    "heading": 1.1646474142953478
+  },
+  "start": [
+    0.0,
+    -0.12
+  ],
+  "goal": [
+    4.5,
+    0.15
+  ],
+  "webots_exit_code": 0
+}
