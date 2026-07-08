@@ -19,12 +19,15 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from mfinav import (
+    ArtificialPotentialFieldNavigator,
     DoubleIntegratorState,
+    HaddadinNavigator,
     MagneticFieldNavigator,
     MagneticFieldNavigator3D,
     ObstacleCollection,
     PolygonObstacle,
     PrismObstacle,
+    SabattiniNavigator,
     SphereObstacle,
     compute_metrics,
     make_paper_geometric_config,
@@ -170,7 +173,12 @@ if __name__ == "__main__":
     auto_quit = os.environ.get(AUTO_QUIT_ENV, "0") == "1"
     max_steps = int(os.environ.get(MAX_STEPS_ENV, str(DEFAULT_MAX_STEPS)))
     method_name = os.environ.get(METHOD_ENV, "")
-    default_nav_mode = "mfi3d" if method_name.endswith("_3d") else ("mfi" if method_name.startswith("paper_") else "waypoint")
+    if method_name in {"paper_pd_3d", "paper_geometric_3d"}:
+        default_nav_mode = "mfi3d"
+    elif method_name and method_name.endswith("_3d"):
+        default_nav_mode = "baseline3d"
+    else:
+        default_nav_mode = "mfi" if method_name.startswith("paper_") else "waypoint"
     nav_mode = os.environ.get(NAV_MODE_ENV, default_nav_mode)
     goal, start_translation, hover_height, mfi_obstacles, scenario_name = _load_scenario()
 
@@ -200,7 +208,18 @@ if __name__ == "__main__":
         mfi_config.max_acceleration = 2.5
         mfi_config.max_speed_norm = XY_SPEED_LIMIT
     _apply_overrides(mfi_config)
-    mfi_navigator = MagneticFieldNavigator3D(mfi_config) if method_name.endswith("_3d") else MagneticFieldNavigator(mfi_config)
+    if method_name == "paper_pd_3d":
+        navigator = MagneticFieldNavigator3D(mfi_config)
+    elif method_name == "paper_geometric_3d":
+        navigator = MagneticFieldNavigator3D(mfi_config)
+    elif method_name == "apf_3d":
+        navigator = ArtificialPotentialFieldNavigator(mfi_config)
+    elif method_name == "haddadin_3d":
+        navigator = HaddadinNavigator(mfi_config, gain_3d=8.0)
+    elif method_name == "sabattini_3d":
+        navigator = SabattiniNavigator(mfi_config, gain_3d=8.0)
+    else:
+        navigator = MagneticFieldNavigator(mfi_config)
 
     translation_field.setSFVec3f([float(start_translation[0]), float(start_translation[1]), float(start_translation[2])])
 
@@ -256,9 +275,9 @@ if __name__ == "__main__":
             desired_yaw_rate = 0.0
             desired_altitude_state = float(hover_height)
         else:
-            if nav_mode == "mfi3d":
+            if nav_mode in {"mfi3d", "baseline3d"}:
                 full_state = DoubleIntegratorState(position=position.copy(), velocity=velocity_global.copy())
-                guidance = np.asarray(mfi_navigator.command(full_state, goal.copy(), mfi_obstacles), dtype=float)
+                guidance = np.asarray(navigator.command(full_state, goal.copy(), mfi_obstacles), dtype=float)
                 desired_velocity_world = velocity_global + dt * guidance
                 desired_velocity_world = _clip_norm(
                     desired_velocity_world,
@@ -271,7 +290,7 @@ if __name__ == "__main__":
             elif nav_mode == "mfi":
                 planar_state = DoubleIntegratorState(position=position[:2].copy(), velocity=velocity_global[:2].copy())
                 planar_goal = goal[:2].copy()
-                planar_guidance = np.asarray(mfi_navigator.command(planar_state, planar_goal, mfi_obstacles), dtype=float)
+                planar_guidance = np.asarray(navigator.command(planar_state, planar_goal, mfi_obstacles), dtype=float)
                 desired_velocity_world = velocity_global[:2] + dt * planar_guidance
                 speed_norm = float(np.linalg.norm(desired_velocity_world))
                 if speed_norm > XY_SPEED_LIMIT:

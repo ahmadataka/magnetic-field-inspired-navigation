@@ -1,0 +1,38 @@
+{
+  "status": "collision",
+  "scenario": "archway",
+  "goal": [
+    3.2,
+    0.0,
+    1.2046153846153846
+  ],
+  "goal_tolerance": 0.18,
+  "steps": 608,
+  "nav_mode": "baseline3d",
+  "method": "haddadin_3d",
+  "final_state": {
+    "x": 557.057170115285,
+    "y": 35.2345650017635,
+    "z": -0.5238105443602135
+  },
+  "final_goal_distance": 554.9794833281381,
+  "start": [
+    -1.1772229919581596e-16,
+    -3.5819561406517295e-17,
+    0.014929504589417884
+  ],
+  "metrics": {
+    "steps": 608.0,
+    "path_length": 618.7762090352992,
+    "final_goal_distance": 554.9794833281381,
+    "min_clearance": 0.31342158106230167,
+    "mean_speed": 31.803875875580758,
+    "success": 0.0,
+    "goal_reached_once": 0.0,
+    "collision": 0.0,
+    "safety_violation": 0.0,
+    "time_to_goal_steps": Infinity,
+    "path_efficiency": 0.9020557430778793
+  },
+  "webots_exit_code": 2
+}
