@@ -39,6 +39,9 @@ WEBOTS_HORIZON_S = 160.0
 METHOD_SPECS = {
     "paper_pd": BASE_METHOD_SPECS["paper_pd"],
     "paper_geometric": BASE_METHOD_SPECS["paper_geometric"],
+    "apf": BASE_METHOD_SPECS["apf"],
+    "haddadin": BASE_METHOD_SPECS["haddadin"],
+    "sabattini": BASE_METHOD_SPECS["sabattini"],
 }
 METHOD_CONFIG_OVERRIDES = {
     "paper_pd": {
@@ -59,6 +62,9 @@ METHOD_CONFIG_OVERRIDES = {
         "r_l": 2.5,
         "r_la": 1.0,
     },
+    "apf": {},
+    "haddadin": {},
+    "sabattini": {},
 }
 
 
