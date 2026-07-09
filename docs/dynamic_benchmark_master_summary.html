@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dynamic Benchmark Master Summary</title>
+  <style>
+    :root { color-scheme: dark; --bg: #111315; --panel: #171a1d; --grid: #2b3036; --text: #e8eaed; --muted: #aeb4bb; --best: #12351f; --worst: #3a1919; }
+    body { margin: 0; padding: 32px; font-family: Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    main { max-width: 1400px; margin: 0 auto; }
+    h1, h2, h3 { margin: 0 0 12px; }
+    p, li { color: var(--muted); line-height: 1.45; }
+    .table-section { margin-top: 28px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--grid); border-radius: 14px; background: var(--panel); }
+    table { width: 100%; border-collapse: collapse; min-width: 980px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--grid); text-align: left; vertical-align: top; }
+    th { position: sticky; top: 0; background: #1c2024; }
+    td.best { background: var(--best); }
+    td.worst { background: var(--worst); }
+    code { color: #d2e3fc; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Dynamic Benchmark Master Summary</h1>
+    <p>This page consolidates the dynamic-environment benchmark results currently available in the clean Python and Webots validation suites.</p>
+    <p>Families included: <code>dynamic_double_integrator_2d</code>, <code>dynamic_differential_drive_2d</code>, <code>dynamic_double_integrator_3d</code>, <code>dynamic_quadrotor_3d</code>, <code>webots_epuck_dynamic</code>, and <code>webots_crazyflie_dynamic</code>.</p>
+    <p>Best and worst values are highlighted inside each model section.</p>
+<section class="table-section">
+<h3>2D double integrator</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>N</th>
+<th>Succ</th>
+<th>Succ Rate</th>
+<th>Reach Once</th>
+<th>Path</th>
+<th>T_goal (s)</th>
+<th>Final Err</th>
+<th>Mean Clr</th>
+<th>Worst Clr</th>
+<th>Coll Rate</th>
+<th>Safe Viol</th>
+<th>Eff</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APF</td>
+<td>6</td>
+<td>4</td>
+<td>0.667</td>
+<td>0.667</td>
+<td class="worst">31.346</td>
+<td>27.94</td>
+<td class="worst">15.777</td>
+<td class="best">1.056</td>
+<td class="best">0.838</td>
+<td class="best">0.000</td>
+<td class="best">0.000</td>
+<td>0.734</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>Haddadin</td>
+<td>6</td>
+<td>2</td>
+<td>0.333</td>
+<td>0.333</td>
+<td>10.175</td>
+<td>26.33</td>
+<td>4.382</td>
+<td>0.204</td>
+<td class="worst">-0.025</td>
+<td>0.667</td>
+<td>0.667</td>
+<td>0.904</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>MFI-Geometric</td>
+<td>6</td>
+<td class="best">5</td>
+<td class="best">0.833</td>
+<td class="best">0.833</td>
+<td>19.243</td>
+<td class="best">22.68</td>
+<td class="best">0.181</td>
+<td>1.048</td>
+<td>0.483</td>
+<td class="best">0.000</td>
+<td class="best">0.000</td>
+<td>0.695</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>MFI-PD</td>
+<td>6</td>
+<td class="best">5</td>
+<td class="best">0.833</td>
+<td class="best">0.833</td>
+<td>18.562</td>
+<td class="worst">38.32</td>
+<td>0.884</td>
+<td>0.912</td>
+<td>0.299</td>
+<td class="best">0.000</td>
+<td class="best">0.000</td>
+<td class="worst">0.676</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>Sabattini</td>
+<td>6</td>
+<td class="worst">0</td>
+<td class="worst">0.000</td>
+<td class="worst">0.000</td>
+<td class="best">5.977</td>
+<td>-</td>
+<td>6.962</td>
+<td class="worst">-0.006</td>
+<td>-0.010</td>
+<td class="worst">1.000</td>
+<td class="worst">1.000</td>
+<td class="best">1.000</td>
+<td>completed</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="table-section">
+<h3>2D differential drive</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>N</th>
+<th>Succ</th>
+<th>Succ Rate</th>
+<th>Reach Once</th>
+<th>Path</th>
+<th>T_goal (s)</th>
+<th>Final Err</th>
+<th>Mean Clr</th>
+<th>Worst Clr</th>
+<th>Coll Rate</th>
+<th>Safe Viol</th>
+<th>Eff</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APF</td>
+<td>6</td>
+<td class="best">5</td>
+<td class="best">0.833</td>
+<td class="best">0.833</td>
+<td class="worst">18.770</td>
+<td>69.76</td>
+<td class="best">0.274</td>
+<td>1.304</td>
+<td class="best">0.929</td>
+<td class="best">0.000</td>
+<td class="best">0.000</td>
+<td class="worst">0.745</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>Haddadin</td>
+<td>6</td>
+<td class="best">5</td>
+<td class="best">0.833</td>
+<td class="best">0.833</td>
+<td>12.092</td>
+<td>62.14</td>
+<td>1.414</td>
+<td>0.768</td>
+<td>-0.002</td>
+<td>0.167</td>
+<td>0.167</td>
+<td>0.961</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>MFI-Geometric</td>
+<td>6</td>
+<td>4</td>
+<td>0.667</td>
+<td>0.667</td>
+<td>11.686</td>
+<td class="worst">70.28</td>
+<td>1.992</td>
+<td class="best">2.258</td>
+<td>-0.005</td>
+<td>0.167</td>
+<td>0.167</td>
+<td>0.914</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>MFI-PD</td>
+<td>6</td>
+<td class="worst">3</td>
+<td class="worst">0.500</td>
+<td class="worst">0.500</td>
+<td>11.908</td>
+<td>62.67</td>
+<td>3.094</td>
+<td>1.222</td>
+<td>-0.002</td>
+<td>0.333</td>
+<td>0.333</td>
+<td>0.894</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>Sabattini</td>
+<td>6</td>
+<td class="worst">3</td>
+<td class="worst">0.500</td>
+<td class="worst">0.500</td>
+<td class="best">9.299</td>
+<td class="best">57.66</td>
+<td class="worst">3.640</td>
+<td class="worst">0.375</td>
+<td class="worst">-0.018</td>
+<td class="worst">0.500</td>
+<td class="worst">0.500</td>
+<td class="best">1.000</td>
+<td>completed</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="table-section">
+<h3>3D double integrator</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>N</th>
+<th>Succ</th>
+<th>Succ Rate</th>
+<th>Reach Once</th>
+<th>Path</th>
+<th>T_goal (s)</th>
+<th>Final Err</th>
+<th>Mean Clr</th>
+<th>Worst Clr</th>
+<th>Coll Rate</th>
+<th>Safe Viol</th>
+<th>Eff</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APF</td>
+<td>5</td>
+<td class="worst">0</td>
+<td class="worst">0.000</td>
+<td class="worst">0.000</td>
+<td class="worst">127748.078</td>
+<td>-</td>
+<td class="worst">12.561</td>
+<td class="worst">-0.285</td>
+<td class="worst">-0.657</td>
+<td class="worst">1.000</td>
+<td class="worst">1.000</td>
+<td>0.706</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>Haddadin</td>
+<td>5</td>
+<td>1</td>
+<td>0.200</td>
+<td>0.400</td>
+<td>187.255</td>
+<td class="worst">70.56</td>
+<td>4.348</td>
+<td>0.264</td>
+<td>-0.141</td>
+<td>0.600</td>
+<td>0.600</td>
+<td class="worst">0.404</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>MFI-Geometric</td>
+<td>5</td>
+<td class="best">3</td>
+<td class="best">0.600</td>
+<td class="best">0.600</td>
+<td>12.307</td>
+<td>40.44</td>
+<td class="best">2.159</td>
+<td class="best">2.083</td>
+<td class="best">-0.020</td>
+<td class="best">0.400</td>
+<td class="best">0.400</td>
+<td>0.858</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>MFI-PD</td>
+<td>5</td>
+<td>1</td>
+<td>0.200</td>
+<td>0.200</td>
+<td>46.689</td>
+<td>30.28</td>
+<td>7.088</td>
+<td>0.469</td>
+<td>-0.037</td>
+<td>0.600</td>
+<td>0.600</td>
+<td>0.706</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>Sabattini</td>
+<td>5</td>
+<td>1</td>
+<td>0.200</td>
+<td>0.200</td>
+<td class="best">6.575</td>
+<td class="best">18.82</td>
+<td>5.494</td>
+<td>0.017</td>
+<td>-0.037</td>
+<td>0.800</td>
+<td>0.800</td>
+<td class="best">1.000</td>
+<td>completed</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="table-section">
+<h3>3D quadrotor</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>N</th>
+<th>Succ</th>
+<th>Succ Rate</th>
+<th>Reach Once</th>
+<th>Path</th>
+<th>T_goal (s)</th>
+<th>Final Err</th>
+<th>Mean Clr</th>
+<th>Worst Clr</th>
+<th>Coll Rate</th>
+<th>Safe Viol</th>
+<th>Eff</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APF</td>
+<td>5</td>
+<td class="worst">0</td>
+<td class="worst">0.000</td>
+<td class="worst">0.000</td>
+<td>36.846</td>
+<td>-</td>
+<td>3.246</td>
+<td class="worst">0.233</td>
+<td class="worst">-0.089</td>
+<td class="worst">0.600</td>
+<td class="worst">0.600</td>
+<td>0.515</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>Haddadin</td>
+<td>5</td>
+<td class="worst">0</td>
+<td class="worst">0.000</td>
+<td class="worst">0.000</td>
+<td>50.448</td>
+<td>-</td>
+<td class="worst">3.283</td>
+<td>0.857</td>
+<td>-0.015</td>
+<td>0.400</td>
+<td>0.400</td>
+<td>0.436</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>MFI-Geometric</td>
+<td>5</td>
+<td class="best">2</td>
+<td class="best">0.400</td>
+<td class="best">0.400</td>
+<td class="best">24.132</td>
+<td class="worst">28.30</td>
+<td>3.210</td>
+<td>0.693</td>
+<td>-0.012</td>
+<td class="worst">0.600</td>
+<td class="worst">0.600</td>
+<td>0.457</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>MFI-PD</td>
+<td>5</td>
+<td class="worst">0</td>
+<td class="worst">0.000</td>
+<td>0.200</td>
+<td class="worst">61.397</td>
+<td class="best">22.72</td>
+<td class="best">1.314</td>
+<td class="best">0.962</td>
+<td class="best">-0.009</td>
+<td class="best">0.200</td>
+<td class="best">0.200</td>
+<td class="worst">0.211</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>Sabattini</td>
+<td>5</td>
+<td class="worst">0</td>
+<td class="worst">0.000</td>
+<td class="worst">0.000</td>
+<td>36.944</td>
+<td>-</td>
+<td>3.071</td>
+<td>0.349</td>
+<td>-0.038</td>
+<td class="worst">0.600</td>
+<td class="worst">0.600</td>
+<td class="best">0.532</td>
+<td>completed</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="table-section">
+<h3>Webots e-puck</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>N</th>
+<th>Succ</th>
+<th>Succ Rate</th>
+<th>Reach Once</th>
+<th>Path</th>
+<th>T_goal (s)</th>
+<th>Final Err</th>
+<th>Mean Clr</th>
+<th>Worst Clr</th>
+<th>Coll Rate</th>
+<th>Safe Viol</th>
+<th>Eff</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APF</td>
+<td>6</td>
+<td>4</td>
+<td>0.667</td>
+<td>0.667</td>
+<td class="worst">8.292</td>
+<td class="worst">93.47</td>
+<td>0.737</td>
+<td class="best">0.399</td>
+<td class="best">0.128</td>
+<td class="best">0.000</td>
+<td class="best">0.000</td>
+<td class="worst">0.175</td>
+<td>goal_reached</td>
+</tr>
+<tr>
+<td>Haddadin</td>
+<td>6</td>
+<td class="best">5</td>
+<td class="best">0.833</td>
+<td class="best">0.833</td>
+<td class="best">0.990</td>
+<td>30.87</td>
+<td class="best">0.300</td>
+<td>0.224</td>
+<td>0.007</td>
+<td class="best">0.000</td>
+<td>0.167</td>
+<td class="best">0.831</td>
+<td>goal_reached</td>
+</tr>
+<tr>
+<td>MFI-Geometric</td>
+<td>6</td>
+<td>3</td>
+<td>0.500</td>
+<td>0.500</td>
+<td>1.356</td>
+<td class="best">26.66</td>
+<td>0.336</td>
+<td>0.223</td>
+<td class="worst">-0.001</td>
+<td class="worst">0.333</td>
+<td>0.500</td>
+<td>0.668</td>
+<td>goal_reached</td>
+</tr>
+<tr>
+<td>MFI-PD</td>
+<td>6</td>
+<td class="best">5</td>
+<td class="best">0.833</td>
+<td class="best">0.833</td>
+<td>1.392</td>
+<td>32.73</td>
+<td>0.324</td>
+<td>0.249</td>
+<td class="worst">-0.001</td>
+<td>0.167</td>
+<td>0.167</td>
+<td>0.589</td>
+<td>goal_reached</td>
+</tr>
+<tr>
+<td>Sabattini</td>
+<td>6</td>
+<td class="worst">1</td>
+<td class="worst">0.167</td>
+<td class="worst">0.167</td>
+<td>2.857</td>
+<td>44.06</td>
+<td class="worst">1.658</td>
+<td class="worst">0.159</td>
+<td class="worst">-0.001</td>
+<td>0.167</td>
+<td class="worst">0.667</td>
+<td>0.725</td>
+<td>timeout</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="table-section">
+<h3>Webots Crazyflie</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>N</th>
+<th>Succ</th>
+<th>Succ Rate</th>
+<th>Reach Once</th>
+<th>Path</th>
+<th>T_goal (s)</th>
+<th>Final Err</th>
+<th>Mean Clr</th>
+<th>Worst Clr</th>
+<th>Coll Rate</th>
+<th>Safe Viol</th>
+<th>Eff</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APF</td>
+<td>3</td>
+<td class="worst">1</td>
+<td class="worst">0.333</td>
+<td class="worst">0.333</td>
+<td class="best">9.908</td>
+<td>40.00</td>
+<td>3.447</td>
+<td>0.535</td>
+<td>0.143</td>
+<td class="best">0.000</td>
+<td class="best">0.000</td>
+<td>0.418</td>
+<td>collision</td>
+</tr>
+<tr>
+<td>Haddadin</td>
+<td>3</td>
+<td class="best">2</td>
+<td class="best">0.667</td>
+<td class="best">0.667</td>
+<td class="worst">1880.624</td>
+<td>21.34</td>
+<td class="worst">1612.438</td>
+<td>0.659</td>
+<td>-0.051</td>
+<td class="worst">0.333</td>
+<td class="worst">0.333</td>
+<td class="best">0.626</td>
+<td>goal_reached</td>
+</tr>
+<tr>
+<td>MFI-Geometric</td>
+<td>3</td>
+<td class="best">2</td>
+<td class="best">0.667</td>
+<td class="best">0.667</td>
+<td>17.446</td>
+<td>37.73</td>
+<td>0.788</td>
+<td>0.705</td>
+<td>0.332</td>
+<td class="best">0.000</td>
+<td class="best">0.000</td>
+<td>0.257</td>
+<td>goal_reached</td>
+</tr>
+<tr>
+<td>MFI-PD</td>
+<td>3</td>
+<td class="worst">1</td>
+<td class="worst">0.333</td>
+<td class="worst">0.333</td>
+<td>16.091</td>
+<td class="worst">58.43</td>
+<td class="best">0.386</td>
+<td class="best">0.723</td>
+<td class="best">0.334</td>
+<td class="best">0.000</td>
+<td class="best">0.000</td>
+<td class="worst">0.192</td>
+<td>collision</td>
+</tr>
+<tr>
+<td>Sabattini</td>
+<td>3</td>
+<td class="worst">1</td>
+<td class="worst">0.333</td>
+<td class="worst">0.333</td>
+<td>15.362</td>
+<td class="best">17.98</td>
+<td>0.898</td>
+<td class="worst">0.455</td>
+<td class="worst">-0.100</td>
+<td class="worst">0.333</td>
+<td class="worst">0.333</td>
+<td>0.281</td>
+<td>collision</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+  </main>
+</body>
+</html>
