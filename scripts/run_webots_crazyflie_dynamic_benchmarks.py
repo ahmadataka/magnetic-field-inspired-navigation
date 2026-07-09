@@ -37,6 +37,9 @@ WEBOTS_VIEW_MARGIN_Z = 0.75
 METHOD_SPECS = {
     "paper_pd_3d": {"label": "MFI-PD", "color": "#1f77b4"},
     "paper_geometric_3d": {"label": "MFI-Geometric", "color": "#2ca02c"},
+    "apf_3d": {"label": "APF", "color": "#ff7f0e"},
+    "haddadin_3d": {"label": "Haddadin", "color": "#8b5cf6"},
+    "sabattini_3d": {"label": "Sabattini", "color": "#d97706"},
 }
 METHOD_BASE_CONFIGS = {
     "paper_pd_3d": {
@@ -59,6 +62,33 @@ METHOD_BASE_CONFIGS = {
         "kp_geom": 0.28,
         "max_acceleration": 2.2,
         "max_speed_norm": 0.52,
+    },
+    "apf_3d": {
+        "kp_goal": 0.08,
+        "kd_goal": 0.45,
+        "c_field": 14.0,
+        "r_la": 2.0,
+        "max_acceleration": 2.2,
+        "max_speed_norm": 0.42,
+        "speed_limit": 0.32,
+    },
+    "haddadin_3d": {
+        "kp_goal": 0.08,
+        "kd_goal": 0.45,
+        "r_l": 4.0,
+        "r_la": 2.0,
+        "max_acceleration": 2.2,
+        "max_speed_norm": 0.42,
+        "speed_limit": 0.34,
+    },
+    "sabattini_3d": {
+        "kp_goal": 0.08,
+        "kd_goal": 0.45,
+        "r_l": 4.0,
+        "r_la": 2.0,
+        "max_acceleration": 2.2,
+        "max_speed_norm": 0.42,
+        "speed_limit": 0.34,
     },
 }
 

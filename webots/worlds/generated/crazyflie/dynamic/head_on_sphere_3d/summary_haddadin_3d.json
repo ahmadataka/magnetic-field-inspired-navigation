@@ -1,0 +1,38 @@
+{
+  "status": "collision",
+  "scenario": "head_on_sphere_3d",
+  "goal": [
+    3.2,
+    0.0,
+    0.5260869565217392
+  ],
+  "goal_tolerance": 0.18,
+  "steps": 1318,
+  "nav_mode": "baseline3d",
+  "method": "haddadin_3d",
+  "final_state": {
+    "x": 3441.5664362536004,
+    "y": -3402.189271690196,
+    "z": -3.797725560216472
+  },
+  "final_goal_distance": 4837.072904734208,
+  "start": [
+    -7.585315386445274e-17,
+    4.601891581715041e-17,
+    0.014979522040285381
+  ],
+  "metrics": {
+    "steps": 1318.0,
+    "path_length": 5628.8786875948335,
+    "final_goal_distance": 4837.072904734208,
+    "min_clearance": -0.05122352112637768,
+    "mean_speed": 133.46165325291244,
+    "success": 0.0,
+    "goal_reached_once": 0.0,
+    "collision": 1.0,
+    "safety_violation": 1.0,
+    "time_to_goal_steps": Infinity,
+    "path_efficiency": 0.8597356494669899
+  },
+  "webots_exit_code": 2
+}
