@@ -1,0 +1,11 @@
+scenario,method,method_label,max_success_beta_ref,max_safe_beta_ref,best_final_goal_distance,worst_min_clearance
+moving_circle_crossing,paper_pd,MFI-PD,1.000,1.000,0.150,0.835
+moving_circle_crossing,paper_geometric,MFI-Geometric,1.000,1.000,0.017,0.795
+moving_circle_crossing,apf,APF,1.000,1.000,0.150,1.031
+moving_circle_crossing,haddadin,Haddadin,1.000,1.000,0.021,0.045
+moving_circle_crossing,sabattini,Sabattini,1.000,1.000,0.150,-0.014
+head_on_circle,paper_pd,MFI-PD,1.000,1.000,0.150,0.302
+head_on_circle,paper_geometric,MFI-Geometric,0.900,0.900,0.001,-0.007
+head_on_circle,apf,APF,1.000,1.000,0.152,0.654
+head_on_circle,haddadin,Haddadin,-,-,3.697,-0.028
+head_on_circle,sabattini,Sabattini,-,-,3.697,-0.028
