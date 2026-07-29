@@ -1,5 +1,5 @@
 {
-  "status": "collision",
+  "status": "timeout",
   "scenario": "archway",
   "goal": [
     3.2,
@@ -7,32 +7,32 @@
     1.2046153846153846
   ],
   "goal_tolerance": 0.18,
-  "steps": 1064,
+  "steps": 2200,
   "nav_mode": "mfi3d",
   "method": "paper_pd_3d",
   "final_state": {
-    "x": 1.8607862296917557,
-    "y": -0.9827574463480957,
-    "z": 0.019249838767889257
+    "x": 2.5573840009141775,
+    "y": 0.6974942481301002,
+    "z": 1.1311332154415166
   },
-  "final_goal_distance": 2.0406854726336894,
+  "final_goal_distance": 0.9701991605268295,
   "start": [
     -1.1772229919581596e-16,
     -3.5819561406517295e-17,
     0.014929504589417884
   ],
   "metrics": {
-    "steps": 1064.0,
-    "path_length": 13.134761561096923,
-    "final_goal_distance": 2.0406854726336894,
-    "min_clearance": 0.008544139222608327,
-    "mean_speed": 0.38577189735364614,
+    "steps": 2200.0,
+    "path_length": 20.10025583615634,
+    "final_goal_distance": 0.9701991605268295,
+    "min_clearance": 0.4319969692217034,
+    "mean_speed": 0.28551499767267524,
     "success": 0.0,
     "goal_reached_once": 0.0,
     "collision": 0.0,
-    "safety_violation": 1.0,
+    "safety_violation": 0.0,
     "time_to_goal_steps": Infinity,
-    "path_efficiency": 0.16021349065651597
+    "path_efficiency": 0.14268235263456971
   },
-  "webots_exit_code": 2
+  "webots_exit_code": 1
 }

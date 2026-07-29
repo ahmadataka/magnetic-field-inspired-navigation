@@ -7,32 +7,32 @@
     0.7000000000000001
   ],
   "goal_tolerance": 0.18,
-  "steps": 1364,
+  "steps": 835,
   "nav_mode": "mfi3d",
   "method": "paper_geometric_3d",
   "final_state": {
-    "x": 3.1097855333694153,
-    "y": 0.41987444301770277,
-    "z": 0.6147923134564451
+    "x": 3.085862578741788,
+    "y": 0.6102969557975854,
+    "z": 0.7751453611295224
   },
-  "final_goal_distance": 0.1681425574540839,
+  "final_goal_distance": 0.15683614192392276,
   "start": [
     -1.2778058734485714e-17,
     -0.26666666666666666,
     0.014978264171574442
   ],
   "metrics": {
-    "steps": 1364.0,
-    "path_length": 11.504637863725865,
-    "final_goal_distance": 0.1681425574540839,
-    "min_clearance": 0.9865015020810869,
-    "mean_speed": 0.2635776636667399,
+    "steps": 835.0,
+    "path_length": 6.5865696943973635,
+    "final_goal_distance": 0.15683614192392276,
+    "min_clearance": 1.0135622184996727,
+    "mean_speed": 0.24650335682624866,
     "success": 1.0,
     "goal_reached_once": 1.0,
     "collision": 0.0,
     "safety_violation": 0.0,
-    "time_to_goal_steps": 1247.0,
-    "path_efficiency": 0.28168298036642425
+    "time_to_goal_steps": 804.0,
+    "path_efficiency": 0.5005469666932031
   },
   "webots_exit_code": 0
 }

@@ -53,6 +53,7 @@ ALTITUDE_TOLERANCE = 0.12
 VELOCITY_TOLERANCE = 0.12
 XY_SPEED_LIMIT = 0.35
 Z_SPEED_LIMIT = 0.35
+Z_SPEED_LIMIT_DOWN = 0.18
 YAW_RATE_LIMIT = 1.2
 KP_XY = 0.8
 KP_Z = 0.9
@@ -63,6 +64,9 @@ DEFAULT_MAX_STEPS = 1800
 HOVER_HEIGHT = 1.0
 MIN_COLLISION_STEP = 500
 MOVE_ENABLE_TIME = 6.0
+MIN_FLIGHT_ALTITUDE = 0.30
+ALTITUDE_RECOVERY_TRIGGER = 0.24
+LOW_ALTITUDE_XY_SCALE = 0.55
 MFI_OBSTACLES = ObstacleCollection(
     obstacles=[
         PolygonObstacle(vertices=np.array([[0.225, -0.075], [0.575, -0.075], [0.575, 0.275], [0.225, 0.275]], dtype=float)),
@@ -329,10 +333,10 @@ if __name__ == "__main__":
                     desired_velocity_world,
                     _goal_speed_cap(float(np.linalg.norm(goal_error_world)), float(mfi_config.max_speed_norm)),
                 )
-                desired_velocity_world[2] = float(np.clip(desired_velocity_world[2], -Z_SPEED_LIMIT, Z_SPEED_LIMIT))
+                desired_velocity_world[2] = float(np.clip(desired_velocity_world[2], -Z_SPEED_LIMIT_DOWN, Z_SPEED_LIMIT))
                 target_altitude = float(goal[2] + ALTITUDE_VELOCITY_FEEDFORWARD * desired_velocity_world[2])
                 desired_altitude_state += ALTITUDE_SETPOINT_BLEND * (target_altitude - desired_altitude_state)
-                desired_altitude_state = float(np.clip(desired_altitude_state, 0.25, max(goal[2], hover_height) + 0.9))
+                desired_altitude_state = float(np.clip(desired_altitude_state, MIN_FLIGHT_ALTITUDE, max(goal[2], hover_height) + 0.9))
             elif nav_mode == "mfi":
                 planar_state = DoubleIntegratorState(position=position[:2].copy(), velocity=velocity_global[:2].copy())
                 planar_goal = goal[:2].copy()
@@ -350,12 +354,21 @@ if __name__ == "__main__":
                 )
                 target_altitude = float(goal[2] + ALTITUDE_VELOCITY_FEEDFORWARD * np.clip(KP_Z * goal_error_world[2], -Z_SPEED_LIMIT, Z_SPEED_LIMIT))
                 desired_altitude_state += ALTITUDE_SETPOINT_BLEND * (target_altitude - desired_altitude_state)
-                desired_altitude_state = float(np.clip(desired_altitude_state, 0.25, max(goal[2], hover_height) + 0.9))
+                desired_altitude_state = float(np.clip(desired_altitude_state, MIN_FLIGHT_ALTITUDE, max(goal[2], hover_height) + 0.9))
+
+            if nav_mode in {"mfi3d", "baseline3d"} and position[2] < ALTITUDE_RECOVERY_TRIGGER:
+                desired_velocity_world[:2] *= LOW_ALTITUDE_XY_SCALE
+                desired_velocity_world[2] = max(float(desired_velocity_world[2]), 0.12)
+                desired_altitude_state = max(desired_altitude_state, hover_height)
 
             desired_vx = float(desired_velocity_world[0] * cos_yaw + desired_velocity_world[1] * sin_yaw)
             desired_vy = float(-desired_velocity_world[0] * sin_yaw + desired_velocity_world[1] * cos_yaw)
 
-            desired_heading = math.atan2(goal_error_world[1], goal_error_world[0])
+            horizontal_speed_command = float(np.linalg.norm(desired_velocity_world[:2]))
+            if horizontal_speed_command > 1e-4:
+                desired_heading = math.atan2(desired_velocity_world[1], desired_velocity_world[0])
+            else:
+                desired_heading = math.atan2(goal_error_world[1], goal_error_world[0])
             yaw_error = _wrap_angle(desired_heading - yaw)
             desired_yaw_rate = max(-YAW_RATE_LIMIT, min(YAW_RATE_LIMIT, KP_YAW * yaw_error))
         desired_altitude = desired_altitude_state

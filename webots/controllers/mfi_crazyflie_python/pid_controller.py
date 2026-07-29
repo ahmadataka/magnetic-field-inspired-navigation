@@ -11,6 +11,7 @@ class pid_velocity_fixed_height_controller:
         self.past_pitch_error = 0.0
         self.past_roll_error = 0.0
         self.altitude_integrator = 0.0
+        self.max_tilt_command = 0.35
 
     def pid(
         self,
@@ -44,6 +45,8 @@ class pid_velocity_fixed_height_controller:
         vy_deriv = (vy_error - self.past_vy_error) / dt
         desired_pitch = gains["kp_vel_xy"] * np.clip(vx_error, -1, 1) + gains["kd_vel_xy"] * vx_deriv
         desired_roll = -gains["kp_vel_xy"] * np.clip(vy_error, -1, 1) - gains["kd_vel_xy"] * vy_deriv
+        desired_pitch = float(np.clip(desired_pitch, -self.max_tilt_command, self.max_tilt_command))
+        desired_roll = float(np.clip(desired_roll, -self.max_tilt_command, self.max_tilt_command))
         self.past_vx_error = vx_error
         self.past_vy_error = vy_error
 

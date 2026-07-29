@@ -11,11 +11,11 @@
   "nav_mode": "mfi3d",
   "method": "paper_pd_3d",
   "final_state": {
-    "x": 2.7282504786305903,
-    "y": 0.10529169093948061,
-    "z": 0.4402115933991668
+    "x": 2.4575598243433245,
+    "y": -0.2027133965636321,
+    "z": 0.5274212430692578
   },
-  "final_goal_distance": 0.5204803586197577,
+  "final_goal_distance": 0.7761409809242924,
   "start": [
     8.625220723956744e-17,
     -1.7655552049253315e-17,
@@ -23,16 +23,16 @@
   ],
   "metrics": {
     "steps": 2200.0,
-    "path_length": 19.38448624619038,
-    "final_goal_distance": 0.5204803586197577,
-    "min_clearance": 0.7906978869881853,
-    "mean_speed": 0.27534781599702296,
+    "path_length": 12.645907200198128,
+    "final_goal_distance": 0.7761409809242924,
+    "min_clearance": 0.5977334960957799,
+    "mean_speed": 0.17962936363917795,
     "success": 0.0,
     "goal_reached_once": 0.0,
     "collision": 0.0,
     "safety_violation": 0.0,
     "time_to_goal_steps": Infinity,
-    "path_efficiency": 0.14250533214928518
+    "path_efficiency": 0.19919930544440145
   },
   "webots_exit_code": 1
 }

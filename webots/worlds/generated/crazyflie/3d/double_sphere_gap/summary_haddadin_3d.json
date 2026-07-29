@@ -11,11 +11,11 @@
   "nav_mode": "baseline3d",
   "method": "haddadin_3d",
   "final_state": {
-    "x": 1.0128159230461635,
-    "y": 0.1193865477022402,
-    "z": 0.014954033972841946
+    "x": 1.5077823309756286,
+    "y": -0.5248630513651643,
+    "z": 0.0149540325034278
   },
-  "final_goal_distance": 2.2750421969286907,
+  "final_goal_distance": 1.875332377848371,
   "start": [
     8.625220723956744e-17,
     -1.7655552049253315e-17,
@@ -23,16 +23,16 @@
   ],
   "metrics": {
     "steps": 501.0,
-    "path_length": 3.458837706288973,
-    "final_goal_distance": 2.2750421969286907,
-    "min_clearance": 0.41654892847303354,
-    "mean_speed": 0.2157458649132359,
+    "path_length": 6.322628584596341,
+    "final_goal_distance": 1.875332377848371,
+    "min_clearance": 0.0039429486055637675,
+    "mean_speed": 0.3943755354663392,
     "success": 0.0,
     "goal_reached_once": 0.0,
     "collision": 0.0,
-    "safety_violation": 0.0,
+    "safety_violation": 1.0,
     "time_to_goal_steps": Infinity,
-    "path_efficiency": 0.2948470359350149
+    "path_efficiency": 0.25250952935038556
   },
   "webots_exit_code": 2
 }

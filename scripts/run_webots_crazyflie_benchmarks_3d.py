@@ -50,14 +50,14 @@ METHOD_SPECS = {
 }
 METHOD_BASE_CONFIGS = {
     "paper_pd_3d": {
-        "c_field": 12.0,
+        "c_field": 13.0,
         "c_perp": 18.0,
-        "speed_limit": 0.40,
-        "kp_goal": 0.08,
-        "kp_goal_relaxed": 0.08,
-        "kd_goal": 0.45,
+        "speed_limit": 0.42,
+        "kp_goal": 0.10,
+        "kp_goal_relaxed": 0.09,
+        "kd_goal": 0.52,
         "max_acceleration": 2.2,
-        "max_speed_norm": 0.55,
+        "max_speed_norm": 0.60,
     },
     "paper_geometric_3d": {
         "c_field": 16.0,

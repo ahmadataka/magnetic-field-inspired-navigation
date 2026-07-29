@@ -1,5 +1,5 @@
 {
-  "status": "collision",
+  "status": "goal_reached",
   "scenario": "wandering_sphere_3d",
   "goal": [
     3.2,
@@ -7,32 +7,32 @@
     0.6466666666666667
   ],
   "goal_tolerance": 0.18,
-  "steps": 501,
+  "steps": 1366,
   "nav_mode": "baseline3d",
   "method": "apf_3d",
   "final_state": {
-    "x": 3.0533356169615633,
-    "y": -0.5209933367341675,
-    "z": 0.014953894876794674
+    "x": 3.3558108829357183,
+    "y": 0.26317524579414275,
+    "z": 0.5597155329558203
   },
-  "final_goal_distance": 1.0202841507403173,
+  "final_goal_distance": 0.1784649010716635,
   "start": [
     -2.4977624763042066e-17,
     -0.10666666666666666,
     0.014979702191869355
   ],
   "metrics": {
-    "steps": 501.0,
-    "path_length": 6.017416419129769,
-    "final_goal_distance": 1.0202841507403173,
-    "min_clearance": 0.14323445830298498,
-    "mean_speed": 0.37533785049462154,
-    "success": 0.0,
-    "goal_reached_once": 0.0,
+    "steps": 1366.0,
+    "path_length": 14.765386891550161,
+    "final_goal_distance": 0.1784649010716635,
+    "min_clearance": 0.49108778593076213,
+    "mean_speed": 0.3377879504838527,
+    "success": 1.0,
+    "goal_reached_once": 1.0,
     "collision": 0.0,
     "safety_violation": 0.0,
-    "time_to_goal_steps": Infinity,
-    "path_efficiency": 0.5120667232137286
+    "time_to_goal_steps": 1322.0,
+    "path_efficiency": 0.23160879004684148
   },
-  "webots_exit_code": 2
+  "webots_exit_code": 0
 }

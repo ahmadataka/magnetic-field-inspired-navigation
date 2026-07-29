@@ -7,32 +7,32 @@
     0.7000000000000001
   ],
   "goal_tolerance": 0.18,
-  "steps": 533,
+  "steps": 847,
   "nav_mode": "baseline3d",
   "method": "haddadin_3d",
   "final_state": {
-    "x": 3.1873846558548036,
-    "y": 0.4609725479530715,
-    "z": 0.6455876169199982
+    "x": 3.21064211431314,
+    "y": 0.6821802474392034,
+    "z": 0.6366911460932909
   },
-  "final_goal_distance": 0.09141081774710763,
+  "final_goal_distance": 0.16210080017962658,
   "start": [
     -1.2778058734485714e-17,
     -0.26666666666666666,
     0.014978264171574442
   ],
   "metrics": {
-    "steps": 533.0,
-    "path_length": 5.111350170080573,
-    "final_goal_distance": 0.09141081774710763,
-    "min_clearance": 0.6931237343848174,
-    "mean_speed": 0.29968047432461203,
+    "steps": 847.0,
+    "path_length": 7.567149392258994,
+    "final_goal_distance": 0.16210080017962658,
+    "min_clearance": 0.524282055854395,
+    "mean_speed": 0.2791893961134519,
     "success": 1.0,
     "goal_reached_once": 1.0,
     "collision": 0.0,
     "safety_violation": 0.0,
-    "time_to_goal_steps": 522.0,
-    "path_efficiency": 0.6514221695506822
+    "time_to_goal_steps": 831.0,
+    "path_efficiency": 0.44999138063632715
   },
   "webots_exit_code": 0
 }
