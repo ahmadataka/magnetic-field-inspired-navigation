@@ -47,21 +47,49 @@ def _initial_state(start: np.ndarray, goal: np.ndarray) -> DifferentialDriveStat
     return DifferentialDriveState(position=start.copy(), heading=heading)
 
 
-def _diff_drive_config(base_config):
-    return replace(
-        base_config,
-        max_linear_speed=1.2,
-        max_angular_speed=3.0,
-        speed_gain=1.5,
-        heading_gain=4.0,
-        min_forward_factor=0.25,
-    )
+def _diff_drive_config(base_config, profile: str = "default"):
+    common = {
+        "max_linear_speed": 1.2,
+        "max_angular_speed": 3.0,
+        "speed_gain": 1.5,
+        "heading_gain": 4.0,
+        "min_forward_factor": 0.25,
+    }
+    profiles = {
+        "default": common,
+        # Dynamic moving-obstacle scenes benefit from more heading authority and
+        # less forced forward progress while the robot is still rotating.
+        "mfi_pd_dynamic": {
+            "max_linear_speed": 0.85,
+            "max_angular_speed": 4.8,
+            "speed_gain": 1.0,
+            "heading_gain": 6.5,
+            "min_forward_factor": 0.02,
+            "r_l": 3.8,
+            "r_la": 2.8,
+            "c_field": 12.0,
+            "c_perp": 24.0,
+        },
+        "mfi_geometric_dynamic": {
+            "max_linear_speed": 0.75,
+            "max_angular_speed": 5.2,
+            "speed_gain": 0.9,
+            "heading_gain": 7.0,
+            "min_forward_factor": 0.0,
+            "r_l": 3.8,
+            "r_la": 2.8,
+            "c_field": 12.0,
+            "c_perp": 24.0,
+        },
+    }
+    return replace(base_config, **profiles[profile])
 
 
 def main() -> None:
     scenarios = make_dynamic_scenarios_2d()
-    config_pd = _diff_drive_config(make_paper_pd_config())
-    config_geometric = _diff_drive_config(make_paper_geometric_config())
+    config_pd = _diff_drive_config(make_paper_pd_config(), profile="mfi_pd_dynamic")
+    config_geometric = _diff_drive_config(make_paper_geometric_config(), profile="mfi_geometric_dynamic")
+    config_baseline = _diff_drive_config(make_paper_pd_config(), profile="default")
     artifacts = benchmark_artifact_dir(ROOT, "dynamic_differential_drive_2d")
     artifacts.mkdir(parents=True, exist_ok=True)
 
@@ -93,22 +121,22 @@ def main() -> None:
                 _initial_state(scenario.start, scenario.goal),
                 scenario.goal,
                 scenario.obstacles,
-                config_pd,
-                navigator=ArtificialPotentialFieldNavigator(config_pd),
+                config_baseline,
+                navigator=ArtificialPotentialFieldNavigator(config_baseline),
             ),
             "haddadin": simulate_differential_drive(
                 _initial_state(scenario.start, scenario.goal),
                 scenario.goal,
                 scenario.obstacles,
-                config_pd,
-                navigator=HaddadinNavigator(config_pd),
+                config_baseline,
+                navigator=HaddadinNavigator(config_baseline),
             ),
             "sabattini": simulate_differential_drive(
                 _initial_state(scenario.start, scenario.goal),
                 scenario.goal,
                 scenario.obstacles,
-                config_pd,
-                navigator=SabattiniNavigator(config_pd),
+                config_baseline,
+                navigator=SabattiniNavigator(config_baseline),
             ),
         }
 
