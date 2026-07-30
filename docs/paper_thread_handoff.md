@@ -2,6 +2,10 @@
 
 Use this note as the starting context for the Codex thread that will work on the paper/manuscript side.
 
+For the newest compact experiment-side deliverable, also read:
+
+- `docs/paper_thread_experiment_report.md`
+
 ## Repo
 
 - repository: `magnetic-field-inspired-navigation`
@@ -158,4 +162,3 @@ If the manuscript-side agent needs to work efficiently, use this order:
 You can give the paper thread something close to this:
 
 > Use `/Users/ahmadataka/Documents/Bitbucket - Ataka/magnetic-field-inspired-navigation/docs/paper_thread_handoff.md` as the repo guide. Prioritize `docs/dynamic_benchmark_master_summary.md`, `docs/dynamic_paper_figures.md`, `artifacts/summaries/dynamic_master/`, and `artifacts/summaries/dynamic_paper_figures/`. Use the curated figures as the first candidates for the paper. Only inspect the full benchmark folders if you need backup evidence, additional cases, or raw comparison details.
-
