@@ -31,59 +31,59 @@ dynamic_double_integrator_2d,2D double integrator,wandering_circle,paper_pd,MFI-
 dynamic_double_integrator_2d,2D double integrator,wandering_circle,sabattini,Sabattini,completed,0.000,0.000,6.460,inf,inf,6.579,-0.007,1.000,1.000,1.000
 dynamic_differential_drive_2d,2D differential drive,head_on_circle,apf,APF,completed,1.000,1.000,19.116,3224.0,64.48,0.150,1.040,0.000,0.000,0.620
 dynamic_differential_drive_2d,2D differential drive,head_on_circle,haddadin,Haddadin,completed,0.000,0.000,4.267,inf,inf,7.733,-0.002,1.000,1.000,1.000
-dynamic_differential_drive_2d,2D differential drive,head_on_circle,paper_geometric,MFI-Geometric,completed,0.000,0.000,1.991,inf,inf,10.851,-0.005,1.000,1.000,0.614
-dynamic_differential_drive_2d,2D differential drive,head_on_circle,paper_pd,MFI-PD,completed,0.000,0.000,4.125,inf,inf,7.965,-0.001,1.000,1.000,0.979
+dynamic_differential_drive_2d,2D differential drive,head_on_circle,paper_geometric,MFI-Geometric,completed,0.000,0.000,1.013,inf,inf,11.143,-0.007,1.000,1.000,0.853
+dynamic_differential_drive_2d,2D differential drive,head_on_circle,paper_pd,MFI-PD,completed,0.000,0.000,3.293,inf,inf,8.725,-0.014,1.000,1.000,0.995
 dynamic_differential_drive_2d,2D differential drive,head_on_circle,sabattini,Sabattini,completed,0.000,0.000,4.267,inf,inf,7.733,-0.002,1.000,1.000,1.000
 dynamic_differential_drive_2d,2D differential drive,mixed_static_dynamic_field,apf,APF,completed,0.000,0.000,21.792,inf,inf,0.896,1.396,0.000,0.000,0.700
 dynamic_differential_drive_2d,2D differential drive,mixed_static_dynamic_field,haddadin,Haddadin,completed,1.000,1.000,16.407,3858.0,77.16,0.150,0.852,0.000,0.000,0.907
-dynamic_differential_drive_2d,2D differential drive,mixed_static_dynamic_field,paper_geometric,MFI-Geometric,completed,0.000,0.000,17.930,inf,inf,0.631,1.229,0.000,0.000,0.872
-dynamic_differential_drive_2d,2D differential drive,mixed_static_dynamic_field,paper_pd,MFI-PD,completed,0.000,0.000,19.619,inf,inf,0.786,1.867,0.000,0.000,0.785
+dynamic_differential_drive_2d,2D differential drive,mixed_static_dynamic_field,paper_geometric,MFI-Geometric,completed,0.000,0.000,10.738,inf,inf,4.875,1.591,0.000,0.000,0.954
+dynamic_differential_drive_2d,2D differential drive,mixed_static_dynamic_field,paper_pd,MFI-PD,completed,0.000,0.000,12.726,inf,inf,5.349,2.399,0.000,0.000,0.902
 dynamic_differential_drive_2d,2D differential drive,mixed_static_dynamic_field,sabattini,Sabattini,completed,1.000,1.000,14.858,3041.0,60.82,0.150,0.209,0.000,0.000,1.000
 dynamic_differential_drive_2d,2D differential drive,moving_circle_crossing,apf,APF,completed,1.000,1.000,11.959,2786.0,55.72,0.150,1.616,0.000,0.000,0.991
 dynamic_differential_drive_2d,2D differential drive,moving_circle_crossing,haddadin,Haddadin,completed,1.000,1.000,12.078,2794.0,55.88,0.150,1.481,0.000,0.000,0.981
-dynamic_differential_drive_2d,2D differential drive,moving_circle_crossing,paper_geometric,MFI-Geometric,completed,1.000,1.000,11.883,3249.0,64.98,0.117,4.052,0.000,0.000,1.000
-dynamic_differential_drive_2d,2D differential drive,moving_circle_crossing,paper_pd,MFI-PD,completed,1.000,1.000,12.918,3067.0,61.34,0.150,2.107,0.000,0.000,0.918
+dynamic_differential_drive_2d,2D differential drive,moving_circle_crossing,paper_geometric,MFI-Geometric,completed,1.000,1.000,11.850,5123.0,102.46,0.150,4.429,0.000,0.000,1.000
+dynamic_differential_drive_2d,2D differential drive,moving_circle_crossing,paper_pd,MFI-PD,completed,1.000,1.000,12.903,3867.0,77.34,0.150,2.702,0.000,0.000,0.919
 dynamic_differential_drive_2d,2D differential drive,moving_circle_crossing,sabattini,Sabattini,completed,1.000,1.000,11.850,2750.0,55.00,0.150,1.266,0.000,0.000,1.000
 dynamic_differential_drive_2d,2D differential drive,moving_convex_sweeper,apf,APF,completed,1.000,1.000,13.576,3001.0,60.02,0.150,1.560,0.000,0.000,0.953
 dynamic_differential_drive_2d,2D differential drive,moving_convex_sweeper,haddadin,Haddadin,completed,1.000,1.000,13.318,2936.0,58.72,0.150,1.276,0.000,0.000,0.971
-dynamic_differential_drive_2d,2D differential drive,moving_convex_sweeper,paper_geometric,MFI-Geometric,completed,1.000,1.000,12.970,3613.0,72.26,0.117,3.899,0.000,0.000,1.000
-dynamic_differential_drive_2d,2D differential drive,moving_convex_sweeper,paper_pd,MFI-PD,completed,1.000,1.000,14.231,3170.0,63.40,0.150,2.332,0.000,0.000,0.909
+dynamic_differential_drive_2d,2D differential drive,moving_convex_sweeper,paper_geometric,MFI-Geometric,completed,1.000,1.000,12.943,5703.0,114.06,0.151,4.644,0.000,0.000,0.999
+dynamic_differential_drive_2d,2D differential drive,moving_convex_sweeper,paper_pd,MFI-PD,completed,1.000,1.000,14.228,4003.0,80.06,0.150,2.978,0.000,0.000,0.909
 dynamic_differential_drive_2d,2D differential drive,moving_convex_sweeper,sabattini,Sabattini,completed,1.000,1.000,12.936,2858.0,57.16,0.150,0.797,0.000,0.000,1.000
 dynamic_differential_drive_2d,2D differential drive,moving_u_shape,apf,APF,completed,1.000,1.000,29.954,5334.0,106.68,0.150,1.284,0.000,0.000,0.413
 dynamic_differential_drive_2d,2D differential drive,moving_u_shape,haddadin,Haddadin,completed,1.000,1.000,13.200,3018.0,60.36,0.150,0.685,0.000,0.000,0.936
-dynamic_differential_drive_2d,2D differential drive,moving_u_shape,paper_geometric,MFI-Geometric,completed,1.000,1.000,12.418,3547.0,70.94,0.117,1.541,0.000,0.000,0.997
-dynamic_differential_drive_2d,2D differential drive,moving_u_shape,paper_pd,MFI-PD,completed,0.000,0.000,6.605,inf,inf,9.362,-0.002,1.000,1.000,0.849
+dynamic_differential_drive_2d,2D differential drive,moving_u_shape,paper_geometric,MFI-Geometric,completed,1.000,1.000,12.359,5546.0,110.92,0.151,2.428,0.000,0.000,0.999
+dynamic_differential_drive_2d,2D differential drive,moving_u_shape,paper_pd,MFI-PD,completed,1.000,1.000,14.039,5061.0,101.22,0.150,1.972,0.000,0.000,0.880
 dynamic_differential_drive_2d,2D differential drive,moving_u_shape,sabattini,Sabattini,completed,0.000,0.000,5.536,inf,inf,6.964,-0.003,1.000,1.000,1.000
 dynamic_differential_drive_2d,2D differential drive,wandering_circle,apf,APF,completed,1.000,1.000,16.226,3094.0,61.88,0.150,0.929,0.000,0.000,0.795
 dynamic_differential_drive_2d,2D differential drive,wandering_circle,haddadin,Haddadin,completed,1.000,1.000,13.282,2928.0,58.56,0.150,0.319,0.000,0.000,0.971
-dynamic_differential_drive_2d,2D differential drive,wandering_circle,paper_geometric,MFI-Geometric,completed,1.000,1.000,12.922,3648.0,72.96,0.117,2.833,0.000,0.000,1.000
-dynamic_differential_drive_2d,2D differential drive,wandering_circle,paper_pd,MFI-PD,completed,1.000,1.000,13.948,3163.0,63.26,0.150,1.028,0.000,0.000,0.924
+dynamic_differential_drive_2d,2D differential drive,wandering_circle,paper_geometric,MFI-Geometric,completed,1.000,1.000,12.890,5693.0,113.86,0.151,4.022,0.000,0.000,1.000
+dynamic_differential_drive_2d,2D differential drive,wandering_circle,paper_pd,MFI-PD,completed,1.000,1.000,13.899,4112.0,82.24,0.150,1.793,0.000,0.000,0.928
 dynamic_differential_drive_2d,2D differential drive,wandering_circle,sabattini,Sabattini,completed,0.000,0.000,6.346,inf,inf,6.692,-0.018,1.000,1.000,1.000
-dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,apf_3d,APF,completed,0.000,0.000,638710.466,inf,inf,38.837,-0.411,1.000,1.000,0.000
-dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,haddadin_3d,Haddadin,completed,0.000,0.000,5.121,inf,inf,6.379,-0.037,1.000,1.000,1.000
-dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,paper_geometric_3d,MFI-Geometric,completed,0.000,0.000,1.216,inf,inf,10.284,-0.020,1.000,1.000,1.000
-dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,paper_pd_3d,MFI-PD,completed,0.000,0.000,5.121,inf,inf,6.379,-0.037,1.000,1.000,1.000
-dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,sabattini_3d,Sabattini,completed,0.000,0.000,5.121,inf,inf,6.379,-0.037,1.000,1.000,1.000
-dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,apf_3d,APF,completed,0.000,0.000,9.197,inf,inf,6.748,-0.229,1.000,1.000,0.790
-dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,haddadin_3d,Haddadin,completed,0.000,0.000,61.863,inf,inf,1.693,-0.141,1.000,1.000,0.217
-dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,paper_geometric_3d,MFI-Geometric,completed,0.000,0.000,19.270,inf,inf,0.416,-0.002,1.000,1.000,0.696
-dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,paper_pd_3d,MFI-PD,completed,0.000,0.000,196.122,inf,inf,17.678,0.141,0.000,0.000,0.058
-dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,sabattini_3d,Sabattini,completed,0.000,0.000,6.115,inf,inf,7.418,-0.009,1.000,1.000,1.000
-dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,apf_3d,APF,completed,0.000,0.000,10.008,inf,inf,4.744,-0.045,1.000,1.000,0.747
-dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,haddadin_3d,Haddadin,completed,0.000,0.000,99.708,inf,inf,13.179,-0.140,1.000,1.000,0.089
-dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,paper_geometric_3d,MFI-Geometric,completed,1.000,1.000,13.932,2082.0,41.64,0.022,3.793,0.000,0.000,0.872
-dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,paper_pd_3d,MFI-PD,completed,1.000,1.000,16.473,1514.0,30.28,0.151,2.275,0.000,0.000,0.733
-dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,sabattini_3d,Sabattini,completed,0.000,0.000,5.089,inf,inf,7.076,-0.020,1.000,1.000,1.000
-dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,apf_3d,APF,completed,0.000,0.000,4.697,inf,inf,6.369,-0.084,1.000,1.000,0.995
-dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,haddadin_3d,Haddadin,completed,1.000,1.000,15.676,1538.0,30.76,0.150,1.563,0.000,0.000,0.698
-dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,paper_geometric_3d,MFI-Geometric,completed,1.000,1.000,11.717,1792.0,35.84,0.024,4.131,0.000,0.000,0.939
-dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,paper_pd_3d,MFI-PD,completed,0.000,0.000,6.451,inf,inf,6.567,-0.004,1.000,1.000,0.918
-dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,sabattini_3d,Sabattini,completed,0.000,0.000,4.579,inf,inf,6.449,-0.010,1.000,1.000,1.000
-dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,apf_3d,APF,completed,0.000,0.000,6.023,inf,inf,6.106,-0.657,1.000,1.000,0.999
-dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,haddadin_3d,Haddadin,completed,0.000,1.000,753.907,5518.0,110.36,0.341,0.076,0.000,0.000,0.016
-dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,paper_geometric_3d,MFI-Geometric,completed,1.000,1.000,15.400,2192.0,43.84,0.047,2.511,0.000,0.000,0.784
-dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,paper_pd_3d,MFI-PD,completed,0.000,0.000,9.278,inf,inf,4.667,-0.031,1.000,1.000,0.823
-dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,sabattini_3d,Sabattini,completed,1.000,1.000,11.973,941.0,18.82,0.150,0.161,0.000,0.000,1.000
+dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,apf_3d,APF,completed,0.000,0.000,95.085,inf,inf,99.705,1.321,0.000,0.000,0.928
+dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,haddadin_3d,Haddadin,completed,0.000,0.000,4.245,inf,inf,7.255,-0.009,1.000,1.000,1.000
+dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,paper_geometric_3d,MFI-Geometric,completed,0.000,0.000,0.863,inf,inf,10.637,-0.003,1.000,1.000,1.000
+dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,paper_pd_3d,MFI-PD,completed,0.000,0.000,4.245,inf,inf,7.255,-0.009,1.000,1.000,1.000
+dynamic_double_integrator_3d,3D double integrator,head_on_sphere_3d,sabattini_3d,Sabattini,completed,0.000,0.000,4.245,inf,inf,7.255,-0.009,1.000,1.000,1.000
+dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,apf_3d,APF,completed,0.000,0.000,28.577,inf,inf,2.502,2.034,0.000,0.000,0.516
+dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,haddadin_3d,Haddadin,completed,0.000,0.000,20.137,4871.0,97.42,0.344,-0.007,1.000,1.000,0.664
+dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,paper_geometric_3d,MFI-Geometric,completed,0.000,0.000,42.563,inf,inf,4.249,2.974,0.000,0.000,0.332
+dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,paper_pd_3d,MFI-PD,completed,0.000,0.000,21.985,inf,inf,3.020,2.605,0.000,0.000,0.620
+dynamic_double_integrator_3d,3D double integrator,mixed_static_dynamic_field_3d,sabattini_3d,Sabattini,completed,0.000,0.000,9.226,inf,inf,4.307,-0.003,1.000,1.000,1.000
+dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,apf_3d,APF,completed,1.000,1.000,15.815,2209.0,44.18,0.150,2.017,0.000,0.000,0.760
+dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,haddadin_3d,Haddadin,completed,1.000,1.000,14.774,2068.0,41.36,0.150,0.734,0.000,0.000,0.814
+dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,paper_geometric_3d,MFI-Geometric,completed,1.000,1.000,14.427,2588.0,51.76,0.008,4.645,0.000,0.000,0.844
+dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,paper_pd_3d,MFI-PD,completed,1.000,1.000,17.178,2478.0,49.56,0.150,3.532,0.000,0.000,0.701
+dynamic_double_integrator_3d,3D double integrator,moving_prism_gate_3d,sabattini_3d,Sabattini,completed,0.000,0.000,8.046,inf,inf,4.118,-0.001,1.000,1.000,1.000
+dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,apf_3d,APF,completed,1.000,1.000,12.684,1695.0,33.90,0.150,2.010,0.000,0.000,0.858
+dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,haddadin_3d,Haddadin,completed,1.000,1.000,12.525,1722.0,34.44,0.150,1.472,0.000,0.000,0.869
+dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,paper_geometric_3d,MFI-Geometric,completed,1.000,1.000,12.380,2315.0,46.30,0.008,4.443,0.000,0.000,0.891
+dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,paper_pd_3d,MFI-PD,completed,1.000,1.000,13.208,1913.0,38.26,0.150,2.841,0.000,0.000,0.824
+dynamic_double_integrator_3d,3D double integrator,moving_sphere_crossing_3d,sabattini_3d,Sabattini,completed,1.000,1.000,10.878,1458.0,29.16,0.150,0.650,0.000,0.000,1.000
+dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,apf_3d,APF,completed,1.000,1.000,21.442,2465.0,49.30,0.150,1.719,0.000,0.000,0.568
+dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,haddadin_3d,Haddadin,completed,1.000,1.000,14.753,2674.0,53.48,0.150,0.966,0.000,0.000,0.818
+dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,paper_geometric_3d,MFI-Geometric,completed,1.000,1.000,16.063,3028.0,60.56,0.110,3.727,0.000,0.000,0.750
+dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,paper_pd_3d,MFI-PD,completed,1.000,1.000,19.011,3527.0,70.54,0.150,2.285,0.000,0.000,0.635
+dynamic_double_integrator_3d,3D double integrator,wandering_sphere_3d,sabattini_3d,Sabattini,completed,0.000,0.000,5.249,inf,inf,6.874,-0.020,1.000,1.000,1.000
 dynamic_quadrotor_3d,3D quadrotor,head_on_sphere_3d,apf_3d,APF,completed,0.000,0.000,5.882,inf,inf,5.765,-0.001,1.000,1.000,0.977
 dynamic_quadrotor_3d,3D quadrotor,head_on_sphere_3d,haddadin_3d,Haddadin,completed,0.000,0.000,5.877,inf,inf,5.732,-0.011,1.000,1.000,0.982
 dynamic_quadrotor_3d,3D quadrotor,head_on_sphere_3d,paper_geometric_3d,MFI-Geometric,completed,1.000,1.000,33.308,1402.0,28.04,0.345,1.811,0.000,0.000,0.343
@@ -139,18 +139,18 @@ webots_epuck_dynamic,Webots e-puck,wandering_circle,haddadin,Haddadin,goal_reach
 webots_epuck_dynamic,Webots e-puck,wandering_circle,paper_geometric,MFI-Geometric,goal_reached,1.000,1.000,3.196,479.0,30.66,0.297,0.655,0.000,0.000,0.851
 webots_epuck_dynamic,Webots e-puck,wandering_circle,paper_pd,MFI-PD,goal_reached,1.000,1.000,3.364,522.0,33.41,0.299,0.732,0.000,0.000,0.830
 webots_epuck_dynamic,Webots e-puck,wandering_circle,sabattini,Sabattini,goal_reached,1.000,1.000,4.632,1263.0,80.83,0.300,0.830,0.000,0.000,0.567
-webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,apf_3d,APF,collision,0.000,0.000,13.741,inf,inf,9.141,0.398,0.000,0.000,0.431
-webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,haddadin_3d,Haddadin,collision,0.000,0.000,5628.879,inf,inf,4837.073,-0.051,1.000,1.000,0.860
-webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,paper_geometric_3d,MFI-Geometric,timeout,0.000,0.000,29.237,inf,inf,2.098,0.332,0.000,0.000,0.050
-webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,paper_pd_3d,MFI-PD,collision,0.000,0.000,17.491,inf,inf,0.756,0.334,0.000,0.000,0.151
-webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,sabattini_3d,Sabattini,timeout,0.000,0.000,32.186,inf,inf,0.930,-0.100,1.000,1.000,0.072
-webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,apf_3d,APF,goal_reached,1.000,1.000,9.965,1250.0,40.00,0.179,1.064,0.000,0.000,0.311
-webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,haddadin_3d,Haddadin,goal_reached,1.000,1.000,6.257,621.0,19.87,0.106,1.098,0.000,0.000,0.516
-webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,paper_geometric_3d,MFI-Geometric,goal_reached,1.000,1.000,6.202,615.0,19.68,0.086,1.320,0.000,0.000,0.517
-webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,paper_pd_3d,MFI-PD,goal_reached,1.000,1.000,13.795,1826.0,58.43,0.179,1.261,0.000,0.000,0.225
-webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,sabattini_3d,Sabattini,goal_reached,1.000,1.000,5.857,562.0,17.98,0.054,0.850,0.000,0.000,0.555
-webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,apf_3d,APF,collision,0.000,0.000,6.017,inf,inf,1.020,0.143,0.000,0.000,0.512
-webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,haddadin_3d,Haddadin,goal_reached,1.000,1.000,6.735,713.0,22.82,0.135,0.929,0.000,0.000,0.502
-webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,paper_geometric_3d,MFI-Geometric,goal_reached,1.000,1.000,16.898,1743.0,55.78,0.180,0.465,0.000,0.000,0.202
-webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,paper_pd_3d,MFI-PD,timeout,0.000,0.000,16.986,inf,inf,0.223,0.575,0.000,0.000,0.200
-webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,sabattini_3d,Sabattini,collision,0.000,0.000,8.045,inf,inf,1.709,0.616,0.000,0.000,0.214
+webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,apf_3d,APF,goal_reached,1.000,1.000,7.605,1022.0,32.70,0.171,0.420,0.000,0.000,0.439
+webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,haddadin_3d,Haddadin,goal_reached,0.000,0.000,8.320,563.0,18.02,0.031,-0.098,1.000,1.000,0.391
+webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,paper_geometric_3d,MFI-Geometric,goal_reached,1.000,1.000,16.521,1875.0,60.00,0.180,0.399,0.000,0.000,0.196
+webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,paper_pd_3d,MFI-PD,goal_reached,1.000,1.000,8.009,1014.0,32.45,0.180,0.346,0.000,0.000,0.418
+webots_crazyflie_dynamic,Webots Crazyflie,head_on_sphere_3d,sabattini_3d,Sabattini,collision,0.000,0.000,5.433,inf,inf,0.923,-0.135,1.000,1.000,0.448
+webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,apf_3d,APF,goal_reached,1.000,1.000,4.588,520.0,16.64,0.169,0.975,0.000,0.000,0.685
+webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,haddadin_3d,Haddadin,goal_reached,1.000,1.000,7.717,674.0,21.57,0.136,1.039,0.000,0.000,0.431
+webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,paper_geometric_3d,MFI-Geometric,goal_reached,1.000,1.000,5.045,611.0,19.55,0.145,1.338,0.000,0.000,0.627
+webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,paper_pd_3d,MFI-PD,goal_reached,1.000,1.000,5.403,670.0,21.44,0.169,1.146,0.000,0.000,0.592
+webots_crazyflie_dynamic,Webots Crazyflie,moving_sphere_crossing_3d,sabattini_3d,Sabattini,goal_reached,1.000,1.000,4.200,427.0,13.66,0.175,0.732,0.000,0.000,0.748
+webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,apf_3d,APF,goal_reached,1.000,1.000,14.765,1322.0,42.30,0.178,0.491,0.000,0.000,0.232
+webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,haddadin_3d,Haddadin,goal_reached,1.000,1.000,6.252,750.0,24.00,0.079,0.842,0.000,0.000,0.531
+webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,paper_geometric_3d,MFI-Geometric,goal_reached,1.000,1.000,5.715,710.0,22.72,0.174,0.663,0.000,0.000,0.589
+webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,paper_pd_3d,MFI-PD,goal_reached,1.000,1.000,5.163,614.0,19.65,0.156,0.496,0.000,0.000,0.613
+webots_crazyflie_dynamic,Webots Crazyflie,wandering_sphere_3d,sabattini_3d,Sabattini,collision,0.000,0.000,7.695,inf,inf,1.881,0.449,0.000,0.000,0.190

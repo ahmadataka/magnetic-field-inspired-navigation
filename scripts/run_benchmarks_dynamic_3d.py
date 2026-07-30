@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import csv
+from dataclasses import replace
 import json
 import math
 import sys
@@ -244,8 +245,32 @@ def _metrics_table_html(metrics_rows: list[dict[str, str | float]]) -> str:
 
 def main() -> None:
     scenarios = make_dynamic_scenarios_3d()
-    config_pd = make_paper_pd_3d_config()
-    config_geometric = make_paper_geometric_3d_config()
+    config_pd = replace(
+        make_paper_pd_3d_config(),
+        kp_goal=0.06,
+        kp_goal_relaxed=0.06,
+        kd_goal=0.55,
+        speed_limit=0.75,
+        r_l=5.0,
+        r_la=3.0,
+        c_field=20.0,
+        c_perp=24.0,
+        max_acceleration=3.2,
+        max_speed_norm=1.6,
+    )
+    config_geometric = replace(
+        make_paper_geometric_3d_config(),
+        speed_limit=0.42,
+        kp_goal=0.10,
+        kp_goal_relaxed=0.05,
+        kp_geom=0.34,
+        r_l=5.0,
+        r_la=3.0,
+        c_field=24.0,
+        c_perp=24.0,
+        max_acceleration=3.5,
+        max_speed_norm=1.8,
+    )
     artifacts = benchmark_artifact_dir(ROOT, "dynamic_double_integrator_3d")
     artifacts.mkdir(parents=True, exist_ok=True)
     summary_rows: list[dict[str, str | float]] = []

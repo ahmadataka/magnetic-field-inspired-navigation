@@ -216,7 +216,51 @@ Reason for this override:
 - dynamic head-on scenes were limited by the differential-drive tracking layer forcing too much forward motion during large heading corrections
 - the change is benchmark-side only, and does not alter the MFI field, goal relaxation, or local sensing equations
 
-### 3.3 Webots e-puck dynamic benchmark
+### 3.3 Double-integrator dynamic 3D benchmark
+
+Primary source:
+
+- `scripts/run_benchmarks_dynamic_3d.py`
+
+This benchmark now uses a frozen benchmark-side 3D tuning profile for the MFI variants.
+
+Dynamic MFI-PD 3D benchmark profile uses:
+
+| Parameter | Value |
+| --- | ---: |
+| `kp_goal` | `0.06` |
+| `kp_goal_relaxed` | `0.06` |
+| `kd_goal` | `0.55` |
+| `speed_limit` | `0.75` |
+| `r_l` | `5.0` |
+| `r_la` | `3.0` |
+| `c_field` | `20.0` |
+| `c_perp` | `24.0` |
+| `max_acceleration` | `3.2` |
+| `max_speed_norm` | `1.6` |
+
+Dynamic MFI-Geometric 3D benchmark profile uses:
+
+| Parameter | Value |
+| --- | ---: |
+| `speed_limit` | `0.42` |
+| `kp_goal` | `0.10` |
+| `kp_goal_relaxed` | `0.05` |
+| `kp_geom` | `0.34` |
+| `r_l` | `5.0` |
+| `r_la` | `3.0` |
+| `c_field` | `24.0` |
+| `c_perp` | `24.0` |
+| `max_acceleration` | `3.5` |
+| `max_speed_norm` | `1.8` |
+
+Reason for this override:
+
+- the original 3D benchmark was too brittle in dynamic crossing and wandering scenes
+- increasing activation radius and moderating guidance-speed balance substantially improved 3D dynamic performance without changing the 3D MFI equations themselves
+- the hardest pure head-on sphere case is still not solved by this benchmark-side tuning alone
+
+### 3.4 Webots e-puck dynamic benchmark
 
 Primary source:
 
@@ -252,7 +296,7 @@ Method-specific overrides currently frozen there:
 
 - no extra method-specific override in `METHOD_CONFIG_OVERRIDES`
 
-### 3.4 Webots Crazyflie dynamic benchmark
+### 3.5 Webots Crazyflie dynamic benchmark
 
 Primary source:
 
