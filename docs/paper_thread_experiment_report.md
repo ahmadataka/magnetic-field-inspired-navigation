@@ -151,6 +151,7 @@ Use these first in the paper thread:
 - `artifacts/summaries/dynamic_master/dynamic_master_per_scenario.csv`
 - `docs/dynamic_benchmark_master_summary.md`
 - `docs/dynamic_benchmark_master_summary.html`
+- `docs/dynamic_theory_to_experiment_validation_note.md`
 - `docs/dynamic_paper_figures.md`
 
 Curated publication-style figures:
